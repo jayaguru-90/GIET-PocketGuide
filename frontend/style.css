@@ -1,0 +1,428 @@
+/* ================= COLORS ================= */
+
+:root {
+    --primary: #4F46E5;
+    --secondary: #7C3AED;
+    --accent: #06B6D4;
+
+    --background: #172554;   /* Deep Navy Blue */
+
+    --white: #FFFFFF;
+    --text: #DDD6FE
+    --light-text: #CBD5E1;
+    --border: #334155;
+}
+
+/* ================= RESET ================= */
+
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+}
+
+
+
+/* ================= BODY ================= */
+
+body {
+
+    font-family: Arial, sans-serif;
+
+    background-color: var(--background);
+
+    color: var(--text);
+
+}
+
+
+
+/* ================= NAVBAR ================= */
+
+.header {
+
+    height: 70px;
+
+    width: 100%;
+
+    background-color: var(--white);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 0 8%;
+
+    border-bottom: 1px solid var(--border);
+
+}
+
+
+
+/* Logo section */
+
+.logo-section {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+}
+
+
+.logo {
+
+    height: 65px;
+
+    width: 65px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+}
+
+
+.logo-section h2 {
+
+    color: var(--primary);
+
+    font-size: 22px;
+
+}
+
+
+
+/* ================= NAVIGATION ================= */
+
+.navbar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 35px;
+
+}
+
+
+.navbar a {
+
+    text-decoration: none;
+
+    color: var(--text);
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    transition: 0.3s;
+
+}
+
+
+.navbar a:hover {
+
+    color: var(--accent);
+
+}
+
+
+
+/* ================= HERO ================= */
+
+.hero {
+
+    min-height: 370px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    padding: 60px 20px;
+
+    background: linear-gradient(
+        135deg,
+        var(--background),
+        #EAF4F4
+    );
+
+}
+
+
+.hero h1 {
+
+    font-size: 42px;
+
+    color: var(--primary);
+
+    margin-bottom: 18px;
+
+    font-weight: 700;
+
+}
+
+
+.hero p {
+
+    max-width: 600px;
+
+    font-size: 16px;
+
+    line-height: 1.6;
+
+    color: var(--light-text);
+
+    margin-bottom: 30px;
+
+}
+
+
+
+/* ================= BUTTONS ================= */
+
+.hero-buttons {
+
+    display: flex;
+
+    gap: 15px;
+
+}
+
+
+.btn {
+
+    text-decoration: none;
+
+    padding: 13px 22px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    transition: 0.3s;
+
+}
+
+
+
+/* Map button */
+
+.map-btn {
+
+    background-color: var(--accent);
+
+    color: var(--white);
+
+    box-shadow: 0 4px 10px rgba(8, 126, 139, 0.25);
+
+}
+
+
+.map-btn:hover {
+
+    background-color: var(--primary);
+
+    transform: translateY(-2px);
+
+}
+
+
+
+/* Admin button */
+
+.admin-btn {
+
+    background-color: var(--white);
+
+    color: var(--primary);
+
+    border: 1px solid var(--border);
+
+}
+
+
+.admin-btn:hover {
+
+    background-color: var(--primary);
+
+    color: var(--white);
+
+    border-color: var(--primary);
+
+}
+
+
+
+/* ================= FEATURES ================= */
+
+.features {
+
+    text-align: center;
+
+    padding: 55px 8%;
+
+    background-color: var(--white);
+
+}
+
+
+.features h2 {
+
+    color: var(--primary);
+
+    font-size: 27px;
+
+    margin-bottom: 35px;
+
+}
+
+
+
+/* ================= CARDS ================= */
+
+.feature-cards {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 25px;
+
+}
+
+
+.card {
+
+    width: 260px;
+
+    padding: 28px;
+
+    background-color: var(--white);
+
+    border: 1px solid var(--border);
+
+    border-radius: 12px;
+
+    transition: 0.3s;
+
+}
+
+
+.card:hover {
+
+    transform: translateY(-5px);
+
+    border-color: var(--accent);
+
+    box-shadow: 0 8px 25px rgba(18, 53, 91, 0.10);
+
+}
+
+
+
+/* Card icon */
+
+.card-icon {
+
+    font-size: 32px;
+
+    margin-bottom: 15px;
+
+}
+
+
+.card h3 {
+
+    color: var(--primary);
+
+    font-size: 18px;
+
+    margin-bottom: 12px;
+
+}
+
+
+.card p {
+
+    color: var(--light-text);
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+}
+
+
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 700px) {
+
+    .header {
+
+        padding: 0 20px;
+
+    }
+
+
+    .navbar {
+
+        gap: 15px;
+
+    }
+
+
+    .navbar a {
+
+        font-size: 12px;
+
+    }
+
+
+    .hero h1 {
+
+        font-size: 30px;
+
+    }
+
+
+    .hero p {
+
+        font-size: 14px;
+
+    }
+
+
+    .hero-buttons {
+
+        flex-direction: column;
+
+    }
+
+
+    .feature-cards {
+
+        flex-direction: column;
+
+        align-items: center;
+
+    }
+
+}
