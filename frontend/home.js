@@ -1,4 +1,2 @@
 HTMLVideoElement
 
-Highlight
-Highlight
