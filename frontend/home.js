@@ -2,3 +2,6 @@ HTMLVideoElement
 
 Highlight
 Highlight
+
+HTMLIFrameElement
+Enumerator
