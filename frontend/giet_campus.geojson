@@ -1,0 +1,300 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "GIET Main Road" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8311909, 19.0474079],
+          [83.8319401, 19.0478154],
+          [83.8323675, 19.0480433],
+          [83.8330831, 19.0484282],
+          [83.8334392, 19.0486246],
+          [83.8338431, 19.048839]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "swimming pool road" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8338431, 19.048839],
+          [83.8337812, 19.0488749],
+          [83.833655, 19.0490832],
+          [83.8334317, 19.0494297],
+          [83.8333257, 19.0495951],
+          [83.8330777, 19.0499791]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "temple road" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8330777, 19.0499791],
+          [83.8330038, 19.0499546],
+          [83.8329273, 19.04992],
+          [83.832777, 19.0498432],
+          [83.8326796, 19.0497867],
+          [83.8325409, 19.0497098],
+          [83.8323665, 19.0496023],
+          [83.832196, 19.0494946],
+          [83.8319689, 19.0493557],
+          [83.8319265, 19.0493256],
+          [83.8316801, 19.0491806],
+          [83.8313053, 19.0489617],
+          [83.8312725, 19.0489058],
+          [83.8312693, 19.0488525],
+          [83.8315166, 19.0484685],
+          [83.8319401, 19.0478154]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "CSE Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8315166, 19.0484685],
+          [83.8315621, 19.0484843]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Temple Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8312693, 19.0488525],
+          [83.8307732, 19.0486077]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BSH Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8316801, 19.0491806],
+          [83.8317289, 19.0491051]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "AME Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8319689, 19.0493557],
+          [83.831949, 19.0494422]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "ECE Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8319689, 19.0493557],
+          [83.8319928, 19.0493369]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Management Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.832196, 19.0494946],
+          [83.8322269, 19.0494428]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Library / ECE Gate 1 Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8323665, 19.0496023],
+          [83.8323933, 19.049564],
+          [83.8323803, 19.0492385]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "RDB Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8326796, 19.0497867],
+          [83.8327062, 19.0497347]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mechanical Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8334317, 19.0494297],
+          [83.8333445, 19.0493456]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Agriculture Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8334392, 19.0486246],
+          [83.8333491, 19.0487797],
+          [83.8333488, 19.0487696]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Admin Block Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8323675, 19.0480433],
+          [83.8323102, 19.0481287]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Canteen Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8330831, 19.0484282],
+          [83.8330964, 19.0481867]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Cool Parlor Connector" },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8330831, 19.0484282],
+          [83.8327318, 19.0491146]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "CSE Building" },
+      "geometry": { "type": "Point", "coordinates": [83.8315621, 19.0484843] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "BSH Building" },
+      "geometry": { "type": "Point", "coordinates": [83.8317289, 19.0491051] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "GIET Temple" },
+      "geometry": { "type": "Point", "coordinates": [83.8307732, 19.0486077] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "AME" },
+      "geometry": { "type": "Point", "coordinates": [83.831949, 19.0494422] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bio tech Building" },
+      "geometry": { "type": "Point", "coordinates": [83.832343, 19.0499698] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "RDB Building" },
+      "geometry": { "type": "Point", "coordinates": [83.8327062, 19.0497347] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Library" },
+      "geometry": { "type": "Point", "coordinates": [83.8323803, 19.0492385] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "ECE Block Gate 1" },
+      "geometry": { "type": "Point", "coordinates": [83.8323933, 19.049564] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Admin Block" },
+      "geometry": { "type": "Point", "coordinates": [83.8323102, 19.0481287] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Agriculture Block" },
+      "geometry": { "type": "Point", "coordinates": [83.8333488, 19.0487696] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Mechanical building" },
+      "geometry": { "type": "Point", "coordinates": [83.8333445, 19.0493456] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hardware section" },
+      "geometry": { "type": "Point", "coordinates": [83.8338592, 19.0485406] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Canteen" },
+      "geometry": { "type": "Point", "coordinates": [83.8330964, 19.0481867] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Main Gate" },
+      "geometry": { "type": "Point", "coordinates": [83.8311909, 19.0474079] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Parking" },
+      "geometry": { "type": "Point", "coordinates": [83.8315954, 19.0475368] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Cool Parloor" },
+      "geometry": { "type": "Point", "coordinates": [83.8327318, 19.0491146] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "ECE Block Gate 2" },
+      "geometry": { "type": "Point", "coordinates": [83.8319928, 19.0493369] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Dept. Manegment" },
+      "geometry": { "type": "Point", "coordinates": [83.8322269, 19.0494428] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bus stop" },
+      "geometry": { "type": "Point", "coordinates": [83.8338431, 19.048839] }
+    }
+  ]
+}

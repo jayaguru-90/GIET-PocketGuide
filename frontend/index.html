@@ -1,137 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GIET Guide - Campus Navigation</title>
 
-    <title>NaviCampus</title>
-
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <!-- ================= NAVBAR ================= -->
-
+    <!-- NAVBAR -->
     <header class="header">
-
         <div class="logo-section">
-
-            <img src="/frontend/logo.jpeg" class="logo">
-
+            <img src="logo.jpeg" class="logo" alt="GIET Logo">
             <h2>GIET Campus Guide</h2>
-
         </div>
-
-
         <nav class="navbar">
-
             <a href="#">Home</a>
-
-            <a href="#">Campus Map</a>
-
+            <a href="#map-section">Campus Map</a>
             <a href="#">Admin Login</a>
-
         </nav>
-
     </header>
 
-
-
-    <!-- ================= HERO SECTION ================= -->
-
+    <!-- HERO SECTION -->
     <section class="hero">
-
         <h1>Explore Your Campus</h1>
-
-        <p>
-            Find buildings, departments, facilities and routes
-            around your campus with ease.
-        </p>
-
-
+        <p>Find buildings, departments, facilities and walk routes around GIET University with ease.</p>
         <div class="hero-buttons">
-
-            <a href="#" class="btn map-btn">
-                🗺️ Open Campus Map
-            </a>
-
-            <a href="#" class="btn admin-btn">
-                🔒 Admin Login
-            </a>
-
+            <a href="#map-section" class="btn map-btn">🗺️ Open Campus Map</a>
         </div>
-
     </section>
 
-
-
-    <!-- ================= FEATURES ================= -->
-
+    <!-- FEATURES SECTION -->
     <section class="features">
-
         <h2>What can you find?</h2>
-
-
         <div class="feature-cards">
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    🏢
-                </div>
-
+                <div class="card-icon">🏢</div>
                 <h3>Buildings</h3>
-
-                <p>
-                    Find academic blocks, departments
-                    and important buildings.
-                </p>
-
+                <p>Find academic blocks, departments and administrative buildings.</p>
             </div>
-
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    🗺️
-                </div>
-
+                <div class="card-icon">🗺️</div>
                 <h3>Campus Map</h3>
-
-                <p>
-                    Explore the campus map and
-                    find the best routes.
-                </p>
-
+                <p>Explore full pathways and step-by-step pedestrian routes.</p>
             </div>
-
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    📍
-                </div>
-
+                <div class="card-icon">📍</div>
                 <h3>Facilities</h3>
-
-                <p>
-                    Easily locate important facilities
-                    around the campus.
-                </p>
-
+                <p>Locate canteens, hostels, ATMs, sports grounds, and labs.</p>
             </div>
-
-
         </div>
-
     </section>
 
+    <!-- CAMPUS MAP & NAVIGATION SECTION -->
+    <section id="map-section" class="map-section">
+        <!-- Floating Navigation Control Card -->
+        <div class="nav-panel">
+            <h3>Find Route</h3>
 
+            <div class="input-group">
+                <label for="start-select">Starting Point:</label>
+                <select id="start-select">
+                    <option value="">Choose Current Location</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="end-select">Destination:</label>
+                <select id="end-select">
+                    <option value="">Choose Destination</option>
+                </select>
+            </div>
+
+            <div class="action-buttons">
+                <button id="find-route-btn" class="btn btn-primary">Find Route</button>
+                <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
+            </div>
+
+            <div id="route-output" class="route-output"></div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div id="map"></div>
+    </section>
+
+    <!-- Leaflet JS & App Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="home.js"></script>
 </body>
-
 </html>
