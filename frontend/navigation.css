@@ -159,7 +159,6 @@ html, body {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.3s ease;
 }
 
-/* Mobile Toggle Handle (Hidden on Desktop) */
 .panel-toggle-btn {
     display: none;
     background: none;
@@ -245,7 +244,7 @@ html, body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* ================= BUTTONS ================= */
+/* ================= ACTION BUTTONS ================= */
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -318,21 +317,45 @@ html, body {
     line-height: 1.5;
 }
 
-/* ================= SATELLITE LABELS ================= */
+/* ================= MODERN GLASSMORPHIC PILL LABELS ================= */
 .satellite-label {
-    background: rgba(15, 23, 42, 0.88) !important;
-    border: 1px solid rgba(255, 255, 255, 0.35) !important;
-    color: #f8fafc !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    padding: 2px 7px !important;
-    border-radius: 4px !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 3px 9px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     pointer-events: none;
+    letter-spacing: 0.2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
 }
 
 .satellite-label::before {
-    border-top-color: rgba(15, 23, 42, 0.88) !important;
+    border-top-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* ================= PATHWAY & ROUTE EFFECTS ================= */
+.campus-walkway-base {
+    stroke: rgba(255, 255, 255, 0.7);
+    stroke-width: 3.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+}
+
+.active-nav-route {
+    stroke: #38bdf8;
+    stroke-width: 6px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
 /* ================= MOBILE BOTTOM SHEET & COLLAPSE ================= */
@@ -361,9 +384,8 @@ html, body {
         display: block;
     }
 
-    /* Slides card down so only handle and header stay visible */
     .nav-panel.collapsed {
-        transform: translateY(calc(100% - 50px));
+        transform: translateY(calc(100% - 48px));
     }
 
     .nav-panel.collapsed .panel-body {

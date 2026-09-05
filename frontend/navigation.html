@@ -15,12 +15,12 @@
     <div id="loading-screen" class="loading-screen">
         <div class="loader-content">
             <div class="spinner"></div>
-            <h3>Loading Satellite Campus Map...</h3>
-            <p>Fetching buildings, pedestrian pathways, and imagery</p>
+            <h3>Loading Campus Navigator...</h3>
+            <p>Fetching buildings, walkways, and high-res satellite imagery</p>
         </div>
     </div>
 
-    <!-- TOP COMPACT NAVBAR -->
+    <!-- TOP NAVBAR -->
     <header class="header">
         <div class="logo-section">
             <a href="index.html" class="logo-link">
@@ -33,11 +33,11 @@
         </nav>
     </header>
 
-    <!-- MAP CONTAINER & NAVIGATION PANEL -->
+    <!-- MAP CANVAS & FLOATING BOTTOM-SHEET PANEL -->
     <main class="map-section">
         <!-- Floating Navigation Control Card -->
         <aside id="nav-panel" class="nav-panel">
-            <!-- Mobile Toggle / Collapse Handle -->
+            <!-- Mobile Toggle / Drag Pill -->
             <button id="toggle-panel-btn" class="panel-toggle-btn" aria-label="Toggle Panel">
                 <span class="toggle-bar"></span>
             </button>
@@ -47,12 +47,11 @@
                 <span class="badge">Satellite Live</span>
             </div>
 
-            <!-- Collapsible Body Content -->
             <div class="panel-body">
                 <div class="input-group">
                     <label for="start-select">Starting Point</label>
                     <select id="start-select">
-                        <option value="">Choose Current Location</option>
+                        <option value="">Choose Starting Location</option>
                     </select>
                 </div>
 
@@ -63,13 +62,13 @@
                     </select>
                 </div>
 
-                <!-- Route Finding Buttons -->
+                <!-- Route Actions -->
                 <div class="action-buttons">
                     <button id="find-route-btn" class="btn btn-primary">Find Route</button>
                     <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
                 </div>
 
-                <!-- Live GPS & Walking Simulation Buttons -->
+                <!-- Navigation & Simulation Actions -->
                 <div class="action-buttons">
                     <button id="start-nav-btn" class="btn btn-gps">🚶 GPS Live</button>
                     <button id="simulate-btn" class="btn btn-simulate">▶️ Simulate Walk</button>
@@ -83,7 +82,7 @@
         <div id="map"></div>
     </main>
 
-    <!-- Leaflet JS & Navigation Logic -->
+    <!-- Leaflet JS & App Script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="navigation.js"></script>
 </body>
