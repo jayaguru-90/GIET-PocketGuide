@@ -147,15 +147,41 @@ html, body {
     left: 20px;
     z-index: 1000;
     width: 330px;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(10px);
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-    padding: 18px 20px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.3s ease;
+}
+
+/* Mobile Toggle Handle (Hidden on Desktop) */
+.panel-toggle-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    padding: 6px 0 2px 0;
+    outline: none;
+}
+
+.toggle-bar {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: #cbd5e1;
+    border-radius: 999px;
+    margin: 0 auto;
+    transition: background-color 0.2s;
+}
+
+.panel-toggle-btn:hover .toggle-bar {
+    background: #94a3b8;
 }
 
 .nav-panel-header {
@@ -178,6 +204,13 @@ html, body {
     padding: 2px 8px;
     border-radius: 9999px;
     text-transform: uppercase;
+}
+
+.panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: opacity 0.2s ease;
 }
 
 .input-group {
@@ -285,7 +318,7 @@ html, body {
     line-height: 1.5;
 }
 
-/* ================= SATELLITE PERMANENT LABELS ================= */
+/* ================= SATELLITE LABELS ================= */
 .satellite-label {
     background: rgba(15, 23, 42, 0.88) !important;
     border: 1px solid rgba(255, 255, 255, 0.35) !important;
@@ -302,20 +335,39 @@ html, body {
     border-top-color: rgba(15, 23, 42, 0.88) !important;
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
+/* ================= MOBILE BOTTOM SHEET & COLLAPSE ================= */
 @media (max-width: 640px) {
     .header {
-        padding: 10px 16px;
+        padding: 8px 16px;
+        height: 52px;
+    }
+
+    .map-section {
+        height: calc(100vh - 52px);
     }
 
     .nav-panel {
         top: auto;
-        left: 12px;
-        right: 12px;
-        bottom: 16px;
+        left: 10px;
+        right: 10px;
+        bottom: 12px;
         width: auto;
-        max-height: 48vh;
-        overflow-y: auto;
-        padding: 14px 16px;
+        padding: 10px 16px 14px 16px;
+        border-radius: 20px;
+        max-height: 80vh;
+    }
+
+    .panel-toggle-btn {
+        display: block;
+    }
+
+    /* Slides card down so only handle and header stay visible */
+    .nav-panel.collapsed {
+        transform: translateY(calc(100% - 50px));
+    }
+
+    .nav-panel.collapsed .panel-body {
+        opacity: 0;
+        pointer-events: none;
     }
 }

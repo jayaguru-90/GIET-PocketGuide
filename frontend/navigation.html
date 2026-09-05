@@ -36,46 +36,54 @@
     <!-- MAP CONTAINER & NAVIGATION PANEL -->
     <main class="map-section">
         <!-- Floating Navigation Control Card -->
-        <aside class="nav-panel">
+        <aside id="nav-panel" class="nav-panel">
+            <!-- Mobile Toggle / Collapse Handle -->
+            <button id="toggle-panel-btn" class="panel-toggle-btn" aria-label="Toggle Panel">
+                <span class="toggle-bar"></span>
+            </button>
+
             <div class="nav-panel-header">
                 <h3>Find Route</h3>
                 <span class="badge">Satellite Live</span>
             </div>
 
-            <div class="input-group">
-                <label for="start-select">Starting Point</label>
-                <select id="start-select">
-                    <option value="">Choose Current Location</option>
-                </select>
-            </div>
+            <!-- Collapsible Body Content -->
+            <div class="panel-body">
+                <div class="input-group">
+                    <label for="start-select">Starting Point</label>
+                    <select id="start-select">
+                        <option value="">Choose Current Location</option>
+                    </select>
+                </div>
 
-            <div class="input-group">
-                <label for="end-select">Destination</label>
-                <select id="end-select">
-                    <option value="">Choose Destination</option>
-                </select>
-            </div>
+                <div class="input-group">
+                    <label for="end-select">Destination</label>
+                    <select id="end-select">
+                        <option value="">Choose Destination</option>
+                    </select>
+                </div>
 
-            <!-- Route Finding Buttons -->
-            <div class="action-buttons">
-                <button id="find-route-btn" class="btn btn-primary">Find Route</button>
-                <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
-            </div>
+                <!-- Route Finding Buttons -->
+                <div class="action-buttons">
+                    <button id="find-route-btn" class="btn btn-primary">Find Route</button>
+                    <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
+                </div>
 
-            <!-- Live GPS & Simulation Buttons -->
-            <div class="action-buttons">
-                <button id="start-nav-btn" class="btn btn-gps">🚶 GPS Live</button>
-                <button id="simulate-btn" class="btn btn-simulate">▶️ Simulate Walk</button>
-            </div>
+                <!-- Live GPS & Walking Simulation Buttons -->
+                <div class="action-buttons">
+                    <button id="start-nav-btn" class="btn btn-gps">🚶 GPS Live</button>
+                    <button id="simulate-btn" class="btn btn-simulate">▶️ Simulate Walk</button>
+                </div>
 
-            <div id="route-output" class="route-output"></div>
+                <div id="route-output" class="route-output"></div>
+            </div>
         </aside>
 
         <!-- Leaflet Map Canvas -->
         <div id="map"></div>
     </main>
 
-    <!-- Leaflet JS & Navigation Script -->
+    <!-- Leaflet JS & Navigation Logic -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="navigation.js"></script>
 </body>

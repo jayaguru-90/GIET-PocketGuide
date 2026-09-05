@@ -7,6 +7,8 @@ const startNavBtn = document.getElementById('start-nav-btn');
 const simulateBtn = document.getElementById('simulate-btn');
 const routeOutput = document.getElementById('route-output');
 const loadingScreen = document.getElementById('loading-screen');
+const navPanel = document.getElementById('nav-panel');
+const togglePanelBtn = document.getElementById('toggle-panel-btn');
 
 const GIET_CENTER = [19.0485, 83.8320];
 
@@ -21,7 +23,7 @@ let userAccuracyCircle = null;
 let watchId = null;
 let simulationInterval = null;
 
-// ================= 2. MAP & GOOGLE HYBRID SATELLITE VIEW =================
+// ================= 2. MAP & GOOGLE HYBRID SATELLITE LAYER =================
 const map = L.map('map', {
     zoomControl: false,
     maxZoom: 22
@@ -30,7 +32,7 @@ const map = L.map('map', {
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
 // Google Maps Hybrid Satellite Layer (Satellite + Labels)
-// maxNativeZoom: 20 prevents "Map data not yet available" placeholders
+// maxNativeZoom: 20 ensures deep zooming without missing tile errors
 L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
     maxZoom: 22,
     maxNativeZoom: 20,
@@ -266,7 +268,13 @@ function updateUserPosition(lat, lng, accuracy = 5) {
     }
 }
 
-// ================= 6. NAVIGATION ACTIONS =================
+// ================= 6. NAVIGATION ACTIONS & PANEL TOGGLE =================
+if (togglePanelBtn && navPanel) {
+    togglePanelBtn.addEventListener('click', () => {
+        navPanel.classList.toggle('collapsed');
+    });
+}
+
 findRouteBtn.addEventListener('click', () => {
     const startName = startSelect.value;
     const endName = endSelect.value;
@@ -315,6 +323,11 @@ findRouteBtn.addEventListener('click', () => {
 
     routeOutput.style.display = 'block';
     routeOutput.innerHTML = `Walking Distance: ~${totalMeters} meters<br>Estimated Time: ~${Math.ceil(totalMeters / 75)} mins`;
+
+    // Auto-collapse panel on mobile screens to reveal the generated path
+    if (window.innerWidth <= 640 && navPanel) {
+        navPanel.classList.add('collapsed');
+    }
 });
 
 startNavBtn.addEventListener('click', () => {
