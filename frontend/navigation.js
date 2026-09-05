@@ -1,14 +1,4 @@
-// 1. Initialize Map centered on GIET University Gunupur
-const GIET_CENTER = [19.0485, 83.8320];
-const map = L.map('map').setView(GIET_CENTER, 17);
-
-// Free OpenStreetMap base tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 20,
-    attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-// DOM Elements
+// ================= 1. DOM REFERENCES & STATE =================
 const startSelect = document.getElementById('start-select');
 const endSelect = document.getElementById('end-select');
 const findRouteBtn = document.getElementById('find-route-btn');
@@ -16,21 +6,53 @@ const clearRouteBtn = document.getElementById('clear-route-btn');
 const startNavBtn = document.getElementById('start-nav-btn');
 const simulateBtn = document.getElementById('simulate-btn');
 const routeOutput = document.getElementById('route-output');
+const loadingScreen = document.getElementById('loading-screen');
 
-// Data structures
-let buildings = {};        
-let graph = {};            
-let allGraphNodes = [];    
+const GIET_CENTER = [19.0485, 83.8320];
+
+let buildings = {};
+let graph = {};
+let allGraphNodes = [];
 let activeRouteLayer = null;
 let currentRouteCoords = [];
 
-// User Live Location Marker & Tracking State
 let userMarker = null;
 let userAccuracyCircle = null;
 let watchId = null;
 let simulationInterval = null;
 
-// Distance calculation helper (Haversine formula in meters)
+// ================= 2. MAP & GOOGLE HYBRID SATELLITE VIEW =================
+const map = L.map('map', {
+    zoomControl: false,
+    maxZoom: 22
+}).setView(GIET_CENTER, 18);
+
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// Google Maps Hybrid Satellite Layer (Satellite + Labels)
+// maxNativeZoom: 20 prevents "Map data not yet available" placeholders
+L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    maxZoom: 22,
+    maxNativeZoom: 20,
+    attribution: '&copy; Google Maps'
+}).addTo(map);
+
+function hideLoader() {
+    if (!loadingScreen) return;
+    setTimeout(() => {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
+    }, 600);
+}
+
+// Fallback safety timeout in case of connectivity delays
+setTimeout(() => {
+    hideLoader();
+}, 4000);
+
+// ================= 3. UTILITY & GRAPH FUNCTIONS =================
 function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -75,14 +97,16 @@ function findClosestGraphNode(targetLat, targetLng) {
     return { key: closestKey, dist: minDist };
 }
 
-// 2. Fetch GeoJSON and Build Network Graph
+// ================= 4. LOAD GEOJSON, BUILD GRAPH & POPULATE PLACES =================
 fetch('giet_campus.geojson')
     .then(res => {
-        if (!res.ok) throw new Error("giet_campus.geojson not found in frontend/");
+        if (!res.ok) throw new Error("Could not find giet_campus.geojson");
         return res.json();
     })
     .then(data => {
-        // Step A: Parse drawn paths & build graph
+        const placeNames = [];
+
+        // Step A: Parse line features into graph edges
         data.features.forEach(feature => {
             if (feature.geometry.type === 'LineString') {
                 const coords = feature.geometry.coordinates;
@@ -94,7 +118,7 @@ fetch('giet_campus.geojson')
             }
         });
 
-        // Step B: Auto-bridge disconnected junctions
+        // Step B: Auto-bridge disconnected walkway nodes within 35m
         for (let i = 0; i < allGraphNodes.length; i++) {
             const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
             for (let j = i + 1; j < allGraphNodes.length; j++) {
@@ -106,22 +130,22 @@ fetch('giet_campus.geojson')
             }
         }
 
-        // Step C: Render paths and building markers
+        // Step C: Render paths and pins with permanent satellite labels
         L.geoJSON(data, {
             style: (feature) => {
                 if (feature.geometry.type === 'LineString') {
-                    return { color: '#2563eb', weight: 4, opacity: 0.85 };
+                    return { color: '#00f0ff', weight: 4, opacity: 0.9 };
                 }
-                return { color: '#10b981', weight: 2 };
+                return { color: '#22c55e', weight: 2 };
             },
             pointToLayer: (feature, latlng) => {
                 return L.circleMarker(latlng, {
-                    radius: 6,
-                    fillColor: '#ef4444',
+                    radius: 7,
+                    fillColor: '#38bdf8',
                     color: '#ffffff',
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.9
+                    fillOpacity: 1
                 });
             },
             onEachFeature: (feature, layer) => {
@@ -131,26 +155,41 @@ fetch('giet_campus.geojson')
                     const lng = feature.geometry.coordinates[0];
                     buildings[name] = [lat, lng];
 
-                    layer.bindPopup(`<b>${name}</b>`);
+                    layer.bindTooltip(`<b>${name}</b>`, {
+                        permanent: true,
+                        direction: 'top',
+                        offset: [0, -8],
+                        className: 'satellite-label'
+                    });
 
-                    const opt1 = document.createElement('option');
-                    opt1.value = name;
-                    opt1.textContent = name;
-                    startSelect.appendChild(opt1);
-
-                    const opt2 = document.createElement('option');
-                    opt2.value = name;
-                    opt2.textContent = name;
-                    endSelect.appendChild(opt2);
+                    placeNames.push(name);
                 }
             }
         }).addTo(map);
+
+        // Step D: Sort places alphabetically (A to Z)
+        placeNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+        placeNames.forEach(name => {
+            const opt1 = document.createElement('option');
+            opt1.value = name;
+            opt1.textContent = name;
+            startSelect.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = name;
+            opt2.textContent = name;
+            endSelect.appendChild(opt2);
+        });
+
+        hideLoader();
     })
     .catch(err => {
-        console.error("GeoJSON Error:", err);
+        console.error("GeoJSON load error:", err);
+        hideLoader();
     });
 
-// 3. Dijkstra Shortest-Path Algorithm
+// ================= 5. DIJKSTRA PATHFINDING =================
 function dijkstra(startKey, endKey) {
     const distances = {};
     const previous = {};
@@ -202,12 +241,11 @@ function dijkstra(startKey, endKey) {
     return { path, totalDistance: distances[endKey] };
 }
 
-// Helper: Update / Move User Location Pin
 function updateUserPosition(lat, lng, accuracy = 5) {
     if (!userMarker) {
         userMarker = L.circleMarker([lat, lng], {
-            radius: 8,
-            fillColor: '#0284c7',
+            radius: 9,
+            fillColor: '#facc15',
             color: '#ffffff',
             weight: 3,
             opacity: 1,
@@ -216,9 +254,9 @@ function updateUserPosition(lat, lng, accuracy = 5) {
 
         userAccuracyCircle = L.circle([lat, lng], {
             radius: accuracy,
-            color: '#38bdf8',
-            fillColor: '#38bdf8',
-            fillOpacity: 0.15,
+            color: '#facc15',
+            fillColor: '#fde047',
+            fillOpacity: 0.2,
             weight: 1
         }).addTo(map);
     } else {
@@ -228,7 +266,7 @@ function updateUserPosition(lat, lng, accuracy = 5) {
     }
 }
 
-// 4. Find Route Action
+// ================= 6. NAVIGATION ACTIONS =================
 findRouteBtn.addEventListener('click', () => {
     const startName = startSelect.value;
     const endName = endSelect.value;
@@ -237,9 +275,8 @@ findRouteBtn.addEventListener('click', () => {
         alert("Please select both Start and Destination.");
         return;
     }
-
     if (startName === endName) {
-        alert("Start and Destination cannot be the same place.");
+        alert("Start and Destination cannot be the same.");
         return;
     }
 
@@ -250,14 +287,13 @@ findRouteBtn.addEventListener('click', () => {
     const endNode = findClosestGraphNode(endCoords[0], endCoords[1]);
 
     if (!startNode.key || !endNode.key) {
-        alert("Could not locate route path near these points.");
+        alert("No walkway network detected nearby.");
         return;
     }
 
     const result = dijkstra(startNode.key, endNode.key);
-
     if (result.path.length < 2) {
-        alert("No connected walking path found between these locations.");
+        alert("No connected walking path found between these spots.");
         return;
     }
 
@@ -269,20 +305,18 @@ findRouteBtn.addEventListener('click', () => {
     }
 
     activeRouteLayer = L.polyline(currentRouteCoords, {
-        color: '#dc2626',
+        color: '#ff2d55',
         weight: 6,
         opacity: 0.95
     }).addTo(map);
 
-    map.fitBounds(activeRouteLayer.getBounds(), { padding: [50, 50] });
-
+    map.fitBounds(activeRouteLayer.getBounds(), { padding: [60, 60] });
     updateUserPosition(startCoords[0], startCoords[1], 8);
 
     routeOutput.style.display = 'block';
     routeOutput.innerHTML = `Walking Distance: ~${totalMeters} meters<br>Estimated Time: ~${Math.ceil(totalMeters / 75)} mins`;
 });
 
-// 5. Live GPS Tracking (Mobile / Geolocation)
 startNavBtn.addEventListener('click', () => {
     if (!navigator.geolocation) {
         alert("Geolocation is not supported by your browser.");
@@ -292,11 +326,11 @@ startNavBtn.addEventListener('click', () => {
     if (watchId) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
-        startNavBtn.textContent = "🚶 Start Navigation";
+        startNavBtn.textContent = "🚶 GPS Live";
         return;
     }
 
-    startNavBtn.textContent = "⏹️ Stop Navigation";
+    startNavBtn.textContent = "⏹️ Stop GPS";
 
     watchId = navigator.geolocation.watchPosition(
         (pos) => {
@@ -309,20 +343,15 @@ startNavBtn.addEventListener('click', () => {
         },
         (err) => {
             console.error(err);
-            alert("Unable to get GPS location: " + err.message);
+            alert("Unable to fetch GPS: " + err.message);
         },
-        {
-            enableHighAccuracy: true,
-            maximumAge: 1000,
-            timeout: 5000
-        }
+        { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
     );
 });
 
-// 6. Simulate Walk (Smooth Walking Movement Animation)
 simulateBtn.addEventListener('click', () => {
     if (currentRouteCoords.length < 2) {
-        alert("Please click 'Find Route' first before simulating the walk!");
+        alert("Select endpoints and click 'Find Route' first.");
         return;
     }
 
@@ -364,7 +393,6 @@ simulateBtn.addEventListener('click', () => {
     }, 150);
 });
 
-// 7. Clear Route
 clearRouteBtn.addEventListener('click', () => {
     if (activeRouteLayer) {
         map.removeLayer(activeRouteLayer);
@@ -378,7 +406,7 @@ clearRouteBtn.addEventListener('click', () => {
     if (watchId) {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
-        startNavBtn.textContent = "🚶 Start Navigation";
+        startNavBtn.textContent = "🚶 GPS Live";
     }
     if (userMarker) {
         map.removeLayer(userMarker);
@@ -390,5 +418,5 @@ clearRouteBtn.addEventListener('click', () => {
     startSelect.value = '';
     endSelect.value = '';
     routeOutput.style.display = 'none';
-    map.setView(GIET_CENTER, 17);
+    map.setView(GIET_CENTER, 18);
 });

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campus Navigator - GIET University</title>
+
+    <!-- Leaflet Core CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="navigation.css" />
+</head>
+<body>
+
+    <!-- FULLSCREEN ANIMATED LOADER -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <h3>Loading Satellite Campus Map...</h3>
+            <p>Fetching buildings, pedestrian pathways, and imagery</p>
+        </div>
+    </div>
+
+    <!-- TOP COMPACT NAVBAR -->
+    <header class="header">
+        <div class="logo-section">
+            <a href="index.html" class="logo-link">
+                <img src="logo.jpeg" class="logo" alt="GIET Logo" />
+                <h2>GIET Campus Guide</h2>
+            </a>
+        </div>
+        <nav class="navbar">
+            <a href="index.html">← Back to Home</a>
+        </nav>
+    </header>
+
+    <!-- MAP CONTAINER & NAVIGATION PANEL -->
+    <main class="map-section">
+        <!-- Floating Navigation Control Card -->
+        <aside class="nav-panel">
+            <div class="nav-panel-header">
+                <h3>Find Route</h3>
+                <span class="badge">Satellite Live</span>
+            </div>
+
+            <div class="input-group">
+                <label for="start-select">Starting Point</label>
+                <select id="start-select">
+                    <option value="">Choose Current Location</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="end-select">Destination</label>
+                <select id="end-select">
+                    <option value="">Choose Destination</option>
+                </select>
+            </div>
+
+            <!-- Route Finding Buttons -->
+            <div class="action-buttons">
+                <button id="find-route-btn" class="btn btn-primary">Find Route</button>
+                <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
+            </div>
+
+            <!-- Live GPS & Simulation Buttons -->
+            <div class="action-buttons">
+                <button id="start-nav-btn" class="btn btn-gps">🚶 GPS Live</button>
+                <button id="simulate-btn" class="btn btn-simulate">▶️ Simulate Walk</button>
+            </div>
+
+            <div id="route-output" class="route-output"></div>
+        </aside>
+
+        <!-- Leaflet Map Canvas -->
+        <div id="map"></div>
+    </main>
+
+    <!-- Leaflet JS & Navigation Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="navigation.js"></script>
+</body>
+</html>
