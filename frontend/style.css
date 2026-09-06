@@ -1,3 +1,20 @@
+/* ================= COLORS ================= */
+
+:root {
+    --primary: #4F46E5;
+    --secondary: #7C3AED;
+    --accent: #06B6D4;
+
+    --background: #172554;   /* Deep Navy Blue */
+
+    --white: #FFFFFF;
+    --text: #DDD6FE
+    --light-text: #CBD5E1;
+    --border: #334155;
+}
+
+/* ================= RESET ================= */
+
 * {
     margin: 0;
     padding: 0;
@@ -61,10 +78,17 @@ body {
 }
 
 .hero h1 {
-    font-size: 38px;
-    color: #0f172a;
-    margin-bottom: 12px;
+
+    font-size: 42px;
+
+    color: var(--primary);
+
+    margin-bottom: 18px;
+
+    font-weight: 700;
+
 }
+
 
 .hero p {
     font-size: 16px;
@@ -79,35 +103,63 @@ body {
     border-radius: 8px;
     font-size: 15px;
     font-weight: 600;
-    cursor: pointer;
-    border: none;
-    display: inline-block;
-    transition: transform 0.1s ease, background-color 0.2s ease;
+
+    transition: 0.3s;
+
 }
 
-.btn:active {
-    transform: scale(0.98);
+
+
+/* Map button */
+
+.map-btn {
+
+    background-color: var(--accent);
+
+    color: var(--white);
+
+    box-shadow: 0 4px 10px rgba(8, 126, 139, 0.25);
+
 }
 
-.map-btn, .btn-primary {
-    background-color: #2563eb;
-    color: #ffffff;
+
+.map-btn:hover {
+
+    background-color: var(--primary);
+
+    transform: translateY(-2px);
+
 }
 
-.map-btn:hover, .btn-primary:hover {
-    background-color: #1d4ed8;
+
+
+/* Admin button */
+
+.admin-btn {
+
+    background-color: var(--white);
+
+    color: var(--primary);
+
+    border: 1px solid var(--border);
+
 }
 
-.btn-secondary {
-    background-color: #e2e8f0;
-    color: #334155;
+
+.admin-btn:hover {
+
+    background-color: var(--primary);
+
+    color: var(--white);
+
+    border-color: var(--primary);
+
 }
 
-.btn-secondary:hover {
-    background-color: #cbd5e1;
-}
 
-/* FEATURES SECTION */
+
+/* ================= FEATURES ================= */
+
 .features {
     padding: 40px 20px;
     text-align: center;
@@ -230,3 +282,18 @@ body {
     border: 1px solid #bbf7d0;
     display: none;
 }
+
+.aboutparent{
+    
+    margin: 50px auto 0;
+    border: solid white 3px;
+     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 300px;
+    align-items: center;
+    flex: 1 1 260px;
+}
+.about h4{
+    padding-bottom:20px ;
+}
+
