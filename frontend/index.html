@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <title>GIET Guide - Campus Navigation</title>
 
     <!-- Typography -->
@@ -26,7 +26,16 @@
                     <span class="brand-sub">Navigation Portal</span>
                 </div>
             </a>
-            <nav class="navbar">
+
+            <!-- Hamburger Button (Mobile Only) -->
+            <button class="hamburger-btn" id="hamburger-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+
+            <!-- Navigation Links -->
+            <nav class="navbar" id="navbar">
                 <a href="index.html" class="nav-link active">Home</a>
                 <a href="navigation.html" class="nav-link">Campus Map</a>
                 <a href="admin.html" class="nav-link admin-btn">Admin Login</a>
@@ -59,12 +68,14 @@
                 </div>
 
                 <!-- Instant Jump Chips -->
-                <div class="quick-chips">
+                <div class="quick-chips-wrapper">
                     <span class="chips-label">Popular Locations:</span>
-                    <a href="navigation.html?dest=CSE" class="chip">🏢 CSE Block</a>
-                    <a href="navigation.html?dest=Library" class="chip">📚 Central Library</a>
-                    <a href="navigation.html?dest=Mess" class="chip">🍛 Central Mess</a>
-                    <a href="navigation.html?dest=Admin" class="chip">🏛️ Administration</a>
+                    <div class="quick-chips">
+                        <a href="navigation.html?dest=CSE" class="chip">🏢 CSE Block</a>
+                        <a href="navigation.html?dest=Library" class="chip">📚 Central Library</a>
+                        <a href="navigation.html?dest=Mess" class="chip">🍛 Central Mess</a>
+                        <a href="navigation.html?dest=Admin" class="chip">🏛️ Administration</a>
+                    </div>
                 </div>
 
                 <!-- Visual Anchor: Live Routing Preview Card -->

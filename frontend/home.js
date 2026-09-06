@@ -1,13 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. INJECT SYSTEM KEYFRAMES & UTILITY STYLES
+    // Detect mobile / touch devices to prevent sticky hover/tilts
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    // 1. INJECT SYSTEM KEYFRAMES & UTILITY STYLES DYNAMICALLY
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
         /* Fluid Entrance Revealer */
         .reveal-item {
             opacity: 0;
-            transform: translateY(22px);
-            transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-                        transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(20px);
+            transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
             will-change: opacity, transform;
         }
         .reveal-item.revealed {
@@ -26,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.35s ease;
-            background: radial-gradient(450px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.12), transparent 80%);
+            background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.12), transparent 80%);
             z-index: 1;
         }
         .card:hover .card-spotlight,
@@ -37,21 +40,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
         /* Scrolled Glass Navbar State */
         .header.scrolled {
-            box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(37, 99, 235, 0.05);
-            background: rgba(255, 255, 255, 0.88);
+            box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(37, 99, 235, 0.05);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
     `;
     document.head.appendChild(styleSheet);
 
-    // 2. SCROLL REVEAL (CLASS-BASED TO PREVENT LAYOUT SHIFT)
+    // 2. HAMBURGER MENU TOGGLE LOGIC
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const navbar = document.getElementById('navbar');
+
+    if (hamburgerBtn && navbar) {
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = navbar.classList.toggle('open');
+            hamburgerBtn.classList.toggle('active');
+            hamburgerBtn.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Close dropdown when tapping any link
+        navbar.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navbar.classList.remove('open');
+                hamburgerBtn.classList.remove('active');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Close dropdown when tapping anywhere outside
+        document.addEventListener('click', (e) => {
+            if (!navbar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                navbar.classList.remove('open');
+                hamburgerBtn.classList.remove('active');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    // 3. SCROLL REVEAL (CLASS-BASED TO PREVENT LAYOUT SHIFT)
     const elementsToReveal = document.querySelectorAll(
-        '.badge-wrapper, .hero h1, .hero-subtitle, .hero-buttons, .quick-chips, .hero-preview-card, .section-heading, .card, .team-card'
+        '.badge-wrapper, .hero h1, .hero-subtitle, .hero-buttons, .quick-chips-wrapper, .hero-preview-card, .section-heading, .card, .team-card'
     );
 
     elementsToReveal.forEach((el, index) => {
         el.classList.add('reveal-item');
-        el.style.transitionDelay = `${(index % 3) * 80}ms`;
+        el.style.transitionDelay = `${(index % 3) * 60}ms`;
     });
 
     const revealObserver = new IntersectionObserver((entries) => {
@@ -61,91 +96,92 @@ document.addEventListener('DOMContentLoaded', () => {
                 revealObserver.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+    }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
 
     elementsToReveal.forEach(el => revealObserver.observe(el));
 
-    // 3. 60FPS 3D TILT WITH DIRECTIONAL SHADOW LIGHTING
-    const tiltCards = document.querySelectorAll('.card, .team-card, .hero-preview-card');
+    // 4. 60FPS 3D TILT WITH LIGHT-DIRECTIONAL SHADOWS (DESKTOP ONLY)
+    if (!isTouchDevice) {
+        const tiltCards = document.querySelectorAll('.card, .team-card, .hero-preview-card');
 
-    tiltCards.forEach(card => {
-        // Inject cursor spotlight container
-        const spotlight = document.createElement('div');
-        spotlight.className = 'card-spotlight';
-        card.appendChild(spotlight);
+        tiltCards.forEach(card => {
+            const spotlight = document.createElement('div');
+            spotlight.className = 'card-spotlight';
+            card.appendChild(spotlight);
 
-        let isHovered = false;
-        let mouseX = 0;
-        let mouseY = 0;
-        let currentRotateX = 0;
-        let currentRotateY = 0;
-        let rafId = null;
+            let isHovered = false;
+            let mouseX = 0;
+            let mouseY = 0;
+            let currentRotateX = 0;
+            let currentRotateY = 0;
+            let rafId = null;
 
-        const renderFrame = () => {
-            if (!isHovered) {
-                currentRotateX += (0 - currentRotateX) * 0.12;
-                currentRotateY += (0 - currentRotateY) * 0.12;
-                card.style.transform = `perspective(1000px) rotateX(${currentRotateX.toFixed(2)}deg) rotateY(${currentRotateY.toFixed(2)}deg) translateY(0px) scale(1)`;
+            const renderFrame = () => {
+                if (!isHovered) {
+                    currentRotateX += (0 - currentRotateX) * 0.12;
+                    currentRotateY += (0 - currentRotateY) * 0.12;
+                    card.style.transform = `perspective(1000px) rotateX(${currentRotateX.toFixed(2)}deg) rotateY(${currentRotateY.toFixed(2)}deg) translateY(0px) scale(1)`;
 
-                if (Math.abs(currentRotateX) > 0.01 || Math.abs(currentRotateY) > 0.01) {
-                    rafId = requestAnimationFrame(renderFrame);
-                } else {
-                    card.style.transform = '';
-                    card.style.boxShadow = '';
-                    cancelAnimationFrame(rafId);
-                    rafId = null;
+                    if (Math.abs(currentRotateX) > 0.01 || Math.abs(currentRotateY) > 0.01) {
+                        rafId = requestAnimationFrame(renderFrame);
+                    } else {
+                        card.style.transform = '';
+                        card.style.boxShadow = '';
+                        cancelAnimationFrame(rafId);
+                        rafId = null;
+                    }
+                    return;
                 }
-                return;
-            }
 
-            const rect = card.getBoundingClientRect();
-            const xPercent = (mouseX - rect.left) / rect.width - 0.5;
-            const yPercent = (mouseY - rect.top) / rect.height - 0.5;
+                const rect = card.getBoundingClientRect();
+                const xPercent = (mouseX - rect.left) / rect.width - 0.5;
+                const yPercent = (mouseY - rect.top) / rect.height - 0.5;
 
-            const targetRotateX = yPercent * -8;
-            const targetRotateY = xPercent * 8;
+                const targetRotateX = yPercent * -8;
+                const targetRotateY = xPercent * 8;
 
-            currentRotateX += (targetRotateX - currentRotateX) * 0.18;
-            currentRotateY += (targetRotateY - currentRotateY) * 0.18;
+                currentRotateX += (targetRotateX - currentRotateX) * 0.18;
+                currentRotateY += (targetRotateY - currentRotateY) * 0.18;
 
-            const shadowX = (xPercent * 20).toFixed(1);
-            const shadowY = (yPercent * 20 + 12).toFixed(1);
+                const shadowX = (xPercent * 20).toFixed(1);
+                const shadowY = (yPercent * 20 + 12).toFixed(1);
 
-            card.style.transform = `perspective(1000px) rotateX(${currentRotateX.toFixed(2)}deg) rotateY(${currentRotateY.toFixed(2)}deg) translateY(-5px) scale(1.012)`;
-            card.style.boxShadow = `${shadowX}px ${shadowY}px 30px -4px rgba(37, 99, 235, 0.16), 0 8px 16px -2px rgba(15, 23, 42, 0.04)`;
+                card.style.transform = `perspective(1000px) rotateX(${currentRotateX.toFixed(2)}deg) rotateY(${currentRotateY.toFixed(2)}deg) translateY(-5px) scale(1.012)`;
+                card.style.boxShadow = `${shadowX}px ${shadowY}px 30px -4px rgba(37, 99, 235, 0.16), 0 8px 16px -2px rgba(15, 23, 42, 0.04)`;
 
-            rafId = requestAnimationFrame(renderFrame);
-        };
+                rafId = requestAnimationFrame(renderFrame);
+            };
 
-        card.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            card.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
 
-            const rect = card.getBoundingClientRect();
-            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
 
-            if (!rafId) rafId = requestAnimationFrame(renderFrame);
+                if (!rafId) rafId = requestAnimationFrame(renderFrame);
+            });
+
+            card.addEventListener('mouseenter', () => {
+                isHovered = true;
+                if (!rafId) rafId = requestAnimationFrame(renderFrame);
+            });
+
+            card.addEventListener('mouseleave', () => {
+                isHovered = false;
+            });
         });
+    }
 
-        card.addEventListener('mouseenter', () => {
-            isHovered = true;
-            if (!rafId) rafId = requestAnimationFrame(renderFrame);
-        });
-
-        card.addEventListener('mouseleave', () => {
-            isHovered = false;
-        });
-    });
-
-    // 4. DEBOUNCED GLASS NAVBAR OBSERVER
+    // 5. DEBOUNCED GLASS NAVBAR OBSERVER
     const header = document.querySelector('.header');
     if (header) {
         let ticking = false;
         window.addEventListener('scroll', () => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
-                    if (window.scrollY > 20) {
+                    if (window.scrollY > 15) {
                         header.classList.add('scrolled');
                     } else {
                         header.classList.remove('scrolled');
@@ -154,6 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 ticking = true;
             }
-        });
+        }, { passive: true });
     }
 });
