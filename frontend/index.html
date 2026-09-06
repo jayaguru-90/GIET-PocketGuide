@@ -5,70 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GIET Guide - Campus Navigation</title>
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
     <!-- NAVBAR -->
     <header class="header">
-        <div class="logo-section">
-            <img src="logo.jpeg" class="logo" alt="GIET Logo" />
-            <h2>GIET Campus Guide</h2>
+        <div class="nav-container">
+            <a href="index.html" class="logo-section">
+                <div class="logo-box">
+                    <img src="LOGO.png" class="logo" alt="GIET Logo" />
+                </div>
+                <div class="brand-text-group">
+                    <span class="brand-title">GIETU <span class="highlight">Campus Guide</span></span>
+                    <span class="brand-sub">Navigation Portal</span>
+                </div>
+            </a>
+            <nav class="navbar">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="navigation.html" class="nav-link">Campus Map</a>
+                <a href="admin.html" class="nav-link admin-btn">Admin Login</a>
+            </nav>
         </div>
-        <nav class="navbar">
-            <a href="index.html">Home</a>
-            <a href="navigation.html">Campus Map</a>
-            <a href="admin.html">Admin Login</a>
-        </nav>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="hero">
-        <h1>Explore Your Campus</h1>
-        <p>Find buildings, departments, facilities, and accurate walking paths around GIET University with ease.</p>
-        <div class="hero-buttons">
-            <a href="navigation.html" class="btn map-btn">🗺️ Open Campus Map</a>
-        </div>
-    </section>
+    <main>
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <div class="hero-container">
+                <div class="badge-wrapper">
+                    <span class="badge">📍 Smart Campus Navigation</span>
+                </div>
+                
+                <h1>Navigate GIET University <br><span class="gradient-text">Without Getting Lost</span></h1>
+                
+                <p class="hero-subtitle">
+                    Find departments, lecture blocks, hostel messes, libraries, and connected walking paths across the entire campus in seconds.
+                </p>
 
-    <!-- FEATURES SECTION -->
-    <section class="features">
-        <h2>What can you find?</h2>
-        <div class="feature-cards">
-            <div class="card">
-                <div class="card-icon">🏢</div>
-                <h3>Academic Blocks</h3>
-                <p>Locate CSE, BSH, Mechanical, Agriculture, and administration offices.</p>
+                <!-- Primary Action Buttons -->
+                <div class="hero-buttons">
+                    <a href="navigation.html" class="btn btn-primary">
+                        <span>🗺️</span> Launch Interactive Map
+                    </a>
+                    <a href="navigation.html?mode=list" class="btn btn-secondary">
+                        <span>📋</span> View Building Directory
+                    </a>
+                </div>
+
+                <!-- Instant Jump Chips -->
+                <div class="quick-chips">
+                    <span class="chips-label">Popular Locations:</span>
+                    <a href="navigation.html?dest=CSE" class="chip">🏢 CSE Block</a>
+                    <a href="navigation.html?dest=Library" class="chip">📚 Central Library</a>
+                    <a href="navigation.html?dest=Mess" class="chip">🍛 Central Mess</a>
+                    <a href="navigation.html?dest=Admin" class="chip">🏛️ Administration</a>
+                </div>
+
+                <!-- Visual Anchor: Live Routing Preview Card -->
+                <div class="hero-preview-card">
+                    <div class="preview-bar">
+                        <div class="window-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-amber"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="preview-title">gietu-live-routing-engine v2.4</span>
+                    </div>
+                    <div class="preview-body">
+                        <div class="preview-info">
+                            <div class="status-indicator">
+                                <span class="status-pulse"></span>
+                                <strong>Connected Dijkstra Routing Grid</strong>
+                            </div>
+                            <p>Turn-by-turn routing across verified walkways with live simulation support.</p>
+                        </div>
+                        <a href="navigation.html" class="preview-link">Open Live Map →</a>
+                    </div>
+                </div>
             </div>
-            <div class="card">
-                <div class="card-icon">🗺️</div>
-                <h3>Pedestrian Paths</h3>
-                <p>Turn-by-turn connected navigation following verified campus walkways.</p>
+        </section>
+
+        <!-- FEATURES SECTION -->
+        <section class="features">
+            <div class="section-container">
+                <div class="section-heading">
+                    <span class="section-eyebrow">EXPLORE CAPABILITIES</span>
+                    <h2>What Can You Find?</h2>
+                    <p>Accurate wayfinding built specifically for GIET University students and faculty</p>
+                </div>
+                <div class="feature-cards">
+                    <div class="card">
+                        <div class="card-icon">🏢</div>
+                        <h3>Academic Blocks</h3>
+                        <p>Locate CSE, BSH, Mechanical, Agriculture, and official administration blocks without wandering.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🧭</div>
+                        <h3>Pedestrian Walkways</h3>
+                        <p>Dijkstra-powered shortest paths along verified campus walking corridors avoiding restricted routes.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📍</div>
+                        <h3>Amenities & Dining</h3>
+                        <p>Instant coordinates to mess halls, campus cafes, sports grounds, stationary stores, and ATMs.</p>
+                    </div>
+                </div>
             </div>
-            <div class="card">
-                <div class="card-icon">📍</div>
-                <h3>Amenities</h3>
-                <p>Easily find central mess, canteens, library, sports grounds, and ATMs.</p>
+        </section>
+
+        <!-- CONTRIBUTORS SECTION -->
+        <section class="about-section">
+            <div class="section-container">
+                <div class="section-heading">
+                    <span class="section-eyebrow">THE TEAM</span>
+                    <h2>Project Contributors</h2>
+                    <p>Designed and built for the GIET University community</p>
+                </div>
+                <div class="team-grid">
+                    <div class="team-card">
+                        <div class="avatar-wrapper">
+                            <img src="jaya photo.jpeg" alt="Jayaguru Sahu" />
+                        </div>
+                        <h4>Jayaguru Sahu</h4>
+                        <span class="team-role">Developer</span>
+                    </div>
+
+                    <div class="team-card">
+                        <div class="avatar-wrapper">
+                            <img src="bhavishya image .jpeg" alt="Pedina Bhavishya" />
+                        </div>
+                        <h4>Pedina Bhavishya</h4>
+                        <span class="team-role">Developer</span>
+                    </div>
+
+                    <div class="team-card">
+                        <div class="avatar-wrapper">
+                            <img src="Ayush photo.jpeg" alt="Ayush Kumar Behera" />
+                        </div>
+                        <h4>Ayush Kumar Behera</h4>
+                        <span class="team-role">Developer</span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
+    </main>
 
-<div class="aboutparent">
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>&copy; 2026 GIET Campus Guide. Built with precision for GIET University.</p>
+    </footer>
 
-    <h2>About Us </h2>
-<div class="about">
-<img src="jaya photo.jpeg" alt="photo" height="100px" width="100px">
-<h4 >Jayaguru Sahu</h4>
-<img src="bhavishya image .jpeg" alt="photo" height="100px" width="100px">
-<h4>Pedina Bhavishya</h4>
-<img src="Ayush photo.jpeg" alt="photo" height="100px" width="100px">
-<h4>Ayush Kumar Behera</h4>
-</div>
-</div>
-    
-
-    </section>
     <script src="home.js"></script>
 </body>
 </html>
