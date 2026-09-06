@@ -282,3 +282,18 @@ body {
     border: 1px solid #bbf7d0;
     display: none;
 }
+
+.aboutparent{
+    
+    margin: 50px auto 0;
+    border: solid white 3px;
+     border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 300px;
+    align-items: center;
+    flex: 1 1 260px;
+}
+.about h4{
+    padding-bottom:20px ;
+}
+
