@@ -1,14 +1,14 @@
 /* ================= COLORS ================= */
 
 :root {
-    --primary: #4F46E5;
-    --secondary: #7C3AED;
-    --accent: #06B6D4;
+    --primary: #7C3AED;
+    --secondary: #8B5E3C;
+    --accent: #F472B6;
 
-    --background: #172554;   /* Deep Navy Blue */
+    --background:  #171225;   /* Deep Navy Blue */
 
     --white: #FFFFFF;
-    --text: #DDD6FE
+    --text: #F5F3FF;
     --light-text: #CBD5E1;
     --border: #334155;
 }
@@ -168,7 +168,7 @@ body {
 
     font-size: 42px;
 
-    color: var(--primary);
+    color: var(--secondary);
 
     margin-bottom: 18px;
 
@@ -226,9 +226,9 @@ body {
 
 .map-btn {
 
-    background-color: var(--accent);
+    background-color: var(--white);
 
-    color: var(--white);
+    color: var(--primary);
 
     box-shadow: 0 4px 10px rgba(8, 126, 139, 0.25);
 
