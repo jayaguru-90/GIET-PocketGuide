@@ -1,0 +1,395 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+html, body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #0f172a;
+    color: #0f172a;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= FULLSCREEN LOADING SCREEN ================= */
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    background: #0f172a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    pointer-events: all;
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #334155;
+    border-top: 4px solid #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader-content h3 {
+    font-size: 19px;
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.loader-content p {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* ================= COMPACT NAVBAR ================= */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    height: 60px;
+    z-index: 1100;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.logo-section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+
+.navbar a {
+    text-decoration: none;
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.navbar a:hover {
+    background-color: #eff6ff;
+}
+
+/* ================= MAP CANVAS ================= */
+.map-section {
+    position: relative;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    flex: 1;
+    overflow: hidden;
+}
+
+#map {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+/* ================= FLOATING NAVIGATION PANEL ================= */
+.nav-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 330px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.3s ease;
+}
+
+.panel-toggle-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    padding: 6px 0 2px 0;
+    outline: none;
+}
+
+.toggle-bar {
+    display: block;
+    width: 44px;
+    height: 5px;
+    background: #cbd5e1;
+    border-radius: 999px;
+    margin: 0 auto;
+    transition: background-color 0.2s;
+}
+
+.panel-toggle-btn:hover .toggle-bar {
+    background: #94a3b8;
+}
+
+.nav-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-panel-header h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.badge {
+    background-color: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+}
+
+.panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: opacity 0.2s ease;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input-group select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ================= ACTION BUTTONS ================= */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.btn {
+    flex: 1;
+    text-decoration: none;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.btn-secondary:hover {
+    background-color: #e2e8f0;
+}
+
+.btn-gps {
+    background-color: #16a34a;
+    color: #ffffff;
+}
+.btn-gps:hover {
+    background-color: #15803d;
+}
+
+.btn-simulate {
+    background-color: #7c3aed;
+    color: #ffffff;
+}
+.btn-simulate:hover {
+    background-color: #6d28d9;
+}
+
+.route-output {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #166534;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: none;
+    line-height: 1.5;
+}
+
+/* ================= MODERN GLASSMORPHIC PILL LABELS ================= */
+.satellite-label {
+    background: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    color: #0f172a !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    padding: 3px 9px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    pointer-events: none;
+    letter-spacing: 0.2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+}
+
+.satellite-label::before {
+    border-top-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* ================= PATHWAY & ROUTE EFFECTS ================= */
+.campus-walkway-base {
+    stroke: rgba(255, 255, 255, 0.7);
+    stroke-width: 3.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+}
+
+.active-nav-route {
+    stroke: #38bdf8;
+    stroke-width: 6px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
+}
+
+/* ================= MOBILE BOTTOM SHEET & COLLAPSE ================= */
+@media (max-width: 640px) {
+    .header {
+        padding: 8px 16px;
+        height: 52px;
+    }
+
+    .map-section {
+        height: calc(100vh - 52px);
+    }
+
+    .nav-panel {
+        top: auto;
+        left: 10px;
+        right: 10px;
+        bottom: 12px;
+        width: auto;
+        padding: 10px 16px 14px 16px;
+        border-radius: 20px;
+        max-height: 80vh;
+    }
+
+    .panel-toggle-btn {
+        display: block;
+    }
+
+    .nav-panel.collapsed {
+        transform: translateY(calc(100% - 48px));
+    }
+
+    .nav-panel.collapsed .panel-body {
+        opacity: 0;
+        pointer-events: none;
+    }
+}

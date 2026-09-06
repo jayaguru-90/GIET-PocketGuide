@@ -1,137 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIET Guide - Campus Navigation</title>
 
-    <title>NaviCampus</title>
-
-    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-    <!-- ================= NAVBAR ================= -->
-
+    <!-- NAVBAR -->
     <header class="header">
-
         <div class="logo-section">
-
-            <img src="/frontend/logo.jpeg" class="logo">
-
+            <img src="logo.jpeg" class="logo" alt="GIET Logo" />
             <h2>GIET Campus Guide</h2>
-
         </div>
-
-
         <nav class="navbar">
-
-            <a href="#">Home</a>
-
-            <a href="#">Campus Map</a>
-
-            <a href="#">Admin Login</a>
-
+            <a href="index.html">Home</a>
+            <a href="navigation.html">Campus Map</a>
+            <a href="admin.html">Admin Login</a>
         </nav>
-
     </header>
 
-
-
-    <!-- ================= HERO SECTION ================= -->
-
+    <!-- HERO SECTION -->
     <section class="hero">
-
         <h1>Explore Your Campus</h1>
-
-        <p>
-            Find buildings, departments, facilities and routes
-            around your campus with ease.
-        </p>
-
-
+        <p>Find buildings, departments, facilities, and accurate walking paths around GIET University with ease.</p>
         <div class="hero-buttons">
-
-            <a href="#" class="btn map-btn">
-                🗺️ Open Campus Map
-            </a>
-
-            <a href="#" class="btn admin-btn">
-                🔒 Admin Login
-            </a>
-
+            <a href="navigation.html" class="btn map-btn">🗺️ Open Campus Map</a>
         </div>
-
     </section>
 
-
-
-    <!-- ================= FEATURES ================= -->
-
+    <!-- FEATURES SECTION -->
     <section class="features">
-
         <h2>What can you find?</h2>
-
-
         <div class="feature-cards">
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    🏢
-                </div>
-
-                <h3>Buildings</h3>
-
-                <p>
-                    Find academic blocks, departments
-                    and important buildings.
-                </p>
-
+                <div class="card-icon">🏢</div>
+                <h3>Academic Blocks</h3>
+                <p>Locate CSE, BSH, Mechanical, Agriculture, and administration offices.</p>
             </div>
-
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    🗺️
-                </div>
-
-                <h3>Campus Map</h3>
-
-                <p>
-                    Explore the campus map and
-                    find the best routes.
-                </p>
-
+                <div class="card-icon">🗺️</div>
+                <h3>Pedestrian Paths</h3>
+                <p>Turn-by-turn connected navigation following verified campus walkways.</p>
             </div>
-
-
-
             <div class="card">
-
-                <div class="card-icon">
-                    📍
-                </div>
-
-                <h3>Facilities</h3>
-
-                <p>
-                    Easily locate important facilities
-                    around the campus.
-                </p>
-
+                <div class="card-icon">📍</div>
+                <h3>Amenities</h3>
+                <p>Easily find central mess, canteens, library, sports grounds, and ATMs.</p>
             </div>
-
-
         </div>
-
     </section>
-
-
+    <script src="home.js"></script>
 </body>
-
 </html>
