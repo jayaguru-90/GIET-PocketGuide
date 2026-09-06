@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <title>GIET Guide - Campus Navigation</title>
 
-    <!-- FAVICON CONFIGURATION -->
+    <!-- FAVICON -->
     <link rel="icon" type="image/png" href="LOGO.png" />
     <link rel="shortcut icon" type="image/png" href="LOGO.png" />
     <link rel="apple-touch-icon" href="LOGO.png" />
@@ -19,7 +19,7 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
+    <!-- FLOATING PREMIUM NAVBAR -->
     <header class="header">
         <div class="nav-container">
             <a href="index.html" class="logo-section">
@@ -27,8 +27,8 @@
                     <img src="LOGO.png" class="logo" alt="GIET Logo" />
                 </div>
                 <div class="brand-text-group">
-                    <span class="brand-title">GIETU <span class="highlight">Campus Guide</span></span>
-                    <span class="brand-sub">Navigation Portal</span>
+                    <span class="brand-title">GIETU <span class="highlight-gradient">Campus Guide</span></span>
+                    <span class="brand-sub"><span class="pulse-dot"></span> Navigation Portal</span>
                 </div>
             </a>
 
@@ -39,11 +39,20 @@
                 <span class="bar"></span>
             </button>
 
-            <!-- Navigation Links -->
+            <!-- Navigation Links with SVG Icons -->
             <nav class="navbar" id="navbar">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="navigation.html" class="nav-link">Campus Map</a>
-                <a href="admin.html" class="nav-link admin-btn">Admin Login</a>
+                <a href="index.html" class="nav-link active">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Home</span>
+                </a>
+                <a href="navigation.html" class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                    <span>Campus Map</span>
+                </a>
+                <a href="admin.html" class="nav-link admin-btn">
+                    <svg class="nav-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>Admin Portal</span>
+                </a>
             </nav>
         </div>
     </header>

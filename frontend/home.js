@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Detect mobile / touch devices to prevent sticky hover/tilts
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // 1. INJECT SYSTEM KEYFRAMES & UTILITY STYLES DYNAMICALLY
+    // 1. INJECT SYSTEM KEYFRAMES & SPOTLIGHT STYLES
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
         /* Fluid Entrance Revealer */
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translateY(0);
         }
 
-        /* Ambient Cursor Lighting */
+        /* Ambient Cursor Lighting on Cards */
         .card, .team-card, .hero-preview-card {
             position: relative;
             overflow: hidden;
@@ -29,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.35s ease;
-            background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.12), transparent 80%);
+            background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(59, 130, 246, 0.14), transparent 80%);
             z-index: 1;
         }
         .card:hover .card-spotlight,
@@ -37,18 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         .hero-preview-card:hover .card-spotlight {
             opacity: 1;
         }
-
-        /* Scrolled Glass Navbar State */
-        .header.scrolled {
-            box-shadow: 0 10px 25px -10px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(37, 99, 235, 0.05);
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
     `;
     document.head.appendChild(styleSheet);
 
-    // 2. HAMBURGER MENU TOGGLE LOGIC
+    // 2. HAMBURGER MENU TOGGLE
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const navbar = document.getElementById('navbar');
 
@@ -60,7 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hamburgerBtn.setAttribute('aria-expanded', isOpen);
         });
 
-        // Close dropdown when tapping any link
         navbar.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 navbar.classList.remove('open');
@@ -69,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Close dropdown when tapping anywhere outside
         document.addEventListener('click', (e) => {
             if (!navbar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
                 navbar.classList.remove('open');
@@ -79,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. SCROLL REVEAL (CLASS-BASED TO PREVENT LAYOUT SHIFT)
+    // 3. SCROLL REVEAL OBSERVER
     const elementsToReveal = document.querySelectorAll(
         '.badge-wrapper, .hero h1, .hero-subtitle, .hero-buttons, .quick-chips-wrapper, .hero-preview-card, .section-heading, .card, .team-card'
     );
@@ -100,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elementsToReveal.forEach(el => revealObserver.observe(el));
 
-    // 4. 60FPS 3D TILT WITH LIGHT-DIRECTIONAL SHADOWS (DESKTOP ONLY)
+    // 4. 60FPS 3D TILT ON INTERACTIVE CARDS (DESKTOP ONLY)
     if (!isTouchDevice) {
         const tiltCards = document.querySelectorAll('.card, .team-card, .hero-preview-card');
 
@@ -174,14 +163,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. DEBOUNCED GLASS NAVBAR OBSERVER
+    // 5. FLOATING PILL NAVBAR SCROLL DYNAMICS
     const header = document.querySelector('.header');
     if (header) {
         let ticking = false;
         window.addEventListener('scroll', () => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
-                    if (window.scrollY > 15) {
+                    if (window.scrollY > 20) {
                         header.classList.add('scrolled');
                     } else {
                         header.classList.remove('scrolled');
