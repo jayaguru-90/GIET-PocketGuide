@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let watchId = null;
     let simulationInterval = null;
 
-    // Self-healing dismiss function
     function hideLoader() {
         if (!loadingScreen) return;
         loadingScreen.classList.add('hidden');
@@ -35,10 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
     }
 
-    // Safety fallback: guaranteed removal after 2.5s
     const safetyTimer = setTimeout(hideLoader, 2500);
 
-    // ================= 2. MAP & CLEAN PURE SATELLITE TILES =================
+    // ================= 2. MAP & GOOGLE PURE SATELLITE LAYER =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22
@@ -98,19 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return { key: closestKey, dist: minDist };
     }
 
-    // Helper: Select suitable category icon for pins
     function getPlaceIcon(name) {
         const n = name.toLowerCase();
         if (n.includes('gate')) return '🚪';
         if (n.includes('temple')) return '🛕';
         if (n.includes('library')) return '📚';
-        if (n.includes('canteen') || n.includes('parloor')) return '☕';
+        if (n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) return '☕';
         if (n.includes('bus')) return '🚌';
         if (n.includes('parking')) return '🅿️';
+        if (n.includes('school')) return '🏫';
+        if (n.includes('court') || n.includes('ground') || n.includes('pool')) return '⚽';
         return '🏛️';
     }
 
-    // ================= 4. LOAD GEOJSON, BUILD GRAPH & MODERN LABELS =================
+    // ================= 4. LOAD GIET_CAMPUS.GEOJSON =================
     fetch('giet_campus.geojson')
         .then(res => {
             if (!res.ok) throw new Error("Could not find giet_campus.geojson");
@@ -119,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const placeNames = [];
 
-            // Step A: Parse Lines for the graph
+            // Parse lines
             data.features.forEach(feature => {
                 if (feature.geometry && feature.geometry.type === 'LineString') {
                     const coords = feature.geometry.coordinates;
@@ -131,18 +130,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Step B: Auto-bridge only minor gaps (reduced from 35m to 12m to prevent false shortcuts across buildings)
+            // Auto-bridge nearby path nodes within 12 meters
             for (let i = 0; i < allGraphNodes.length; i++) {
                 const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
                 for (let j = i + 1; j < allGraphNodes.length; j++) {
                     const [lat2, lng2] = allGraphNodes[j].split(',').map(Number);
                     const d = getDistance(lat1, lng1, lat2, lng2);
-                    if (d < 12) { // 12 meters strictly keeps paths on actual walkways
+                    if (d < 12) {
                         addEdge(allGraphNodes[i], allGraphNodes[j], [lat1, lng1], [lat2, lng2]);
                     }
                 }
             }
-            // Step C: Render paths and pins with modern visual aesthetics
+
+            // Render features
             L.geoJSON(data, {
                 style: (feature) => {
                     if (feature.geometry.type === 'LineString') {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }).addTo(map);
 
-            // Step D: Sort alphabetically (A to Z)
+            // Populate sorted dropdowns
             placeNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
             placeNames.forEach(name => {
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoader();
         })
         .catch(err => {
-            console.error("GeoJSON error:", err);
+            console.error("GeoJSON Load Error:", err);
             clearTimeout(safetyTimer);
             hideLoader();
         });
@@ -291,13 +291,108 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 6. NAVIGATION ACTIONS & PANEL TOGGLE =================
+    // ================= 6. GESTURE DRAG BOTTOM SHEET =================
+    let isDragging = false;
+    let startY = 0;
+    let currentTranslateY = 0;
+    let maxTranslate = 0;
+    let isCollapsed = false;
+
+    function calculateLimits() {
+        if (!navPanel) return;
+        const panelHeight = navPanel.offsetHeight;
+        maxTranslate = Math.max(0, panelHeight - 56);
+    }
+
+    function snapToCollapsed() {
+        calculateLimits();
+        isCollapsed = true;
+        currentTranslateY = maxTranslate;
+        navPanel.style.transform = `translateY(${maxTranslate}px)`;
+    }
+
+    function snapToExpanded() {
+        isCollapsed = false;
+        currentTranslateY = 0;
+        navPanel.style.transform = 'translateY(0px)';
+    }
+
+    function onDragStart(e) {
+        if (window.innerWidth > 640) return;
+        isDragging = true;
+        startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        calculateLimits();
+        navPanel.classList.add('dragging');
+    }
+
+    function onDragMove(e) {
+        if (!isDragging) return;
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        const deltaY = clientY - startY;
+
+        let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
+
+        if (newTranslate < -10) newTranslate = -10;
+        if (newTranslate > maxTranslate + 20) newTranslate = maxTranslate + 20;
+
+        currentTranslateY = newTranslate;
+        navPanel.style.transform = `translateY(${newTranslate}px)`;
+
+        if (e.cancelable) e.preventDefault();
+    }
+
+    function onDragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        navPanel.classList.remove('dragging');
+        calculateLimits();
+
+        const snapThreshold = maxTranslate * 0.35;
+
+        if (!isCollapsed) {
+            if (currentTranslateY > snapThreshold) {
+                snapToCollapsed();
+            } else {
+                snapToExpanded();
+            }
+        } else {
+            if (currentTranslateY < maxTranslate - snapThreshold) {
+                snapToExpanded();
+            } else {
+                snapToCollapsed();
+            }
+        }
+    }
+
     if (togglePanelBtn && navPanel) {
+        togglePanelBtn.addEventListener('mousedown', onDragStart);
+        togglePanelBtn.addEventListener('touchstart', onDragStart, { passive: true });
+
+        window.addEventListener('mousemove', onDragMove);
+        window.addEventListener('touchmove', onDragMove, { passive: false });
+
+        window.addEventListener('mouseup', onDragEnd);
+        window.addEventListener('touchend', onDragEnd);
+
         togglePanelBtn.addEventListener('click', () => {
-            navPanel.classList.toggle('collapsed');
+            if (Math.abs(currentTranslateY) > 5 && isCollapsed) return;
+            if (isCollapsed) {
+                snapToExpanded();
+            } else {
+                snapToCollapsed();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 640) {
+                navPanel.style.transform = '';
+            } else if (isCollapsed) {
+                snapToCollapsed();
+            }
         });
     }
 
+    // ================= 7. NAVIGATION ACTIONS =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', () => {
             const startName = startSelect.value;
@@ -336,7 +431,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.removeLayer(activeRouteLayer);
             }
 
-            // Glowing blue electric line
             activeRouteLayer = L.polyline(currentRouteCoords, {
                 color: '#38bdf8',
                 weight: 6,
@@ -354,9 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 routeOutput.innerHTML = `Walking Distance: ~${totalMeters} meters<br>Estimated Time: ~${Math.ceil(totalMeters / 75)} mins`;
             }
 
-            // Auto-collapse bottom card on mobile to reveal route
             if (window.innerWidth <= 640 && navPanel) {
-                navPanel.classList.add('collapsed');
+                setTimeout(snapToCollapsed, 250);
             }
         });
     }
