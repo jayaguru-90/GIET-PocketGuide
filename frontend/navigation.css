@@ -71,7 +71,7 @@ html, body {
     color: #94a3b8;
 }
 
-/* ================= NAVBAR (FLEX ROW WRAP RESISTANT) ================= */
+/* ================= NAVBAR (SINGLE-LINE NO WRAP) ================= */
 .header {
     display: flex;
     justify-content: space-between;
@@ -157,7 +157,7 @@ html, body {
     z-index: 1;
 }
 
-/* ================= FLOATING CONTROL PANEL ================= */
+/* ================= DESKTOP FLOATING PANEL ================= */
 .nav-panel {
     position: absolute;
     top: 20px;
@@ -326,7 +326,7 @@ html, body {
     line-height: 1.5;
 }
 
-/* ================= MODERN GLASSMORPHIC PILL LABELS ================= */
+/* ================= MODERN GLASSMORPHIC LABELS ================= */
 .satellite-label {
     background: rgba(255, 255, 255, 0.94) !important;
     backdrop-filter: blur(8px) !important;
@@ -350,7 +350,7 @@ html, body {
     border-top-color: rgba(255, 255, 255, 0.94) !important;
 }
 
-/* ================= PATHWAY & ROUTE EFFECTS ================= */
+/* ================= PATHWAYS & ROUTE LINES ================= */
 .campus-walkway-base {
     stroke: rgba(255, 255, 255, 0.7);
     stroke-width: 3.5px;
@@ -367,7 +367,7 @@ html, body {
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
-/* ================= MOBILE GESTURE-DRAGGABLE BOTTOM SHEET ================= */
+/* ================= MOBILE BOTTOM-DOCKED SHEET WITH SAFE AREA ================= */
 @media (max-width: 640px) {
     .header {
         padding: 0 12px;
@@ -396,15 +396,18 @@ html, body {
         top: auto;
         left: 10px;
         right: 10px;
-        bottom: 12px;
+        bottom: 0px;
         width: auto;
-        padding: 8px 16px 16px 16px;
-        border-radius: 22px;
-        max-height: 82vh;
+        padding: 6px 16px 18px 16px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-left-radius: 22px;
+        border-top-right-radius: 22px;
+        max-height: 80vh;
         touch-action: none;
         transform: translateY(0);
         will-change: transform;
-        transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
     }
 
     .nav-panel.dragging {
@@ -414,7 +417,7 @@ html, body {
     .panel-toggle-btn {
         display: block;
         cursor: grab;
-        padding: 6px 0 10px 0;
+        padding: 8px 0 6px 0;
         touch-action: none;
     }
 
