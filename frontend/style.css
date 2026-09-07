@@ -35,6 +35,14 @@ body.dark-mode .nav-container {
     border-color: rgba(51, 65, 85, 0.8);
 }
 
+body.dark-mode .header.scrolled .nav-container {
+    background: rgba(15, 23, 42, 0.96);
+    box-shadow: 
+        0 14px 40px -10px rgba(0, 0, 0, 0.4),
+        0 6px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(51, 65, 85, 0.5);
+}
+
 body.dark-mode .navbar {
     background: rgba(30, 41, 59, 0.65);
     border-color: rgba(51, 65, 85, 0.8);
@@ -133,12 +141,14 @@ body {
    ULTRA-MODERN FLOATING PILL NAVBAR
    ============================================================ */
 .header {
-    position: sticky;
+    position: fixed;
     top: 14px;
+    left: 0;
+    right: 0;
     z-index: 1000;
     width: 100%;
     padding: 0 1.25rem;
-    pointer-events: none; /* Allows natural clicks around the pill */
+    pointer-events: none;
 }
 
 .nav-container {
@@ -407,7 +417,7 @@ body {
     background-size: cover;
     background-attachment: scroll;
     padding: 6.5rem 1.5rem 5rem;
-    margin-top: -85px; /* Pulls hero canvas under the floating pill navbar */
+    margin-top: -20px; /* Pulls hero canvas under the floating pill navbar */
     text-align: center;
     overflow: hidden;
 }
