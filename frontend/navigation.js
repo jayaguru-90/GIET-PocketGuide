@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Pure photographic satellite view without default text
+    // Clean photographic tiles without pre-printed labels
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
@@ -109,16 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return '🏛️';
     }
 
-    // ================= 4. LOAD GIET_CAMPUS.GEOJSON =================
+    // ================= 4. FETCH GIET_CAMPUS.GEOJSON =================
     fetch('giet_campus.geojson')
         .then(res => {
-            if (!res.ok) throw new Error("Could not find giet_campus.geojson");
+            if (!res.ok) throw new Error("Could not load giet_campus.geojson");
             return res.json();
         })
         .then(data => {
             const placeNames = [];
 
-            // Parse lines
+            // Step A: Parse lines into adjacency graph
             data.features.forEach(feature => {
                 if (feature.geometry && feature.geometry.type === 'LineString') {
                     const coords = feature.geometry.coordinates;
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Auto-bridge nearby path nodes within 12 meters
+            // Step B: Auto-bridge nearby path nodes within 12 meters
             for (let i = 0; i < allGraphNodes.length; i++) {
                 const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
                 for (let j = i + 1; j < allGraphNodes.length; j++) {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Render features
+            // Step C: Render features on Leaflet canvas
             L.geoJSON(data, {
                 style: (feature) => {
                     if (feature.geometry.type === 'LineString') {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }).addTo(map);
 
-            // Populate sorted dropdowns
+            // Step D: Alphabetical A-Z sorting
             placeNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
             placeNames.forEach(name => {
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoader();
         })
         .catch(err => {
-            console.error("GeoJSON Load Error:", err);
+            console.error("GeoJSON load error:", err);
             clearTimeout(safetyTimer);
             hideLoader();
         });
@@ -291,17 +291,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 6. GESTURE DRAG BOTTOM SHEET =================
+    // ================= 6. SAFE-BOUNDED BOTTOM SHEET CONTROLLER =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
     let maxTranslate = 0;
     let isCollapsed = false;
 
+    // Minimum visible height when collapsed: pill handle + "Find Route" header
+    const VISIBLE_PEEK_HEIGHT = 68;
+
     function calculateLimits() {
         if (!navPanel) return;
         const panelHeight = navPanel.offsetHeight;
-        maxTranslate = Math.max(0, panelHeight - 56);
+        maxTranslate = Math.max(0, panelHeight - VISIBLE_PEEK_HEIGHT);
     }
 
     function snapToCollapsed() {
@@ -332,8 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
 
-        if (newTranslate < -10) newTranslate = -10;
-        if (newTranslate > maxTranslate + 20) newTranslate = maxTranslate + 20;
+        // Hard clamping: prevents dragging off the bottom of the screen
+        if (newTranslate < 0) newTranslate = 0;
+        if (newTranslate > maxTranslate) newTranslate = maxTranslate;
 
         currentTranslateY = newTranslate;
         navPanel.style.transform = `translateY(${newTranslate}px)`;
@@ -365,8 +369,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (togglePanelBtn && navPanel) {
+        const dragHandleArea = document.querySelector('.nav-panel-header') || togglePanelBtn;
+
         togglePanelBtn.addEventListener('mousedown', onDragStart);
         togglePanelBtn.addEventListener('touchstart', onDragStart, { passive: true });
+        dragHandleArea.addEventListener('mousedown', onDragStart);
+        dragHandleArea.addEventListener('touchstart', onDragStart, { passive: true });
 
         window.addEventListener('mousemove', onDragMove);
         window.addEventListener('touchmove', onDragMove, { passive: false });
@@ -375,7 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('touchend', onDragEnd);
 
         togglePanelBtn.addEventListener('click', () => {
-            if (Math.abs(currentTranslateY) > 5 && isCollapsed) return;
             if (isCollapsed) {
                 snapToExpanded();
             } else {

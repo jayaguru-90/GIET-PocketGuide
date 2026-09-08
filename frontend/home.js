@@ -182,3 +182,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     }
 });
+
+// ===== DARK MODE TOGGLE =====
+const themeToggle = document.getElementById('theme-toggle');
+const bodyEl = document.body;
+
+// Apply saved preference on page load
+if (localStorage.getItem('giet-theme') === 'dark') {
+    bodyEl.classList.add('dark-mode');
+}
+
+themeToggle.addEventListener('click', () => {
+    bodyEl.classList.toggle('dark-mode');
+    const isDark = bodyEl.classList.contains('dark-mode');
+    localStorage.setItem('giet-theme', isDark ? 'dark' : 'light');
+});

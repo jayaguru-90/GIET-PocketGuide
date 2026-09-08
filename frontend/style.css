@@ -17,6 +17,106 @@
     --shadow-hover: 0 20px 35px -8px rgba(29, 78, 216, 0.16);
 }
 
+/* ===== DARK MODE VARIABLES ===== */
+body.dark-mode {
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --card-bg: #1e293b;
+    --border-color: #334155;
+    --soft-blue-bg: #1e3a5f;
+}
+
+body.dark-mode {
+    background-color: #0f172a;
+}
+
+body.dark-mode .nav-container {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+body.dark-mode .header.scrolled .nav-container {
+    background: rgba(15, 23, 42, 0.96);
+    box-shadow: 
+        0 14px 40px -10px rgba(0, 0, 0, 0.4),
+        0 6px 20px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(51, 65, 85, 0.5);
+}
+
+body.dark-mode .navbar {
+    background: rgba(30, 41, 59, 0.65);
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+body.dark-mode .nav-link.active,
+body.dark-mode .nav-link:hover {
+    background: #1e293b;
+}
+
+body.dark-mode .logo-box,
+body.dark-mode .logo {
+    background: #1e293b;
+}
+
+body.dark-mode .card,
+body.dark-mode .team-card,
+body.dark-mode .about-section,
+body.dark-mode .footer,
+body.dark-mode .hero-preview-card,
+body.dark-mode .preview-body {
+    background: var(--card-bg);
+}
+
+body.dark-mode .preview-bar {
+    background: #0f172a;
+}
+
+body.dark-mode .section-heading h2 {
+    color: #f1f5f9;
+}
+
+/* FIXED DARK MODE TOGGLE (bottom-right, stays in place while scrolling) */
+.theme-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #bfdbfe;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+    transition: all 0.25s ease;
+}
+
+.theme-toggle:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+}
+
+.theme-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--primary-blue);
+    transition: color 0.3s ease;
+}
+
+body.dark-mode .theme-toggle {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .theme-icon {
+    color: #fbbf24;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -41,12 +141,14 @@ body {
    ULTRA-MODERN FLOATING PILL NAVBAR
    ============================================================ */
 .header {
-    position: sticky;
+    position: fixed;
     top: 14px;
+    left: 0;
+    right: 0;
     z-index: 1000;
     width: 100%;
     padding: 0 1.25rem;
-    pointer-events: none; /* Allows natural clicks around the pill */
+    pointer-events: none;
 }
 
 .nav-container {
@@ -315,7 +417,7 @@ body {
     background-size: cover;
     background-attachment: scroll;
     padding: 6.5rem 1.5rem 5rem;
-    margin-top: -85px; /* Pulls hero canvas under the floating pill navbar */
+    margin-top: -20px; /* Pulls hero canvas under the floating pill navbar */
     text-align: center;
     overflow: hidden;
 }
