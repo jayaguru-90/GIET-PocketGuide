@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>GIET Guide - Admin Portal</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="LOGO.png" />
+    <link rel="shortcut icon" type="image/png" href="LOGO.png" />
+    <link rel="apple-touch-icon" href="LOGO.png" />
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Leaflet Library Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- External Admin Stylesheet -->
+    <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+    <!-- AUTHENTICATION MODAL GATE -->
+    <div class="auth-overlay" id="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-logo-box">
+                <img src="LOGO.png" alt="GIET Logo" />
+            </div>
+            <h2>Admin Portal Access</h2>
+            <p>Enter administrator credentials to manage GIET University campus data.</p>
+
+            <form id="auth-form" autocomplete="off">
+                <div class="auth-field">
+                    <label for="admin-user">Username</label>
+                    <input type="text" id="admin-user" placeholder="admin" required autocomplete="off" />
+                </div>
+                <div class="auth-field">
+                    <label for="admin-pass">Password</label>
+                    <input type="password" id="admin-pass" placeholder="••••••••" required autocomplete="off" />
+                </div>
+                <div class="auth-error" id="auth-error">Invalid username or password. Try again.</div>
+                <button type="submit" class="auth-submit-btn" id="auth-submit-btn">Authorize & Unlock</button>
+            </form>
+            <a href="index.html" class="auth-back-link">← Return to Public Portal</a>
+        </div>
+    </div>
+
+    <!-- MAIN ADMIN APP WRAPPER -->
+    <div id="admin-app" class="admin-app-locked">
+        <!-- FLOATING PILL HEADER -->
+        <header class="header">
+            <div class="nav-container">
+                <a href="index.html" class="logo-section">
+                    <div class="logo-box">
+                        <img src="LOGO.png" class="logo" alt="GIET Logo" />
+                    </div>
+                    <div class="brand-text-group">
+                        <span class="brand-title">GIETU <span class="highlight-gradient">Campus Guide</span></span>
+                        <span class="brand-sub"><span class="pulse-dot"></span> Admin Control Center</span>
+                    </div>
+                </a>
+
+                <!-- Right Header Quick Controls -->
+                <nav class="navbar">
+                    <a href="index.html" class="nav-link">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span>Home</span>
+                    </a>
+                    <a href="navigation.html" class="nav-link">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                        <span>Live Map</span>
+                    </a>
+                    <button id="export-geojson-btn" class="nav-link admin-btn">
+                        <svg class="nav-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        <span>Export GeoJSON</span>
+                    </button>
+                    <button id="logout-btn" class="nav-link logout-btn" title="Sign out">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <span>Exit</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- WORKSPACE -->
+        <main class="admin-layout">
+            <!-- SIDEBAR PANEL -->
+            <aside class="admin-sidebar">
+                <!-- LOCATION FORM CARD -->
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <span id="form-heading">Add Location</span>
+                        <span id="form-mode-badge">📍 Click Map to Set</span>
+                    </div>
+                    <p class="sidebar-subtitle">Drop pins onto the satellite view or pick a location from the list below.</p>
+
+                    <form id="location-form">
+                        <div class="form-group">
+                            <label for="location-name">Location / Building Name</label>
+                            <input type="text" id="location-name" class="form-input" placeholder="e.g. CSE Block, Central Mess..." required />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Coordinates (Latitude, Longitude)</label>
+                            <div class="coords-grid">
+                                <input type="number" step="any" id="location-lat" class="form-input" placeholder="Latitude" required />
+                                <input type="number" step="any" id="location-lng" class="form-input" placeholder="Longitude" required />
+                            </div>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="button" id="cancel-edit-btn" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" id="save-location-btn" class="btn btn-primary">➕ Save Location</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- DIRECTORY & SEARCH -->
+                <div class="locations-container">
+                    <div class="search-bar-wrap">
+                        <input type="text" id="search-locations" class="form-input" placeholder="🔍 Filter campus locations..." />
+                    </div>
+                    <div class="locations-list" id="locations-list">
+                        <!-- Populated dynamically via admin.js -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- SATELLITE MAP CONTAINER -->
+            <section class="admin-map-wrap">
+                <div class="map-hint-pill">🛰️ Google Satellite Live — Click anywhere on campus to drop a pin</div>
+                <div id="admin-map"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Leaflet Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- External Admin Logic -->
+    <script src="admin.js"></script>
+</body>
+</html>
