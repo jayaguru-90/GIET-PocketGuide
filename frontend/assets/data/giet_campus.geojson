@@ -1,0 +1,1302 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8315621, 19.0484843, 0]
+      },
+      "properties": {
+        "name": "CSE Building",
+        "description": "Department of computer science and engineering",
+        "styleUrl": "#icon-1899-0288D1-labelson",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8317289, 19.0491051, 0]
+      },
+      "properties": {
+        "name": "BSH Building",
+        "description": {
+          "@type": "html",
+          "value": "<img src=\"https://mymaps.usercontent.google.com/hostedimage/m/*/3AAjQbR4ihK8nYABh2ukNvcVpCc5_xeyX8BLbODNQNRXdV8syxTL_6ZpHfTucKs3BpdoOrJdAV6OTTN3NUN2A1nYvQ12py9MNZPZYlzuuh88_c6omhSMeHgDSXnxx1XPd9DKnvbRdkF533pslylFypFxHL97l9kK98RxSi0QS0QPoGj2QkPnbeRsUUgWmjMxCwH2r4eWwLjgBNoj3otSiovvY3lT2CNlYk1Z7gQHzCGwF0GzZ6iraDssMVAPs62o?authuser=0&fife=s16383\" height=\"200\" width=\"auto\" /><br><br>"
+        },
+        "styleUrl": "#icon-1899-0288D1-labelson",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png",
+        "gx_media_links": "https://mymaps.usercontent.google.com/hostedimage/m/*/3AAjQbR4ihK8nYABh2ukNvcVpCc5_xeyX8BLbODNQNRXdV8syxTL_6ZpHfTucKs3BpdoOrJdAV6OTTN3NUN2A1nYvQ12py9MNZPZYlzuuh88_c6omhSMeHgDSXnxx1XPd9DKnvbRdkF533pslylFypFxHL97l9kK98RxSi0QS0QPoGj2QkPnbeRsUUgWmjMxCwH2r4eWwLjgBNoj3otSiovvY3lT2CNlYk1Z7gQHzCGwF0GzZ6iraDssMVAPs62o?authuser=0&fife=s16383"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8307759, 19.0486052, 0]
+      },
+      "properties": {
+        "name": "GIET Temple",
+        "styleUrl": "#icon-1706-FFEA00-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#ffea00",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.831949, 19.0494422, 0]
+      },
+      "properties": {
+        "name": "AME",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8323966, 19.0499166, 0]
+      },
+      "properties": {
+        "name": "Bio tech Building",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8327545, 19.0496662, 0]
+      },
+      "properties": {
+        "name": "RDB Building",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8323803, 19.0492385, 0]
+      },
+      "properties": {
+        "name": "Library",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8324027, 19.0495653, 0]
+      },
+      "properties": {
+        "name": "ECE Block Gate 1",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8323102, 19.0481287, 0]
+      },
+      "properties": {
+        "name": "Admin Block",
+        "styleUrl": "#icon-1726-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8333488, 19.0487696, 0]
+      },
+      "properties": {
+        "name": "Agriculture Block",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8333083, 19.0494166, 0]
+      },
+      "properties": {
+        "name": "Mechanical building",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8338592, 19.0485406, 0]
+      },
+      "properties": {
+        "name": "Hardware section",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8330964, 19.0481867, 0]
+      },
+      "properties": {
+        "name": "Canteen",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8311909, 19.0474079, 0]
+      },
+      "properties": {
+        "name": "Main Gate",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8313916, 19.0474252, 0]
+      },
+      "properties": {
+        "name": "Parking",
+        "styleUrl": "#icon-1644-558B2F-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#558b2f",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8327627, 19.0490728, 0]
+      },
+      "properties": {
+        "name": "Cool Parloor",
+        "styleUrl": "#icon-1534-F57C00-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#f57c00",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8319928, 19.0493369, 0]
+      },
+      "properties": {
+        "name": "ECE Block Gate 2",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8322256, 19.0494327, 0]
+      },
+      "properties": {
+        "name": "Dept. Manegment",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8338431, 19.048839, 0]
+      },
+      "properties": {
+        "name": "BUs stop ",
+        "styleUrl": "#icon-1532-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8311413, 19.0482229, 0]
+      },
+      "properties": {
+        "name": "Temple Garden",
+        "styleUrl": "#icon-1582-7CB342-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#7cb342",
+        "icon-scale": 1,
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8375139, 19.0464626, 0]
+      },
+      "properties": {
+        "name": "GPS School ",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8357854, 19.0481121, 0]
+      },
+      "properties": {
+        "name": "Guest House ",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8333334, 19.0497383, 0]
+      },
+      "properties": {
+        "name": "Swimming pool",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8335484, 19.0494991, 0]
+      },
+      "properties": {
+        "name": "Badminton court",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8337963, 19.0491213, 0]
+      },
+      "properties": {
+        "name": "Basket ball court",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8348255, 19.0494455, 0]
+      },
+      "properties": {
+        "name": "Giet main ground ",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8333162, 19.048406, 0]
+      },
+      "properties": {
+        "name": "Car parking",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8341547, 19.0481938, 0]
+      },
+      "properties": {
+        "name": "NC-8",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8342341, 19.0478023, 0]
+      },
+      "properties": {
+        "name": "NC-9",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8344851, 19.0476786, 0]
+      },
+      "properties": {
+        "name": "NC-10",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8346289, 19.047421, 0]
+      },
+      "properties": {
+        "name": "NC-13",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8354956, 19.0477114, 0]
+      },
+      "properties": {
+        "name": "NC-14",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8346674, 19.0476917, 0]
+      },
+      "properties": {
+        "name": "Central Mess",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [83.8324824, 19.0478957, 0]
+      },
+      "properties": {
+        "name": "Gandhi Park ",
+        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
+        "icon-opacity": 1,
+        "icon-color": "#0288d1",
+        "icon-scale": 1,
+        "icon-offset": [32, 64],
+        "icon-offset-units": ["pixels", "insetPixels"],
+        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8311909, 19.0474079, 0],
+          [83.831233, 19.047431, 0],
+          [83.8312591, 19.0474414, 0],
+          [83.8319401, 19.0478154, 0],
+          [83.8323675, 19.0480433, 0],
+          [83.8326122, 19.048178, 0],
+          [83.8330831, 19.0484282, 0],
+          [83.8332448, 19.0485211, 0],
+          [83.8334392, 19.0486246, 0],
+          [83.8338431, 19.048839, 0]
+        ]
+      },
+      "properties": {
+        "name": "GIET Main Road",
+        "styleUrl": "#line-000000-6619-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 6.619
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8338431, 19.048839, 0],
+          [83.8337812, 19.0488749, 0],
+          [83.8336751, 19.0490553, 0],
+          [83.8334089, 19.0494724, 0],
+          [83.8333629, 19.049532, 0],
+          [83.8332575, 19.0496975, 0],
+          [83.8330777, 19.0499791, 0]
+        ]
+      },
+      "properties": {
+        "name": "swimming pool road ",
+        "styleUrl": "#line-000000-5456-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 5.456
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8333491, 19.0487797, 0],
+          [83.8334392, 19.0486246, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 39",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8343097, 19.0490597, 0],
+          [83.8345297, 19.0486851, 0],
+          [83.8346692, 19.0484597, 0],
+          [83.8348784, 19.0481228, 0],
+          [83.8351897, 19.0476017, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 41",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8312655, 19.0488841, 0],
+          [83.8308469, 19.0486544, 0],
+          [83.8307732, 19.0486077, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 43",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8327627, 19.0490728, 0],
+          [83.8327746, 19.049046, 0],
+          [83.8329367, 19.0487161, 0],
+          [83.8330831, 19.0484282, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 44",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8321858, 19.0494893, 0],
+          [83.8322256, 19.0494327, 0]
+        ]
+      },
+      "properties": {
+        "name": "road-01",
+        "styleUrl": "#line-757575-3906-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#757575",
+        "stroke-width": 3.906
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8338431, 19.048839, 0],
+          [83.8343097, 19.0490597, 0],
+          [83.8348749, 19.0493368, 0],
+          [83.8355225, 19.048267, 0],
+          [83.8357463, 19.047907, 0],
+          [83.8364817, 19.0466832, 0],
+          [83.8369727, 19.0458673, 0],
+          [83.837016, 19.0458234, 0],
+          [83.8370754, 19.0458074, 0],
+          [83.8373051, 19.0459346, 0],
+          [83.8375296, 19.0461145, 0],
+          [83.8375034, 19.0462792, 0],
+          [83.8374347, 19.0463576, 0],
+          [83.8375174, 19.046465, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 38",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.832441, 19.0496439, 0],
+          [83.8326304, 19.0493536, 0],
+          [83.8327267, 19.0491606, 0],
+          [83.832764, 19.049159, 0],
+          [83.8327972, 19.0491427, 0],
+          [83.8328102, 19.0491188, 0],
+          [83.833043, 19.0492724, 0],
+          [83.8333083, 19.0494166, 0],
+          [83.8334089, 19.0494724, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 45",
+        "styleUrl": "#line-757575-2550-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#757575",
+        "stroke-width": 2.55
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8366932, 19.0463422, 0],
+          [83.8371932, 19.046688, 0],
+          [83.8372731, 19.0466743, 0],
+          [83.8374871, 19.0464933, 0],
+          [83.8377789, 19.0462539, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 43",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8315166, 19.0484685, 0],
+          [83.8315621, 19.0484843, 0],
+          [83.8317237, 19.0485721, 0],
+          [83.8319661, 19.0486661, 0],
+          [83.8321309, 19.048746, 0],
+          [83.8321227, 19.0487854, 0],
+          [83.8321508, 19.0488133, 0],
+          [83.8321781, 19.0488143, 0],
+          [83.8322122, 19.048804, 0],
+          [83.8324291, 19.0489214, 0],
+          [83.8325388, 19.048987, 0],
+          [83.8326881, 19.0490695, 0],
+          [83.8327354, 19.0490445, 0],
+          [83.8327746, 19.049046, 0],
+          [83.8328058, 19.0490767, 0],
+          [83.8328102, 19.0491188, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 46",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8316801, 19.0491806, 0],
+          [83.8317289, 19.0491051, 0],
+          [83.8318212, 19.0489943, 0],
+          [83.831898, 19.0488734, 0],
+          [83.8319661, 19.0486661, 0],
+          [83.8320268, 19.0485854, 0],
+          [83.8320139, 19.048557, 0],
+          [83.8320203, 19.0485266, 0],
+          [83.8320482, 19.0485104, 0],
+          [83.832074, 19.0485104, 0],
+          [83.8321538, 19.0484021, 0],
+          [83.8323102, 19.0481287, 0],
+          [83.8323675, 19.0480433, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 47",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8320044, 19.0493752, 0],
+          [83.8319928, 19.0493369, 0],
+          [83.8321116, 19.0491597, 0],
+          [83.8320151, 19.0491029, 0],
+          [83.832073, 19.0489893, 0],
+          [83.8321508, 19.0488133, 0],
+          [83.8321781, 19.0488143, 0],
+          [83.8322122, 19.048804, 0],
+          [83.8322088, 19.0487913, 0],
+          [83.832212, 19.048766, 0],
+          [83.8321905, 19.0487366, 0],
+          [83.8321937, 19.0487092, 0],
+          [83.8322259, 19.0486433, 0],
+          [83.8322163, 19.0486149, 0],
+          [83.8322474, 19.0485976, 0],
+          [83.8322903, 19.0485033, 0],
+          [83.8322978, 19.048482, 0],
+          [83.8324072, 19.0484972, 0],
+          [83.8324459, 19.048477, 0],
+          [83.8326122, 19.048178, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 48",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.831233, 19.047431, 0],
+          [83.8308319, 19.0480449, 0],
+          [83.8305358, 19.0484627, 0],
+          [83.8305572, 19.0485114, 0],
+          [83.8306338, 19.0484702, 0],
+          [83.830748, 19.0485, 0],
+          [83.8308047, 19.0485646, 0],
+          [83.8307732, 19.0486077, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 51",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8308319, 19.0480449, 0],
+          [83.8311413, 19.0482229, 0],
+          [83.8315314, 19.0484455, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 52",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8308469, 19.0486544, 0],
+          [83.83109, 19.0482998, 0],
+          [83.8311413, 19.0482229, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 53",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8323966, 19.0499166, 0],
+          [83.8325409, 19.0497098, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 54",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8326696, 19.0497856, 0],
+          [83.8327062, 19.0497347, 0],
+          [83.8328703, 19.0495229, 0],
+          [83.833043, 19.0492724, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 55",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8330777, 19.0499791, 0],
+          [83.8329781, 19.0499572, 0],
+          [83.8326696, 19.0497856, 0],
+          [83.8325409, 19.0497098, 0],
+          [83.8323665, 19.0496023, 0],
+          [83.8321858, 19.0494893, 0],
+          [83.8320044, 19.0493752, 0],
+          [83.8316801, 19.0491806, 0],
+          [83.8312703, 19.0489534, 0],
+          [83.8312655, 19.0488841, 0],
+          [83.8315166, 19.0484685, 0],
+          [83.8315314, 19.0484455, 0],
+          [83.8319401, 19.0478154, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 67",
+        "styleUrl": "#line-000000-5650-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 5.65
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8320151, 19.0491029, 0],
+          [83.8318212, 19.0489943, 0],
+          [83.8316592, 19.0488686, 0],
+          [83.8316367, 19.0487905, 0],
+          [83.8316495, 19.0487104, 0],
+          [83.8317237, 19.0485721, 0],
+          [83.8318716, 19.0484447, 0],
+          [83.8319478, 19.0483838, 0],
+          [83.8320969, 19.0483737, 0],
+          [83.8321538, 19.0484021, 0],
+          [83.8322978, 19.048482, 0],
+          [83.8324072, 19.0484972, 0],
+          [83.832426, 19.0485196, 0],
+          [83.8324539, 19.0485131, 0],
+          [83.8325193, 19.0485369, 0],
+          [83.8329367, 19.0487161, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 68",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8337963, 19.0491213, 0],
+          [83.8336751, 19.0490553, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 69",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8338592, 19.0485406, 0],
+          [83.8338273, 19.0487252, 0],
+          [83.833786, 19.0488079, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 70",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8341556, 19.0482015, 0],
+          [83.8342082, 19.0482299, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 71",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8338431, 19.048839, 0],
+          [83.8342082, 19.0482299, 0],
+          [83.834395, 19.0478969, 0],
+          [83.8345216, 19.047692, 0],
+          [83.8346696, 19.0474568, 0],
+          [83.834734, 19.0473553, 0],
+          [83.8351897, 19.0476017, 0],
+          [83.8357463, 19.047907, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 72",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8330964, 19.0481867, 0],
+          [83.8329847, 19.0483723, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 73",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8342341, 19.0478023, 0],
+          [83.834395, 19.0478969, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 74",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8333162, 19.048406, 0],
+          [83.8332448, 19.0485211, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 71",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8327267, 19.0491606, 0],
+          [83.8326873, 19.0491303, 0],
+          [83.8326881, 19.0490695, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 72",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8348749, 19.0493368, 0],
+          [83.8348255, 19.0494455, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 69",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.831233, 19.047431, 0],
+          [83.831271, 19.0474031, 0],
+          [83.8313017, 19.047375, 0],
+          [83.8313916, 19.0474252, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 70",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8323675, 19.0480433, 0],
+          [83.8324824, 19.0478957, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 71",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8320044, 19.0493752, 0],
+          [83.831949, 19.0494422, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 72",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8332575, 19.0496975, 0],
+          [83.8333334, 19.0497383, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 73",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8333629, 19.049532, 0],
+          [83.8334756, 19.0495848, 0],
+          [83.8335484, 19.0494991, 0]
+        ]
+      },
+      "properties": {
+        "name": "Line 74",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [83.8323803, 19.0492385, 0],
+          [83.8327627, 19.0490728, 0]
+        ]
+      },
+      "properties": {
+        "name": "Library Entry Link",
+        "styleUrl": "#line-000000-1200-nodesc",
+        "stroke-opacity": 1,
+        "stroke": "#000000",
+        "stroke-width": 1.2
+      }
+    }
+  ]
+}

@@ -1,0 +1,2405 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831562,
+                    19.048484,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "CSE Building",
+                "description": "Department of computer science and engineering",
+                "styleUrl": "#icon-1899-0288D1",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.83431,
+                        19.04906,
+                        0
+                    ],
+                    [
+                        83.83453,
+                        19.048685,
+                        0
+                    ],
+                    [
+                        83.834669,
+                        19.04846,
+                        0
+                    ],
+                    [
+                        83.834878,
+                        19.048123,
+                        0
+                    ],
+                    [
+                        83.83519,
+                        19.047602,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 41",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831729,
+                    19.049105,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "BSH Building",
+                "description": {
+                    "@type": "html",
+                    "value": "<img src=\"https://mymaps.usercontent.google.com/hostedimage/m/*/3AAjQbR7SDvmC8to0XOiEcabZpt61iclfW6YE-L9lBsfbtPaSiBFU80k51CGopZz3THmI7lJdcGTKBNZpjkBXNnWSnY0Xr45YxHDGXwwJM72LkRVBW47o7R_lmOVK0jjpFjsm3vFLu6RoEO5oIcU8sOlipTl1ZwE_3Q7CYRCfNk1SFUtZvmgmTXsZtXtvzy3PniC_7ZOD4lbSJCPMOy7BSwbn17aLxv52Ew6_vWZQSBkKP1ByiORgXJoXw7ZOlc8?authuser=0&fife=s16383\" height=\"200\" width=\"auto\" /><br><br>"
+                },
+                "styleUrl": "#icon-1899-0288D1",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png",
+                "gx_media_links": "https://mymaps.usercontent.google.com/hostedimage/m/*/3AAjQbR7SDvmC8to0XOiEcabZpt61iclfW6YE-L9lBsfbtPaSiBFU80k51CGopZz3THmI7lJdcGTKBNZpjkBXNnWSnY0Xr45YxHDGXwwJM72LkRVBW47o7R_lmOVK0jjpFjsm3vFLu6RoEO5oIcU8sOlipTl1ZwE_3Q7CYRCfNk1SFUtZvmgmTXsZtXtvzy3PniC_7ZOD4lbSJCPMOy7BSwbn17aLxv52Ew6_vWZQSBkKP1ByiORgXJoXw7ZOlc8?authuser=0&fife=s16383"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.830773,
+                    19.048608,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "GIET Temple",
+                "styleUrl": "#icon-1706-FFEA00-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#ffea00",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831949,
+                    19.049442,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "AME",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832397,
+                    19.049917,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Bio tech Building",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832755,
+                    19.049666,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "RDB Building",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.83238,
+                    19.049239,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Library",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832403,
+                    19.049565,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "ECE Block Gate 1",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.83231,
+                    19.048129,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Admin Block",
+                "styleUrl": "#icon-1726-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833349,
+                    19.04877,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Agriculture Block",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833308,
+                    19.049417,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Mechanical building",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833859,
+                    19.048541,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Hardware section",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833096,
+                    19.048187,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Canteen",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831191,
+                    19.047408,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Main Gate",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831392,
+                    19.047425,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Parking",
+                "styleUrl": "#icon-1644-558B2F-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#558b2f",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832763,
+                    19.049073,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Cool Parloor",
+                "styleUrl": "#icon-1534-F57C00-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#f57c00",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831993,
+                    19.049337,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "ECE Block Gate 2",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832226,
+                    19.049433,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Dept. Manegment",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831191,
+                        19.047408,
+                        0
+                    ],
+                    [
+                        83.831233,
+                        19.047431,
+                        0
+                    ],
+                    [
+                        83.831259,
+                        19.047441,
+                        0
+                    ],
+                    [
+                        83.83194,
+                        19.047815,
+                        0
+                    ],
+                    [
+                        83.832368,
+                        19.048043,
+                        0
+                    ],
+                    [
+                        83.832612,
+                        19.048178,
+                        0
+                    ],
+                    [
+                        83.833083,
+                        19.048428,
+                        0
+                    ],
+                    [
+                        83.833439,
+                        19.048625,
+                        0
+                    ],
+                    [
+                        83.833843,
+                        19.048839,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "GIET Main Road",
+                "styleUrl": "#line-000000-6619-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 6.619
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833843,
+                    19.048839,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "BUs stop ",
+                "styleUrl": "#icon-1532-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833843,
+                        19.048839,
+                        0
+                    ],
+                    [
+                        83.833781,
+                        19.048875,
+                        0
+                    ],
+                    [
+                        83.833675,
+                        19.049055,
+                        0
+                    ],
+                    [
+                        83.833409,
+                        19.049472,
+                        0
+                    ],
+                    [
+                        83.833363,
+                        19.049532,
+                        0
+                    ],
+                    [
+                        83.833258,
+                        19.049698,
+                        0
+                    ],
+                    [
+                        83.833078,
+                        19.049979,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "swimming pool road ",
+                "styleUrl": "#line-000000-5456-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 5.456
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832393,
+                        19.049564,
+                        0
+                    ],
+                    [
+                        83.832367,
+                        19.049602,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 36",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833349,
+                        19.04878,
+                        0
+                    ],
+                    [
+                        83.833439,
+                        19.048625,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 39",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.83231,
+                        19.048129,
+                        0
+                    ],
+                    [
+                        83.832368,
+                        19.048043,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 40",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831517,
+                        19.048469,
+                        0
+                    ],
+                    [
+                        83.831562,
+                        19.048484,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 42",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831266,
+                        19.048884,
+                        0
+                    ],
+                    [
+                        83.830773,
+                        19.048608,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 43",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832763,
+                        19.049073,
+                        0
+                    ],
+                    [
+                        83.832937,
+                        19.048716,
+                        0
+                    ],
+                    [
+                        83.833083,
+                        19.048428,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 44",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832186,
+                        19.049489,
+                        0
+                    ],
+                    [
+                        83.832226,
+                        19.049433,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "road-01",
+                "styleUrl": "#line-757575-3906-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#757575",
+                "stroke-width": 3.906
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.831141,
+                    19.048223,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Temple Garden",
+                "styleUrl": "#icon-1582-7CB342-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#7cb342",
+                "icon-scale": 1,
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833843,
+                        19.048839,
+                        0
+                    ],
+                    [
+                        83.83431,
+                        19.04906,
+                        0
+                    ],
+                    [
+                        83.834875,
+                        19.049337,
+                        0
+                    ],
+                    [
+                        83.835669,
+                        19.048033,
+                        0
+                    ],
+                    [
+                        83.836482,
+                        19.046683,
+                        0
+                    ],
+                    [
+                        83.836973,
+                        19.045867,
+                        0
+                    ],
+                    [
+                        83.837016,
+                        19.045823,
+                        0
+                    ],
+                    [
+                        83.837075,
+                        19.045807,
+                        0
+                    ],
+                    [
+                        83.837305,
+                        19.045935,
+                        0
+                    ],
+                    [
+                        83.83753,
+                        19.046115,
+                        0
+                    ],
+                    [
+                        83.837503,
+                        19.046279,
+                        0
+                    ],
+                    [
+                        83.837435,
+                        19.046358,
+                        0
+                    ],
+                    [
+                        83.837517,
+                        19.046465,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 38",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.837514,
+                    19.046463,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "GPS School ",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.836693,
+                        19.046342,
+                        0
+                    ],
+                    [
+                        83.837193,
+                        19.046688,
+                        0
+                    ],
+                    [
+                        83.837273,
+                        19.046674,
+                        0
+                    ],
+                    [
+                        83.837487,
+                        19.046493,
+                        0
+                    ],
+                    [
+                        83.837779,
+                        19.046254,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 43",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.835785,
+                    19.048112,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Guest House ",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832441,
+                        19.049644,
+                        0
+                    ],
+                    [
+                        83.83263,
+                        19.049354,
+                        0
+                    ],
+                    [
+                        83.832727,
+                        19.049161,
+                        0
+                    ],
+                    [
+                        83.832764,
+                        19.049159,
+                        0
+                    ],
+                    [
+                        83.832797,
+                        19.049143,
+                        0
+                    ],
+                    [
+                        83.83281,
+                        19.049119,
+                        0
+                    ],
+                    [
+                        83.833023,
+                        19.04926,
+                        0
+                    ],
+                    [
+                        83.833409,
+                        19.049472,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 45",
+                "styleUrl": "#line-757575-2550-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#757575",
+                "stroke-width": 2.55
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831562,
+                        19.048484,
+                        0
+                    ],
+                    [
+                        83.831724,
+                        19.048572,
+                        0
+                    ],
+                    [
+                        83.831966,
+                        19.048666,
+                        0
+                    ],
+                    [
+                        83.832131,
+                        19.048746,
+                        0
+                    ],
+                    [
+                        83.832123,
+                        19.048785,
+                        0
+                    ],
+                    [
+                        83.832151,
+                        19.048813,
+                        0
+                    ],
+                    [
+                        83.832178,
+                        19.048814,
+                        0
+                    ],
+                    [
+                        83.832212,
+                        19.048804,
+                        0
+                    ],
+                    [
+                        83.832429,
+                        19.048921,
+                        0
+                    ],
+                    [
+                        83.832688,
+                        19.04907,
+                        0
+                    ],
+                    [
+                        83.832735,
+                        19.049045,
+                        0
+                    ],
+                    [
+                        83.832775,
+                        19.049046,
+                        0
+                    ],
+                    [
+                        83.832806,
+                        19.049077,
+                        0
+                    ],
+                    [
+                        83.83281,
+                        19.049119,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 46",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831729,
+                        19.049105,
+                        0
+                    ],
+                    [
+                        83.831842,
+                        19.048965,
+                        0
+                    ],
+                    [
+                        83.831898,
+                        19.048873,
+                        0
+                    ],
+                    [
+                        83.831966,
+                        19.048666,
+                        0
+                    ],
+                    [
+                        83.832027,
+                        19.048585,
+                        0
+                    ],
+                    [
+                        83.832014,
+                        19.048557,
+                        0
+                    ],
+                    [
+                        83.83202,
+                        19.048527,
+                        0
+                    ],
+                    [
+                        83.832048,
+                        19.04851,
+                        0
+                    ],
+                    [
+                        83.832074,
+                        19.04851,
+                        0
+                    ],
+                    [
+                        83.832173,
+                        19.048372,
+                        0
+                    ],
+                    [
+                        83.83231,
+                        19.048129,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 47",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831993,
+                        19.049337,
+                        0
+                    ],
+                    [
+                        83.832112,
+                        19.04916,
+                        0
+                    ],
+                    [
+                        83.832015,
+                        19.049103,
+                        0
+                    ],
+                    [
+                        83.832073,
+                        19.048989,
+                        0
+                    ],
+                    [
+                        83.832151,
+                        19.048813,
+                        0
+                    ],
+                    [
+                        83.832178,
+                        19.048814,
+                        0
+                    ],
+                    [
+                        83.8322,
+                        19.048807,
+                        0
+                    ],
+                    [
+                        83.832209,
+                        19.048791,
+                        0
+                    ],
+                    [
+                        83.832212,
+                        19.048766,
+                        0
+                    ],
+                    [
+                        83.832191,
+                        19.048737,
+                        0
+                    ],
+                    [
+                        83.832194,
+                        19.048709,
+                        0
+                    ],
+                    [
+                        83.832226,
+                        19.048643,
+                        0
+                    ],
+                    [
+                        83.832216,
+                        19.048615,
+                        0
+                    ],
+                    [
+                        83.832247,
+                        19.048598,
+                        0
+                    ],
+                    [
+                        83.83229,
+                        19.048503,
+                        0
+                    ],
+                    [
+                        83.832298,
+                        19.048482,
+                        0
+                    ],
+                    [
+                        83.832407,
+                        19.048497,
+                        0
+                    ],
+                    [
+                        83.832446,
+                        19.048477,
+                        0
+                    ],
+                    [
+                        83.832612,
+                        19.048178,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 48",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.83238,
+                        19.049239,
+                        0
+                    ],
+                    [
+                        83.832539,
+                        19.048987,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 50",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831233,
+                        19.047431,
+                        0
+                    ],
+                    [
+                        83.830832,
+                        19.048045,
+                        0
+                    ],
+                    [
+                        83.830536,
+                        19.048463,
+                        0
+                    ],
+                    [
+                        83.830557,
+                        19.048511,
+                        0
+                    ],
+                    [
+                        83.830634,
+                        19.04847,
+                        0
+                    ],
+                    [
+                        83.830748,
+                        19.0485,
+                        0
+                    ],
+                    [
+                        83.830805,
+                        19.048565,
+                        0
+                    ],
+                    [
+                        83.830773,
+                        19.048608,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 51",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.830832,
+                        19.048045,
+                        0
+                    ],
+                    [
+                        83.831141,
+                        19.048223,
+                        0
+                    ],
+                    [
+                        83.831531,
+                        19.048446,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 52",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.830847,
+                        19.048654,
+                        0
+                    ],
+                    [
+                        83.83109,
+                        19.0483,
+                        0
+                    ],
+                    [
+                        83.831141,
+                        19.048223,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 53",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832397,
+                        19.049917,
+                        0
+                    ],
+                    [
+                        83.832541,
+                        19.04971,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 54",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.83267,
+                        19.049786,
+                        0
+                    ],
+                    [
+                        83.832706,
+                        19.049735,
+                        0
+                    ],
+                    [
+                        83.83287,
+                        19.049523,
+                        0
+                    ],
+                    [
+                        83.833043,
+                        19.049272,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 55",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833333,
+                    19.049738,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Swimming pool",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833548,
+                    19.049499,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Badminton court",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833796,
+                    19.049121,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Basket ball court",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834826,
+                    19.049446,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Giet main ground ",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.833316,
+                    19.048406,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Car parking",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834155,
+                    19.048194,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "NC-8",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834234,
+                    19.047802,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "NC-9",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834485,
+                    19.047679,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "NC-10",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834629,
+                    19.047421,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "NC-13",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.835496,
+                    19.047711,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "NC-14",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.834667,
+                    19.047692,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Central Mess",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.832482,
+                    19.047896,
+                    0
+                ]
+            },
+            "properties": {
+                "name": "Gandhi Park ",
+                "styleUrl": "#icon-1899-0288D1-nodesc",
+                "label-scale": 0,
+                "icon-opacity": 1,
+                "icon-color": "#0288d1",
+                "icon-scale": 1,
+                "icon-offset": [
+                    32,
+                    64
+                ],
+                "icon-offset-units": [
+                    "pixels",
+                    "insetPixels"
+                ],
+                "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.834875,
+                        19.049337,
+                        0
+                    ],
+                    [
+                        83.834826,
+                        19.049446,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 69",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.831233,
+                        19.047431,
+                        0
+                    ],
+                    [
+                        83.831271,
+                        19.047403,
+                        0
+                    ],
+                    [
+                        83.831302,
+                        19.047375,
+                        0
+                    ],
+                    [
+                        83.831392,
+                        19.047425,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 70",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832368,
+                        19.048043,
+                        0
+                    ],
+                    [
+                        83.832482,
+                        19.047896,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 71",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832004,
+                        19.049375,
+                        0
+                    ],
+                    [
+                        83.831949,
+                        19.049442,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 72",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833258,
+                        19.049698,
+                        0
+                    ],
+                    [
+                        83.833333,
+                        19.049738,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 73",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833363,
+                        19.049532,
+                        0
+                    ],
+                    [
+                        83.833476,
+                        19.049585,
+                        0
+                    ],
+                    [
+                        83.833548,
+                        19.049499,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 74",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833078,
+                        19.049979,
+                        0
+                    ],
+                    [
+                        83.832978,
+                        19.049957,
+                        0
+                    ],
+                    [
+                        83.83267,
+                        19.049786,
+                        0
+                    ],
+                    [
+                        83.832541,
+                        19.04971,
+                        0
+                    ],
+                    [
+                        83.832367,
+                        19.049602,
+                        0
+                    ],
+                    [
+                        83.832186,
+                        19.049489,
+                        0
+                    ],
+                    [
+                        83.832004,
+                        19.049375,
+                        0
+                    ],
+                    [
+                        83.83168,
+                        19.049181,
+                        0
+                    ],
+                    [
+                        83.83127,
+                        19.048953,
+                        0
+                    ],
+                    [
+                        83.831266,
+                        19.048884,
+                        0
+                    ],
+                    [
+                        83.831531,
+                        19.048446,
+                        0
+                    ],
+                    [
+                        83.83194,
+                        19.047815,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 67",
+                "styleUrl": "#line-000000-5650-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 5.65
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.832015,
+                        19.049103,
+                        0
+                    ],
+                    [
+                        83.831821,
+                        19.048994,
+                        0
+                    ],
+                    [
+                        83.831659,
+                        19.048869,
+                        0
+                    ],
+                    [
+                        83.831637,
+                        19.048791,
+                        0
+                    ],
+                    [
+                        83.83165,
+                        19.04871,
+                        0
+                    ],
+                    [
+                        83.831724,
+                        19.048572,
+                        0
+                    ],
+                    [
+                        83.831872,
+                        19.048445,
+                        0
+                    ],
+                    [
+                        83.831948,
+                        19.048384,
+                        0
+                    ],
+                    [
+                        83.832097,
+                        19.048374,
+                        0
+                    ],
+                    [
+                        83.832154,
+                        19.048402,
+                        0
+                    ],
+                    [
+                        83.832298,
+                        19.048482,
+                        0
+                    ],
+                    [
+                        83.832407,
+                        19.048497,
+                        0
+                    ],
+                    [
+                        83.832426,
+                        19.04852,
+                        0
+                    ],
+                    [
+                        83.832454,
+                        19.048513,
+                        0
+                    ],
+                    [
+                        83.832519,
+                        19.048537,
+                        0
+                    ],
+                    [
+                        83.832937,
+                        19.048716,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 68",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833796,
+                        19.049121,
+                        0
+                    ],
+                    [
+                        83.833675,
+                        19.049055,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 69",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833859,
+                        19.048541,
+                        0
+                    ],
+                    [
+                        83.833827,
+                        19.048725,
+                        0
+                    ],
+                    [
+                        83.833786,
+                        19.048808,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 70",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.834156,
+                        19.048202,
+                        0
+                    ],
+                    [
+                        83.834208,
+                        19.04823,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 71",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833843,
+                        19.048839,
+                        0
+                    ],
+                    [
+                        83.834208,
+                        19.04823,
+                        0
+                    ],
+                    [
+                        83.834395,
+                        19.047897,
+                        0
+                    ],
+                    [
+                        83.834522,
+                        19.047692,
+                        0
+                    ],
+                    [
+                        83.83467,
+                        19.047457,
+                        0
+                    ],
+                    [
+                        83.834734,
+                        19.047355,
+                        0
+                    ],
+                    [
+                        83.83519,
+                        19.047602,
+                        0
+                    ],
+                    [
+                        83.835746,
+                        19.047907,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 72",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.833096,
+                        19.048187,
+                        0
+                    ],
+                    [
+                        83.832985,
+                        19.048372,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 73",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.834234,
+                        19.047802,
+                        0
+                    ],
+                    [
+                        83.834395,
+                        19.047897,
+                        0
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Line 74",
+                "styleUrl": "#line-000000-1200-nodesc",
+                "stroke-opacity": 1,
+                "stroke": "#000000",
+                "stroke-width": 1.2
+            }
+        }
+    ]
+}

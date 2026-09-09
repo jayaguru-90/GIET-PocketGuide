@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ================= 4. FETCH GIET_CAMPUS.GEOJSON =================
-    fetch('giet_campus.geojson')
+    fetch('assets/data/giet_campus.geojson')
         .then(res => {
             if (!res.ok) throw new Error("Could not load giet_campus.geojson");
             return res.json();
