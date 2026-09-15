@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return matchedKey ? buildingsNormalized[matchedKey] : null;
     }
 
-    // ================= 4. FETCH GIET_CAMPUS.GEOJSON =================
+// ================= 4. FETCH GIET_CAMPUS.GEOJSON =================
     fetch('assets/data/giet_campus.geojson')
         .then(res => {
             if (!res.ok) throw new Error("Could not load giet_campus.geojson");
@@ -159,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const placeNames = [];
 
+            // Step A: Parse LineStrings into Graph Edges
             data.features.forEach(feature => {
                 if (feature.geometry && feature.geometry.type === 'LineString') {
                     const coords = feature.geometry.coordinates;
@@ -170,61 +171,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Step B: Connect disjoint walkway segments within 25 meters (Increased from 12m)
             for (let i = 0; i < allGraphNodes.length; i++) {
                 const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
                 for (let j = i + 1; j < allGraphNodes.length; j++) {
                     const [lat2, lng2] = allGraphNodes[j].split(',').map(Number);
                     const d = getDistance(lat1, lng1, lat2, lng2);
-                    if (d < 12) {
+                    if (d < 25) { // Threshold expanded to bridge disconnected pathways
                         addEdge(allGraphNodes[i], allGraphNodes[j], [lat1, lng1], [lat2, lng2]);
                     }
                 }
             }
 
+            // Step C: Process Point Locations and Force-Snap them to the Walkway Graph
+            data.features.forEach(feature => {
+                const name = feature.properties?.name;
+                if (feature.geometry.type === 'Point' && name) {
+                    const lat = feature.geometry.coordinates[1];
+                    const lng = feature.geometry.coordinates[0];
+                    const pointKey = toKey(lat, lng);
+
+                    buildings[name] = [lat, lng];
+                    buildingsNormalized[name.toLowerCase()] = [lat, lng];
+
+                    // Connect this building point to the nearest walkway node in the graph
+                    const closest = findClosestGraphNode(lat, lng);
+                    if (closest.key) {
+                        const [cLat, cLng] = closest.key.split(',').map(Number);
+                        addEdge(pointKey, closest.key, [lat, lng], [cLat, cLng]);
+                    }
+
+                    const icon = getPlaceIcon(name);
+
+                    L.geoJSON(feature, {
+                        pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+                            radius: 5,
+                            fillColor: '#ffffff',
+                            color: '#2563eb',
+                            weight: 3,
+                            opacity: 1,
+                            fillOpacity: 1
+                        }),
+                        onEachFeature: (f, layer) => {
+                            layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
+                                permanent: true,
+                                direction: 'top',
+                                offset: [0, -6],
+                                className: 'satellite-label'
+                            });
+                        }
+                    }).addTo(map);
+
+                    placeNames.push(name);
+                }
+            });
+
+            // Render remaining LineStrings on the map
             L.geoJSON(data, {
-                style: (feature) => {
-                    if (feature.geometry.type === 'LineString') {
-                        return {
-                            color: '#f8fafc',
-                            weight: 3.5,
-                            opacity: 0.7,
-                            dashArray: '6, 6',
-                            className: 'campus-walkway-base'
-                        };
-                    }
-                    return { color: '#3b82f6', weight: 2 };
-                },
-                pointToLayer: (feature, latlng) => {
-                    return L.circleMarker(latlng, {
-                        radius: 5,
-                        fillColor: '#ffffff',
-                        color: '#2563eb',
-                        weight: 3,
-                        opacity: 1,
-                        fillOpacity: 1
-                    });
-                },
-                onEachFeature: (feature, layer) => {
-                    const name = feature.properties?.name;
-                    if (feature.geometry.type === 'Point' && name) {
-                        const lat = feature.geometry.coordinates[1];
-                        const lng = feature.geometry.coordinates[0];
-                        
-                        // Save both original and normalized lower-case keys
-                        buildings[name] = [lat, lng];
-                        buildingsNormalized[name.toLowerCase()] = [lat, lng];
-
-                        const icon = getPlaceIcon(name);
-
-                        layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
-                            permanent: true,
-                            direction: 'top',
-                            offset: [0, -6],
-                            className: 'satellite-label'
-                        });
-
-                        placeNames.push(name);
-                    }
+                filter: (feature) => feature.geometry.type === 'LineString',
+                style: {
+                    color: '#f8fafc',
+                    weight: 3.5,
+                    opacity: 0.7,
+                    dashArray: '6, 6',
+                    className: 'campus-walkway-base'
                 }
             }).addTo(map);
 
@@ -260,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(safetyTimer);
             hideLoader();
         });
-
     // ================= 5. DIJKSTRA PATHFINDING =================
     function dijkstra(startKey, endKey) {
         const distances = {};
