@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const GIET_CENTER = [19.0485, 83.8320];
 
-    let buildings = {};
+    let buildings = {};          // Case-sensitive exact mapping
+    let buildingsNormalized = {};// Case-insensitive mapping for mobile input matching
     let graph = {};
     let allGraphNodes = [];
     let activeRouteLayer = null;
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const safetyTimer = setTimeout(hideLoader, 2500);
 
-    // ================= 2. MAP & GOOGLE PURE SATELLITE LAYER =================
+    // ================= 2. MAP INITIALIZATION =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22
@@ -44,12 +45,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Clean photographic tiles without pre-printed labels
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
         attribution: '&copy; Google Maps'
     }).addTo(map);
+
+    // Prevent Leaflet from intercepting touch/scroll events on the panel UI
+    if (navPanel && typeof L !== 'undefined') {
+        L.DomEvent.disableClickPropagation(navPanel);
+        L.DomEvent.disableScrollPropagation(navPanel);
+    }
+
+    // Stop touch events on inputs/selects from triggering Leaflet map dragging
+    [startSelect, endSelect].forEach(inputEl => {
+        if (inputEl) {
+            const stopProp = (e) => e.stopPropagation();
+            inputEl.addEventListener('touchstart', stopProp, { passive: true });
+            inputEl.addEventListener('touchend', stopProp, { passive: true });
+            inputEl.addEventListener('pointerdown', stopProp);
+            inputEl.addEventListener('mousedown', stopProp);
+            inputEl.addEventListener('click', stopProp);
+
+            inputEl.addEventListener('focus', () => {
+                if (inputEl.tagName === 'INPUT') {
+                    inputEl.select();
+                }
+            });
+        }
+    });
 
     // ================= 3. UTILITY & GRAPH FUNCTIONS =================
     function getDistance(lat1, lon1, lat2, lon2) {
@@ -109,6 +133,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return '🏛️';
     }
 
+    // Helper: Case-insensitive location search
+    function resolveLocationCoordinates(rawInput) {
+        if (!rawInput) return null;
+        const cleaned = rawInput.trim();
+        
+        // Direct exact match
+        if (buildings[cleaned]) return buildings[cleaned];
+
+        // Case-insensitive match
+        const lowerKey = cleaned.toLowerCase();
+        if (buildingsNormalized[lowerKey]) return buildingsNormalized[lowerKey];
+
+        // Fuzzy partial match
+        const matchedKey = Object.keys(buildingsNormalized).find(key => key.includes(lowerKey));
+        return matchedKey ? buildingsNormalized[matchedKey] : null;
+    }
+
     // ================= 4. FETCH GIET_CAMPUS.GEOJSON =================
     fetch('assets/data/giet_campus.geojson')
         .then(res => {
@@ -118,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const placeNames = [];
 
-            // Step A: Parse lines into adjacency graph
             data.features.forEach(feature => {
                 if (feature.geometry && feature.geometry.type === 'LineString') {
                     const coords = feature.geometry.coordinates;
@@ -130,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Step B: Auto-bridge nearby path nodes within 12 meters
             for (let i = 0; i < allGraphNodes.length; i++) {
                 const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
                 for (let j = i + 1; j < allGraphNodes.length; j++) {
@@ -142,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Step C: Render features on Leaflet canvas
             L.geoJSON(data, {
                 style: (feature) => {
                     if (feature.geometry.type === 'LineString') {
@@ -171,7 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (feature.geometry.type === 'Point' && name) {
                         const lat = feature.geometry.coordinates[1];
                         const lng = feature.geometry.coordinates[0];
+                        
+                        // Save both original and normalized lower-case keys
                         buildings[name] = [lat, lng];
+                        buildingsNormalized[name.toLowerCase()] = [lat, lng];
 
                         const icon = getPlaceIcon(name);
 
@@ -187,29 +228,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }).addTo(map);
 
-            // Step D: Alphabetical A-Z sorting
             placeNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
+            const datalist = document.getElementById('campus-locations');
+
             placeNames.forEach(name => {
-                if (startSelect) {
+                if (datalist) {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    datalist.appendChild(opt);
+                }
+
+                if (startSelect && startSelect.tagName === 'SELECT') {
                     const opt1 = document.createElement('option');
                     opt1.value = name;
                     opt1.textContent = name;
                     startSelect.appendChild(opt1);
                 }
-                if (endSelect) {
+                if (endSelect && endSelect.tagName === 'SELECT') {
                     const opt2 = document.createElement('option');
                     opt2.value = name;
                     opt2.textContent = name;
                     endSelect.appendChild(opt2);
                 }
             });
-
-            clearTimeout(safetyTimer);
-            hideLoader();
         })
         .catch(err => {
             console.error("GeoJSON load error:", err);
+        })
+        .finally(() => {
             clearTimeout(safetyTimer);
             hideLoader();
         });
@@ -291,14 +338,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 6. SAFE-BOUNDED BOTTOM SHEET CONTROLLER =================
+    // ================= 6. BOTTOM SHEET DRAG MECHANICS =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
     let maxTranslate = 0;
     let isCollapsed = false;
 
-    // Minimum visible height when collapsed: pill handle + "Find Route" header
     const VISIBLE_PEEK_HEIGHT = 68;
 
     function calculateLimits() {
@@ -322,6 +368,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function onDragStart(e) {
         if (window.innerWidth > 640) return;
+
+        // CRITICAL FIX: Do NOT initiate panel drag when clicking/tapping form controls or inputs
+        const target = e.target;
+        const tagName = target.tagName.toLowerCase();
+        if (tagName === 'input' || tagName === 'select' || tagName === 'option' || tagName === 'button' || target.closest('.panel-body')) {
+            return;
+        }
+
         isDragging = true;
         startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
         calculateLimits();
@@ -335,7 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
 
-        // Hard clamping: prevents dragging off the bottom of the screen
         if (newTranslate < 0) newTranslate = 0;
         if (newTranslate > maxTranslate) newTranslate = maxTranslate;
 
@@ -382,7 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('mouseup', onDragEnd);
         window.addEventListener('touchend', onDragEnd);
 
-        togglePanelBtn.addEventListener('click', () => {
+        togglePanelBtn.addEventListener('click', (e) => {
+            const tagName = e.target.tagName.toLowerCase();
+            if (tagName === 'input' || tagName === 'select') return;
             if (isCollapsed) {
                 snapToExpanded();
             } else {
@@ -402,20 +457,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================= 7. NAVIGATION ACTIONS =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', () => {
-            const startName = startSelect.value;
-            const endName = endSelect.value;
+            const startRaw = startSelect ? startSelect.value : '';
+            const endRaw = endSelect ? endSelect.value : '';
 
-            if (!startName || !endName) {
+            if (!startRaw.trim() || !endRaw.trim()) {
                 alert("Please select both Start and Destination.");
                 return;
             }
-            if (startName === endName) {
+
+            if (startRaw.trim().toLowerCase() === endRaw.trim().toLowerCase()) {
                 alert("Start and Destination cannot be the same.");
                 return;
             }
 
-            const startCoords = buildings[startName];
-            const endCoords = buildings[endName];
+            // Case-insensitive lookup
+            const startCoords = resolveLocationCoordinates(startRaw);
+            const endCoords = resolveLocationCoordinates(endRaw);
+
+            if (!startCoords || !endCoords) {
+                alert("Please select valid location names from the drop-down or search list.");
+                return;
+            }
 
             const startNode = findClosestGraphNode(startCoords[0], startCoords[1]);
             const endNode = findClosestGraphNode(endCoords[0], endCoords[1]);

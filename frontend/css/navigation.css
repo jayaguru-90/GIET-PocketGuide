@@ -71,7 +71,7 @@ html, body {
     color: #94a3b8;
 }
 
-/* ================= NAVBAR (SINGLE-LINE NO WRAP) ================= */
+/* ================= NAVBAR ================= */
 .header {
     display: flex;
     justify-content: space-between;
@@ -79,7 +79,7 @@ html, body {
     padding: 0 20px;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
     height: 56px;
     z-index: 1100;
     position: relative;
@@ -127,14 +127,15 @@ html, body {
     color: #2563eb;
     font-weight: 600;
     font-size: 13px;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
     white-space: nowrap;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .navbar a:hover {
     background-color: #eff6ff;
+    color: #1d4ed8;
 }
 
 /* ================= MAP CANVAS ================= */
@@ -163,16 +164,17 @@ html, body {
     top: 20px;
     left: 20px;
     z-index: 1000;
-    width: 330px;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(10px);
-    border: 1px solid #e2e8f0;
+    width: 340px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 16px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-    padding: 16px 20px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.08);
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 .panel-toggle-btn {
@@ -180,13 +182,13 @@ html, body {
     background: none;
     border: none;
     width: 100%;
-    padding: 8px 0;
+    padding: 4px 0 8px 0;
     outline: none;
 }
 
 .toggle-bar {
     display: block;
-    width: 48px;
+    width: 42px;
     height: 5px;
     background: #cbd5e1;
     border-radius: 9999px;
@@ -207,24 +209,27 @@ html, body {
 
 .badge {
     background-color: #dcfce7;
-    color: #166534;
+    color: #15803d;
     font-size: 11px;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 3px 9px;
     border-radius: 9999px;
     text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .panel-body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    pointer-events: auto !important;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+    pointer-events: auto !important;
 }
 
 .input-group label {
@@ -235,22 +240,34 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-.input-group select {
+/* Supports both Select & Search Input Elements */
+.input-group select,
+.input-group input[type="text"] {
     width: 100%;
-    padding: 9px 12px;
+    padding: 11px 12px;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 14px;
     background: #ffffff;
-    color: #1e293b;
+    color: #0f172a;
     outline: none;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: all 0.2s ease;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -webkit-appearance: menulist !important;
+    appearance: auto !important;
 }
 
-.input-group select:focus {
+.input-group select:focus,
+.input-group input[type="text"]:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.input-group input[type="text"]::placeholder {
+    color: #94a3b8;
 }
 
 /* ================= ACTION BUTTONS ================= */
@@ -263,8 +280,8 @@ html, body {
 .btn {
     flex: 1;
     text-decoration: none;
-    padding: 9px 12px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -273,16 +290,17 @@ html, body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    transition: background-color 0.15s ease, transform 0.05s ease;
+    transition: all 0.15s ease;
 }
 
 .btn:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
 .btn-primary {
     background-color: #2563eb;
     color: #ffffff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
 .btn-primary:hover {
     background-color: #1d4ed8;
@@ -295,11 +313,13 @@ html, body {
 }
 .btn-secondary:hover {
     background-color: #e2e8f0;
+    color: #334155;
 }
 
 .btn-gps {
     background-color: #16a34a;
     color: #ffffff;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
 }
 .btn-gps:hover {
     background-color: #15803d;
@@ -308,6 +328,7 @@ html, body {
 .btn-simulate {
     background-color: #7c3aed;
     color: #ffffff;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
 }
 .btn-simulate:hover {
     background-color: #6d28d9;
@@ -317,37 +338,32 @@ html, body {
     margin-top: 4px;
     font-size: 13px;
     font-weight: 600;
-    color: #166534;
+    color: #15803d;
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     display: none;
     line-height: 1.5;
 }
 
 /* ================= MODERN GLASSMORPHIC LABELS ================= */
 .satellite-label {
-    background: rgba(255, 255, 255, 0.94) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     color: #0f172a !important;
     font-size: 11.5px !important;
     font-weight: 700 !important;
-    padding: 3px 9px !important;
+    padding: 4px 10px !important;
     border-radius: 20px !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
     pointer-events: none;
-    letter-spacing: 0.2px !important;
     display: inline-flex !important;
     align-items: center !important;
     gap: 5px !important;
     white-space: nowrap !important;
-}
-
-.satellite-label::before {
-    border-top-color: rgba(255, 255, 255, 0.94) !important;
 }
 
 /* ================= PATHWAYS & ROUTE LINES ================= */
@@ -356,7 +372,7 @@ html, body {
     stroke-width: 3.5px;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
 }
 
 .active-nav-route {
@@ -364,10 +380,10 @@ html, body {
     stroke-width: 6px;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
 }
 
-/* ================= MOBILE BOTTOM-DOCKED SHEET WITH SAFE AREA ================= */
+/* ================= MOBILE BOTTOM-DOCKED SHEET & TOUCH FIXES ================= */
 @media (max-width: 640px) {
     .header {
         padding: 0 12px;
@@ -385,40 +401,49 @@ html, body {
 
     .navbar a {
         font-size: 12px;
-        padding: 4px 8px;
+        padding: 5px 8px;
     }
 
     .map-section {
         height: calc(100vh - 50px);
     }
 
+    /* Fixed Mobile Bottom Sheet Panel */
     .nav-panel {
+        position: fixed;
         top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 0px;
-        width: auto;
-        padding: 6px 16px 18px 16px;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-top-left-radius: 22px;
-        border-top-right-radius: 22px;
-        max-height: 80vh;
-        touch-action: none;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        margin: 0;
+        padding: 4px 16px 20px 16px;
+        border-radius: 20px 20px 0 0;
+        z-index: 2000;
+        max-height: 85vh;
+        overflow-y: auto;          
+        touch-action: pan-y;       
+        box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.25);
         transform: translateY(0);
         will-change: transform;
         transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+        pointer-events: auto !important;
     }
 
     .nav-panel.dragging {
         transition: none !important;
     }
 
+    /* Dragging Handle Area */
     .panel-toggle-btn {
         display: block;
+        width: 100%;
+        padding: 10px 0 6px 0;
         cursor: grab;
-        padding: 8px 0 6px 0;
-        touch-action: none;
+        background: transparent;
+        border: none;
+        outline: none;
+        touch-action: none;        
     }
 
     .panel-toggle-btn:active {
@@ -426,6 +451,39 @@ html, body {
     }
 
     .toggle-bar {
-        background: #94a3b8;
+        width: 44px;
+        height: 5px;
+        background: #cbd5e1;
+        border-radius: 9999px;
+        margin: 0 auto;
+    }
+
+    /* Touch/Pointer overrides for mobile input fields & native select menus */
+    .input-group select,
+    .input-group input[type="text"] {
+        padding: 12px 14px;       
+        font-size: 15px;          
+        border-radius: 10px;
+        position: relative;
+        z-index: 2001;           
+        pointer-events: auto !important;
+        touch-action: manipulation !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+    }
+
+    .action-buttons {
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 12px 10px;
+        font-size: 13.5px;
+        border-radius: 10px;
+    }
+
+    .satellite-label {
+        font-size: 10.5px !important;
+        padding: 3px 8px !important;
     }
 }

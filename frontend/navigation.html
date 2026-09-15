@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Navigator - GIET University</title>
 
     <!-- Leaflet Core CSS -->
@@ -48,19 +48,32 @@
             </div>
 
             <div class="panel-body">
+                <!-- Search + Dropdown Input: Starting Point -->
                 <div class="input-group">
                     <label for="start-select">Starting Point</label>
-                    <select id="start-select">
-                        <option value="">Choose Starting Location</option>
-                    </select>
+                    <input 
+                        type="text" 
+                        id="start-select" 
+                        list="campus-locations" 
+                        placeholder="Type or choose starting location..." 
+                        autocomplete="off"
+                    />
                 </div>
 
+                <!-- Search + Dropdown Input: Destination -->
                 <div class="input-group">
                     <label for="end-select">Destination</label>
-                    <select id="end-select">
-                        <option value="">Choose Destination</option>
-                    </select>
+                    <input 
+                        type="text" 
+                        id="end-select" 
+                        list="campus-locations" 
+                        placeholder="Type or choose destination..." 
+                        autocomplete="off"
+                    />
                 </div>
+
+                <!-- Datalist populated dynamically by JS -->
+                <datalist id="campus-locations"></datalist>
 
                 <!-- Route Actions -->
                 <div class="action-buttons">
