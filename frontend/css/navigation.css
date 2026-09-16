@@ -79,7 +79,7 @@ html, body {
     padding: 0 20px;
     background: #ffffff;
     border-bottom: 1px solid #e2e8f0;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     height: 56px;
     z-index: 1100;
     position: relative;
@@ -127,15 +127,14 @@ html, body {
     color: #2563eb;
     font-weight: 600;
     font-size: 13px;
-    padding: 6px 12px;
+    padding: 6px 10px;
     border-radius: 6px;
     white-space: nowrap;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .navbar a:hover {
     background-color: #eff6ff;
-    color: #1d4ed8;
 }
 
 /* ================= MAP CANVAS ================= */
@@ -158,23 +157,23 @@ html, body {
     z-index: 1;
 }
 
-/* ================= DESKTOP FLOATING PANEL ================= */
+/* ================= FLOATING CONTROL PANEL ================= */
 .nav-panel {
     position: absolute;
     top: 20px;
     left: 20px;
     z-index: 1000;
-    width: 340px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    width: 330px;
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e2e8f0;
     border-radius: 16px;
-    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.15), 0 2px 6px rgba(15, 23, 42, 0.08);
-    padding: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
 .panel-toggle-btn {
@@ -182,13 +181,13 @@ html, body {
     background: none;
     border: none;
     width: 100%;
-    padding: 4px 0 8px 0;
+    padding: 8px 0;
     outline: none;
 }
 
 .toggle-bar {
     display: block;
-    width: 42px;
+    width: 48px;
     height: 5px;
     background: #cbd5e1;
     border-radius: 9999px;
@@ -209,27 +208,74 @@ html, body {
 
 .badge {
     background-color: #dcfce7;
-    color: #15803d;
+    color: #166534;
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 9px;
+    padding: 2px 8px;
     border-radius: 9999px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
 }
 
 .panel-body {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    pointer-events: auto !important;
 }
 
+/* ================= LIVE SEARCH BAR ================= */
+.search-container {
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 0 8px 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.search-item {
+    padding: 8px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.search-item:hover {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* ================= MULTI-STOP WAYPOINTS ================= */
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    pointer-events: auto !important;
+    gap: 5px;
 }
 
 .input-group label {
@@ -240,34 +286,97 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-/* Supports both Select & Search Input Elements */
-.input-group select,
-.input-group input[type="text"] {
+.stop-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.stop-row select,
+.input-group select {
     width: 100%;
-    padding: 11px 12px;
+    flex: 1;
+    padding: 9px 12px;
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 14px;
     background: #ffffff;
-    color: #0f172a;
+    color: #1e293b;
     outline: none;
-    transition: all 0.2s ease;
-    pointer-events: auto !important;
-    touch-action: manipulation !important;
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    -webkit-appearance: menulist !important;
-    appearance: auto !important;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-group select:focus,
-.input-group input[type="text"]:focus {
+.stop-row select:focus,
+.input-group select:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-.input-group input[type="text"]::placeholder {
-    color: #94a3b8;
+.btn-remove-stop {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #ef4444;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.btn-add-stop {
+    background: #f8fafc;
+    border: 1px dashed #94a3b8;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-add-stop:hover {
+    background: #e2e8f0;
+    border-color: #64748b;
+}
+
+/* ================= ROUTE CARDS ================= */
+.route-card {
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.route-card.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+}
+
+.route-card-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #1e293b;
+    display: flex;
+    justify-content: space-between;
+}
+
+.route-card.active .route-card-title {
+    color: #1d4ed8;
+}
+
+.route-card-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 2px;
 }
 
 /* ================= ACTION BUTTONS ================= */
@@ -280,8 +389,8 @@ html, body {
 .btn {
     flex: 1;
     text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -290,18 +399,18 @@ html, body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    transition: all 0.15s ease;
+    transition: background-color 0.15s ease, transform 0.05s ease;
 }
 
 .btn:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
 }
 
 .btn-primary {
     background-color: #2563eb;
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
 }
+
 .btn-primary:hover {
     background-color: #1d4ed8;
 }
@@ -311,16 +420,16 @@ html, body {
     color: #475569;
     border: 1px solid #cbd5e1;
 }
+
 .btn-secondary:hover {
     background-color: #e2e8f0;
-    color: #334155;
 }
 
 .btn-gps {
     background-color: #16a34a;
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
 }
+
 .btn-gps:hover {
     background-color: #15803d;
 }
@@ -328,8 +437,8 @@ html, body {
 .btn-simulate {
     background-color: #7c3aed;
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
 }
+
 .btn-simulate:hover {
     background-color: #6d28d9;
 }
@@ -338,41 +447,46 @@ html, body {
     margin-top: 4px;
     font-size: 13px;
     font-weight: 600;
-    color: #15803d;
+    color: #166534;
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
-    padding: 10px 14px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
     display: none;
     line-height: 1.5;
 }
 
-/* ================= MODERN GLASSMORPHIC LABELS ================= */
+/* ================= SATELLITE MARKER LABELS ================= */
 .satellite-label {
-    background: rgba(255, 255, 255, 0.92) !important;
-    backdrop-filter: blur(8px) !important;
+    background: rgba(255, 255, 255, 0.94) !important;
     -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     color: #0f172a !important;
     font-size: 11.5px !important;
     font-weight: 700 !important;
-    padding: 4px 10px !important;
+    padding: 3px 9px !important;
     border-radius: 20px !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     pointer-events: none;
+    letter-spacing: 0.2px !important;
     display: inline-flex !important;
     align-items: center !important;
     gap: 5px !important;
     white-space: nowrap !important;
 }
 
-/* ================= PATHWAYS & ROUTE LINES ================= */
+.satellite-label::before {
+    border-top-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* ================= WALKWAYS & POLYLINES ================= */
 .campus-walkway-base {
     stroke: rgba(255, 255, 255, 0.7);
     stroke-width: 3.5px;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
 }
 
 .active-nav-route {
@@ -380,10 +494,10 @@ html, body {
     stroke-width: 6px;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
-/* ================= MOBILE BOTTOM-DOCKED SHEET & TOUCH FIXES ================= */
+/* ================= MOBILE BOTTOM-DOCKED SHEET ================= */
 @media (max-width: 640px) {
     .header {
         padding: 0 12px;
@@ -401,49 +515,40 @@ html, body {
 
     .navbar a {
         font-size: 12px;
-        padding: 5px 8px;
+        padding: 4px 8px;
     }
 
     .map-section {
         height: calc(100vh - 50px);
     }
 
-    /* Fixed Mobile Bottom Sheet Panel */
     .nav-panel {
-        position: fixed;
         top: auto;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        margin: 0;
-        padding: 4px 16px 20px 16px;
-        border-radius: 20px 20px 0 0;
-        z-index: 2000;
-        max-height: 85vh;
-        overflow-y: auto;          
-        touch-action: pan-y;       
-        box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.25);
+        left: 10px;
+        right: 10px;
+        bottom: 0px;
+        width: auto;
+        padding: 6px 16px 18px 16px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-left-radius: 22px;
+        border-top-right-radius: 22px;
+        max-height: 80vh;
+        touch-action: none;
         transform: translateY(0);
         will-change: transform;
         transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
-        pointer-events: auto !important;
     }
 
     .nav-panel.dragging {
         transition: none !important;
     }
 
-    /* Dragging Handle Area */
     .panel-toggle-btn {
         display: block;
-        width: 100%;
-        padding: 10px 0 6px 0;
         cursor: grab;
-        background: transparent;
-        border: none;
-        outline: none;
-        touch-action: none;        
+        padding: 8px 0 6px 0;
+        touch-action: none;
     }
 
     .panel-toggle-btn:active {
@@ -451,39 +556,6 @@ html, body {
     }
 
     .toggle-bar {
-        width: 44px;
-        height: 5px;
-        background: #cbd5e1;
-        border-radius: 9999px;
-        margin: 0 auto;
-    }
-
-    /* Touch/Pointer overrides for mobile input fields & native select menus */
-    .input-group select,
-    .input-group input[type="text"] {
-        padding: 12px 14px;       
-        font-size: 15px;          
-        border-radius: 10px;
-        position: relative;
-        z-index: 2001;           
-        pointer-events: auto !important;
-        touch-action: manipulation !important;
-        user-select: text !important;
-        -webkit-user-select: text !important;
-    }
-
-    .action-buttons {
-        gap: 8px;
-    }
-
-    .btn {
-        padding: 12px 10px;
-        font-size: 13.5px;
-        border-radius: 10px;
-    }
-
-    .satellite-label {
-        font-size: 10.5px !important;
-        padding: 3px 8px !important;
+        background: #94a3b8;
     }
 }

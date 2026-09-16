@@ -131,7 +131,7 @@
         "coordinates": [83.8324027, 19.0495653, 0]
       },
       "properties": {
-        "name": "ECE Block Gate 1",
+        "name": "ECE Block",
         "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
         "icon-opacity": 1,
         "icon-color": "#0288d1",
@@ -278,7 +278,7 @@
         "coordinates": [83.8319928, 19.0493369, 0]
       },
       "properties": {
-        "name": "ECE Block Gate 2",
+        "name": "CSA block",
         "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
         "icon-opacity": 1,
         "icon-color": "#0288d1",
@@ -312,7 +312,7 @@
         "coordinates": [83.8338431, 19.048839, 0]
       },
       "properties": {
-        "name": "BUs stop ",
+        "name": "Bus-stop ",
         "styleUrl": "#icon-1532-0288D1-labelson-nodesc",
         "icon-opacity": 1,
         "icon-color": "#0288d1",
@@ -327,7 +327,7 @@
         "coordinates": [83.8311413, 19.0482229, 0]
       },
       "properties": {
-        "name": "Temple Garden",
+        "name": "Temple Garden/Open Gym",
         "styleUrl": "#icon-1582-7CB342-labelson-nodesc",
         "icon-opacity": 1,
         "icon-color": "#7cb342",
