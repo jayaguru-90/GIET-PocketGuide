@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="description" content="GIET University Campus Navigation Portal with Dijkstra-powered pathfinding and building directory." />
     <title>GIET Guide - Campus Navigation</title>
 
     <!-- FAVICON -->
@@ -19,7 +20,7 @@
 </head>
 <body>
 
-    <!-- FLOATING PREMIUM NAVBAR -->
+    <!-- FLOATING NAVBAR -->
     <header class="header">
         <div class="nav-container">
             <a href="index.html" class="logo-section">
@@ -39,7 +40,7 @@
                 <span class="bar"></span>
             </button>
 
-            <!-- Navigation Links with SVG Icons -->
+            <!-- Navigation Links -->
             <nav class="navbar" id="navbar">
                 <a href="index.html" class="nav-link active">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -92,7 +93,7 @@
                     </div>
                 </div>
 
-                <!-- Visual Anchor: Live Routing Preview Card -->
+                <!-- Live Routing Preview Card -->
                 <div class="hero-preview-card">
                     <div class="preview-bar">
                         <div class="window-dots">
@@ -110,7 +111,7 @@
                             </div>
                             <p>Turn-by-turn routing across verified walkways with live simulation support.</p>
                         </div>
-                        <a href="navigation.html" class="preview-link">Open Live Map →</a>
+                        <a href="navigation.html" class="preview-link">Open Live Map &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -155,7 +156,8 @@
                 <div class="team-grid">
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/jaya photo.jpeg" alt="Jayaguru Sahu" />
+                            <!-- URL encoded or renamed without spaces -->
+                            <img src="assets/images/jaya%20photo.jpeg" alt="Jayaguru Sahu" loading="lazy" />
                         </div>
                         <h4>Jayaguru Sahu</h4>
                         <span class="team-role">Developer</span>
@@ -163,7 +165,8 @@
 
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/bhavishya image .jpeg" alt="Pedina Bavishya" />
+                            <!-- URL encoded or renamed without spaces -->
+                            <img src="assets/images/bhavishya%20image%20.jpeg" alt="Pedina Bavishya" loading="lazy" />
                         </div>
                         <h4>Pedina Bavishya</h4>
                         <span class="team-role">Developer</span>
@@ -171,7 +174,8 @@
 
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/Ayush photo.jpeg" alt="Ayush Kumar Behera" />
+                            <!-- URL encoded or renamed without spaces -->
+                            <img src="assets/images/Ayush%20photo.jpeg" alt="Ayush Kumar Behera" loading="lazy" />
                         </div>
                         <h4>Ayush Kumar Behera</h4>
                         <span class="team-role">Developer</span>
@@ -186,12 +190,12 @@
         <p>&copy; 2026 GIET Campus Guide. Built with precision for GIET University.</p>
     </footer>
 
-     <!-- Fixed Dark Mode Button -->
-<button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-    <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-    </svg>
-</button>
+    <!-- Dark Mode Button -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    </button>
 
     <script src="js/home.js"></script>
 </body>

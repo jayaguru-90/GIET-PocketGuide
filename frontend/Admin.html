@@ -1,131 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GIETU Campus Guide - Admin Control Center</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)" />
-  <!-- Fonts & Icons -->
-  <link href="[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap)" rel="stylesheet">
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)" />
-  
-  <link rel="stylesheet" href="admin.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>GIETU Campus Guide - Admin Portal</title>
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
+    <link rel="shortcut icon" type="image/png" href="assets/images/LOGO.png" />
+    <link rel="apple-touch-icon" href="assets/images/LOGO.png" />
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/admin.css" />
 </head>
-<body>
+<body class="admin-body">
 
-  <!-- Top Navbar -->
-  <header class="navbar">
-    <div class="brand">
-      <div class="logo-box">
-        <i class="fa-solid fa-graduation-cap"></i>
-      </div>
-      <div class="brand-text">
-        <div class="title">GIETU Campus Guide</div>
-        <div class="subtitle"><span class="dot"></span> ADMIN CONTROL CENTER</div>
-      </div>
-    </div>
-    <div class="nav-actions">
-      <a href="index.html" class="nav-link"><i class="fa-regular fa-compass"></i> Home</a>
-      <a href="live.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Live Map</a>
-      <button id="btnExport" class="btn-primary"><i class="fa-solid fa-download"></i> Export GeoJSON</button>
-      <a href="#" class="nav-link text-muted"><i class="fa-solid fa-arrow-right-from-bracket"></i> Exit</a>
-    </div>
-  </header>
+    <!-- FLOATING PILL NAVBAR (Identical to Homepage) -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="index.html" class="logo-section">
+                <div class="logo-box">
+                    <img src="assets/images/LOGO.png" class="logo" alt="GIET Logo" />
+                </div>
+                <div class="brand-text-group">
+                    <span class="brand-title">GIETU <span class="highlight-gradient">Campus Guide</span></span>
+                    <span class="brand-sub"><span class="pulse-dot"></span> Navigation Portal</span>
+                </div>
+            </a>
 
-  <div class="main-container">
-    <!-- Left Sidebar -->
-    <aside class="sidebar">
-      <!-- Navigation Tabs -->
-      <div class="admin-tabs">
-        <button class="tab-btn active" data-tab="locations"><i class="fa-solid fa-location-dot"></i> Locations</button>
-        <button class="tab-btn" data-tab="routes"><i class="fa-solid fa-route"></i> Add Route</button>
-        <button class="tab-btn" data-tab="manage"><i class="fa-solid fa-pen-to-square"></i> Manage Names</button>
-      </div>
-
-      <!-- Section 1: Add Location -->
-      <div id="tab-locations" class="tab-content active">
-        <div class="section-header">
-          <div class="title-row">
-            <h3>Add Location</h3>
-            <span class="badge" id="modeBadge">Click Map to Set</span>
-          </div>
-          <p class="desc">Drop pins onto the satellite view or pick a location from the list below.</p>
+            <!-- Navigation Links -->
+            <nav class="navbar" id="navbar">
+                <a href="index.html" class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Home</span>
+                </a>
+                <a href="navigation.html" class="nav-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                    <span>Campus Map</span>
+                </a>
+                <button id="auth-action-btn" class="nav-link admin-btn">
+                    <svg class="nav-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span id="auth-btn-text">Admin Portal</span>
+                </button>
+            </nav>
         </div>
+    </header>
 
-        <form id="locationForm" class="control-form">
-          <div class="form-group">
-            <label>LOCATION / BUILDING NAME</label>
-            <input type="text" id="locName" placeholder="e.g. CSE Block, Central Mess..." required />
-          </div>
-
-          <div class="form-group">
-            <label>COORDINATES (LATITUDE, LONGITUDE)</label>
-            <div class="coords-row">
-              <input type="number" step="any" id="locLat" placeholder="Latitude" required />
-              <input type="number" step="any" id="locLng" placeholder="Longitude" required />
+    <!-- AUTHENTICATION OVERLAY -->
+    <div id="auth-modal" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-logo-badge">
+                <img src="assets/images/LOGO.png" alt="GIET Logo" />
             </div>
-          </div>
+            <h2>Admin Authentication</h2>
+            <p>Access the campus spatial registry and routing network</p>
 
-          <button type="submit" class="btn-action"><i class="fa-solid fa-plus"></i> Save Location</button>
-        </form>
-      </div>
-
-      <!-- Section 2: Add Route -->
-      <div id="tab-routes" class="tab-content">
-        <div class="section-header">
-          <div class="title-row">
-            <h3>Add Route / Path</h3>
-            <span class="badge warning" id="routeBadge">Inactive</span>
-          </div>
-          <p class="desc">Click points along roadways or paths on the satellite map to draw a route.</p>
+            <form id="login-form">
+                <div class="input-field">
+                    <label><i class="fa-solid fa-user-shield"></i> Username</label>
+                    <input type="text" id="username" placeholder="Enter admin username" required autocomplete="username" />
+                </div>
+                <div class="input-field">
+                    <label><i class="fa-solid fa-lock"></i> Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required autocomplete="current-password" />
+                </div>
+                <div id="login-error" class="login-error-msg"></div>
+                <button type="submit" class="btn-primary-gradient">
+                    <span>Sign In</span> <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <div class="auth-help-hint">
+                    Default credentials: <code>admin</code> / <code>gietu@123</code>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <div class="control-form">
-          <div class="form-group">
-            <label>ROUTE / ROAD NAME</label>
-            <input type="text" id="routeName" placeholder="e.g. Main Gate to Central Mess Pathway" />
-          </div>
+    <!-- MAIN PORTAL INTERFACE -->
+    <main id="admin-workspace" class="admin-workspace hidden">
+        <div class="workspace-grid">
+            <!-- Sidebar Editor -->
+            <aside class="sidebar-editor">
+                <!-- Location Form Card -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <span class="badge">📍 Spatial Control</span>
+                        <h3 id="form-heading">Add New Location</h3>
+                        <p class="card-desc">Click on the satellite map to pick exact latitude & longitude automatically.</p>
+                    </div>
 
-          <div class="route-btn-row">
-            <button type="button" id="btnStartRoute" class="btn-outline"><i class="fa-solid fa-pen"></i> Start Drawing</button>
-            <button type="button" id="btnClearRoute" class="btn-outline-danger"><i class="fa-solid fa-trash-can"></i> Clear</button>
-          </div>
-          <div class="path-counter" id="pathCounter">Points plotted: 0</div>
+                    <form id="location-form">
+                        <input type="hidden" id="loc-id" />
 
-          <button type="button" id="btnSaveRoute" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> Save Route</button>
+                        <div class="input-field">
+                            <label>Location Name</label>
+                            <input type="text" id="loc-name" placeholder="e.g. NC-15, Central Cafe" required />
+                        </div>
+
+                        <div class="input-field">
+                            <label>Category</label>
+                            <select id="loc-category">
+                                <option value="Academic">Academic Building</option>
+                                <option value="Hostel / Mess">Hostel / Central Mess</option>
+                                <option value="Sports">Sports Ground / Court</option>
+                                <option value="Amenities">Amenities / Park / Temple</option>
+                                <option value="Gate / Road">Gates & Infrastructure</option>
+                            </select>
+                        </div>
+
+                        <div class="coords-row">
+                            <div class="input-field">
+                                <label>Latitude</label>
+                                <input type="number" step="0.0000001" id="loc-lat" placeholder="19.048..." required />
+                            </div>
+                            <div class="input-field">
+                                <label>Longitude</label>
+                                <input type="number" step="0.0000001" id="loc-lng" placeholder="83.831..." required />
+                            </div>
+                        </div>
+
+                        <div class="form-btn-actions">
+                            <button type="submit" class="btn-primary-gradient" id="submit-btn">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Location
+                            </button>
+                            <button type="button" class="btn-cancel hidden" id="cancel-edit-btn">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Locations Directory Card -->
+                <div class="glass-card directory-card">
+                    <div class="directory-header">
+                        <div>
+                            <h4>Campus GeoJSON Registry</h4>
+                            <small id="location-stats">Loading campus points...</small>
+                        </div>
+                        <button id="export-geojson-btn" class="btn-chip" title="Export Modified GeoJSON">
+                            <i class="fa-solid fa-file-export"></i> Export JSON
+                        </button>
+                    </div>
+
+                    <div class="search-wrapper">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="search-filter" placeholder="Search buildings, hostels, grounds..." />
+                    </div>
+
+                    <div class="registry-list" id="registry-list">
+                        <!-- Dynamic points rendered by Admin.js -->
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Map Viewport -->
+            <section class="map-viewport-section">
+                <div id="admin-leaflet-map"></div>
+                <div class="map-status-pill">
+                    <span class="pulse-dot"></span>
+                    <span>Live GPS Grid: <strong>GIET University, Gunupur</strong></span>
+                </div>
+            </section>
         </div>
-      </div>
-
-      <!-- Section 3: Manage / Rename Map Locations -->
-      <div id="tab-manage" class="tab-content">
-        <div class="section-header">
-          <h3>Edit Map Names</h3>
-          <p class="desc">Update and rename markers and landmarks placed on the campus map.</p>
-        </div>
-
-        <div class="form-group" style="padding: 0 16px 8px 16px;">
-          <input type="text" id="filterInput" placeholder="Filter campus locations..." />
-        </div>
-
-        <div class="item-list-container" id="locationsList">
-          <!-- Populated dynamically via admin.js -->
-        </div>
-      </div>
-    </aside>
-
-    <!-- Map Container -->
-    <main class="map-wrapper">
-      <div class="map-pill-badge">
-        <i class="fa-solid fa-satellite"></i> Google Satellite Live &mdash; Click anywhere on campus to drop a pin
-      </div>
-      <div id="map"></div>
     </main>
-  </div>
 
-  <!-- Scripts -->
-  <script src="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.js](https://unpkg.com/leaflet@1.9.4/dist/leaflet.js)"></script>
-  <script src="admin.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/Admin.js"></script>
 </body>
 </html>
