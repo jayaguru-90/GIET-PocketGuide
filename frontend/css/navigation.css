@@ -559,3 +559,46 @@ html, body {
         background: #94a3b8;
     }
 }
+
+/* ================= FLOATING NAVIGATION PANEL ================= */
+.nav-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 330px;
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    /* Enable scrolling when content exceeds the screen height */
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+
+/* Sleek modern scrollbar for the card */
+.nav-panel::-webkit-scrollbar {
+    width: 5px;
+}
+
+.nav-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-panel::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.nav-panel::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
