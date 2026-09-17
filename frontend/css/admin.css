@@ -32,7 +32,7 @@ body.admin-body {
     display: none !important;
 }
 
-/* ================= THEME FLOATING PILL NAVBAR ================= */
+/* ================= FLOATING PILL NAVBAR ================= */
 .header {
     width: 100%;
     padding: 1.2rem 2.5rem 0.6rem 2.5rem;
@@ -160,7 +160,7 @@ body.admin-body {
     stroke: #ffffff;
 }
 
-/* ================= AUTHENTICATION MODAL ================= */
+/* ================= AUTH MODAL ================= */
 .auth-overlay {
     position: fixed;
     inset: 0;
@@ -306,7 +306,7 @@ body.admin-body {
     gap: 1.2rem;
 }
 
-/* ================= SIDEBAR CARDS ================= */
+/* ================= SIDEBAR ================= */
 .sidebar-editor {
     display: flex;
     flex-direction: column;
@@ -547,15 +547,41 @@ body.admin-body {
     gap: 8px;
 }
 
-/* Custom Marker CSS */
-.custom-pin-marker {
-    background: #2563eb;
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: 999px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-    white-space: nowrap;
+/* ================= FLOATING MAP BADGES ================= */
+.custom-leaflet-tooltip {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.campus-map-badge {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3) !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    cursor: pointer !important;
+}
+
+.badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #2563eb;
+}
+
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+    display: none !important;
 }

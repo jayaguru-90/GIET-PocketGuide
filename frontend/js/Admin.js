@@ -1,9 +1,8 @@
 /**
  * GIET University Admin Spatial Management Engine
- * Direct GeoJSON Parser & Interactive Editor
+ * Pure Satellite Imagery with Permanent Custom Map Badges
  */
 
-// Initial GeoJSON features provided for GIET University
 const INITIAL_GEOJSON = {
   "type": "FeatureCollection",
   "features": [
@@ -50,21 +49,17 @@ const INITIAL_GEOJSON = {
   ]
 };
 
-// Map Settings
 const CAMPUS_VIEW = [19.0486, 83.8325];
 let map = null;
 let markersById = {};
 let temporaryMarker = null;
 let walkwaysLayerGroup = null;
 
-// Storage key
 const STORAGE_KEY = "gietu_campus_geojson";
-
-// Authentication Credentials
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "gietu@123";
 
-// Elements
+// DOM References
 const authModal = document.getElementById("auth-modal");
 const adminWorkspace = document.getElementById("admin-workspace");
 const loginForm = document.getElementById("login-form");
@@ -72,7 +67,6 @@ const loginError = document.getElementById("login-error");
 const authActionBtn = document.getElementById("auth-action-btn");
 const authBtnText = document.getElementById("auth-btn-text");
 
-// Form & Controls
 const locationForm = document.getElementById("location-form");
 const locIdInput = document.getElementById("loc-id");
 const locNameInput = document.getElementById("loc-name");
@@ -86,7 +80,6 @@ const searchFilter = document.getElementById("search-filter");
 const locationStats = document.getElementById("location-stats");
 const exportJsonBtn = document.getElementById("export-geojson-btn");
 
-// ================= DATA MANAGERS =================
 function getDataset() {
     const cached = localStorage.getItem(STORAGE_KEY);
     if (!cached) {
@@ -100,7 +93,6 @@ function saveDataset(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-// ================= AUTH MANAGEMENT =================
 function evaluateSession() {
     const isLoggedIn = sessionStorage.getItem("gietu_admin_logged_in") === "true";
     if (isLoggedIn) {
@@ -140,7 +132,6 @@ authActionBtn.addEventListener("click", () => {
     }
 });
 
-// ================= MAP ENGINE & RENDERER =================
 function setupMapEngine() {
     if (map) {
         setTimeout(() => map.invalidateSize(), 200);
@@ -152,15 +143,14 @@ function setupMapEngine() {
         maxZoom: 20
     }).setView(CAMPUS_VIEW, 17);
 
-    // Google Satellite Tiles (Matches navigation.html)
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    // Pure satellite tile layer without hardcoded labels
+    L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 20,
-        attribution: '&copy; Google Maps &mdash; GIET University'
+        attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
     walkwaysLayerGroup = L.layerGroup().addTo(map);
 
-    // Click map to assign coordinates
     map.on("click", (e) => {
         const { lat, lng } = e.latlng;
         locLatInput.value = lat.toFixed(7);
@@ -184,7 +174,6 @@ function renderWorkspace(filterTerm = "") {
     const data = getDataset();
     registryList.innerHTML = "";
 
-    // Clear existing markers & walkways
     Object.values(markersById).forEach(m => map.removeLayer(m));
     markersById = {};
     walkwaysLayerGroup.clearLayers();
@@ -192,45 +181,57 @@ function renderWorkspace(filterTerm = "") {
     let pointCount = 0;
 
     data.features.forEach((feat, index) => {
-        // Render LineStrings (Walkways)
         if (feat.geometry.type === "LineString") {
             const flippedCoords = feat.geometry.coordinates.map(c => [c[1], c[0]]);
             L.polyline(flippedCoords, {
                 color: "#38bdf8",
-                weight: 3,
+                weight: 3.5,
                 opacity: 0.85,
                 dashArray: "4, 6"
             }).addTo(walkwaysLayerGroup);
             return;
         }
 
-        // Render Points (Locations)
         if (feat.geometry.type === "Point") {
             pointCount++;
             const [lng, lat] = feat.geometry.coordinates;
             const name = feat.properties.name || "Unnamed Point";
             const category = feat.properties.category || "Campus Site";
 
-            // Marker on Map
             const marker = L.circleMarker([lat, lng], {
-                radius: 7,
+                radius: 6,
                 fillColor: "#2563eb",
                 color: "#ffffff",
                 weight: 2,
-                fillOpacity: 0.95
+                fillOpacity: 1
             }).addTo(map);
 
+            // Permanent text badge overlay
+            marker.bindTooltip(`
+                <span class="campus-map-badge">
+                    <span class="badge-dot"></span>
+                    ${name}
+                </span>
+            `, {
+                permanent: true,
+                direction: "top",
+                offset: [0, -8],
+                className: "custom-leaflet-tooltip"
+            });
+
             marker.bindPopup(`
-                <div style="font-family: Inter, sans-serif;">
+                <div style="font-family: Inter, sans-serif; min-width: 140px;">
                     <strong style="color: #1e3a8a; font-size: 0.95rem;">${name}</strong><br>
                     <span style="font-size: 0.75rem; color: #64748b;">${category}</span><br>
-                    <code style="font-size: 0.7rem; color: #0284c7;">${lat.toFixed(6)}, ${lng.toFixed(6)}</code>
+                    <code style="font-size: 0.7rem; color: #0284c7;">${lat.toFixed(6)}, ${lng.toFixed(6)}</code><br>
+                    <button onclick="editPoint(${index})" style="margin-top: 8px; padding: 4px 8px; font-size: 0.75rem; border: none; background: #2563eb; color: white; border-radius: 6px; cursor: pointer;">
+                        Rename / Edit
+                    </button>
                 </div>
             `);
 
             markersById[index] = marker;
 
-            // Render to Sidebar if it matches search
             if (name.toLowerCase().includes(filterTerm.toLowerCase()) || category.toLowerCase().includes(filterTerm.toLowerCase())) {
                 const item = document.createElement("div");
                 item.className = "reg-item";
@@ -257,7 +258,6 @@ function renderWorkspace(filterTerm = "") {
     locationStats.textContent = `${pointCount} verified campus spots`;
 }
 
-// ================= CRUD ACTIONS =================
 locationForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const id = locIdInput.value;
@@ -271,7 +271,6 @@ locationForm.addEventListener("submit", (e) => {
     const data = getDataset();
 
     if (id !== "") {
-        // Rename / Update Existing Point
         const idx = parseInt(id);
         if (data.features[idx]) {
             data.features[idx].properties.name = name;
@@ -279,7 +278,6 @@ locationForm.addEventListener("submit", (e) => {
             data.features[idx].geometry.coordinates = [lng, lat, 0];
         }
     } else {
-        // Add New Point Feature
         const newFeature = {
             "type": "Feature",
             "geometry": {
@@ -319,7 +317,6 @@ window.editPoint = function(index) {
     formHeading.textContent = "Rename / Edit Spot";
     cancelEditBtn.classList.remove("hidden");
 
-    // Pan map to point
     const [lng, lat] = feat.geometry.coordinates;
     map.setView([lat, lng], 19);
     if (markersById[index]) {
@@ -358,5 +355,4 @@ exportJsonBtn.addEventListener("click", () => {
     alert("Updated GIET University GeoJSON has been copied to your clipboard!");
 });
 
-// Boot session verification
 evaluateSession();
