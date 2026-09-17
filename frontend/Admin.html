@@ -31,7 +31,7 @@
                 </div>
                 <div class="brand-text-group">
                     <span class="brand-title">GIETU <span class="highlight-gradient">Campus Guide</span></span>
-                    <span class="brand-sub"><span class="pulse-dot"></span> Navigation Portal</span>
+                    <span class="brand-sub"><span class="pulse-dot"></span> Admin Control Center</span>
                 </div>
             </a>
 
@@ -60,7 +60,7 @@
                 <img src="assets/images/LOGO.png" alt="GIET Logo" />
             </div>
             <h2>Admin Authentication</h2>
-            <p>Sign in to manage GIET University spatial points and routes</p>
+            <p>Access the campus spatial registry and routing network</p>
 
             <form id="login-form">
                 <div class="input-field">
@@ -87,12 +87,23 @@
         <div class="workspace-grid">
             <!-- Sidebar Editor -->
             <aside class="sidebar-editor">
-                <!-- Location Form Card -->
-                <div class="glass-card">
+                
+                <!-- Navigation Tabs: Locations vs Routes -->
+                <div class="panel-tabs">
+                    <button class="tab-btn active" id="tab-locations-btn">
+                        <i class="fa-solid fa-location-dot"></i> Buildings & Points
+                    </button>
+                    <button class="tab-btn" id="tab-routes-btn">
+                        <i class="fa-solid fa-route"></i> Walkway Routes
+                    </button>
+                </div>
+
+                <!-- 1. LOCATION FORM PANEL -->
+                <div id="location-panel" class="glass-card">
                     <div class="card-header">
-                        <span class="badge">📍 Spatial Control</span>
-                        <h3 id="form-heading">Add New Location</h3>
-                        <p class="card-desc">Click on the satellite map to pick exact latitude & longitude automatically.</p>
+                        <span class="badge">📍 Pin Manager</span>
+                        <h3 id="form-heading">Add Location</h3>
+                        <p class="card-desc">Click anywhere on the satellite map to fetch exact coordinates.</p>
                     </div>
 
                     <form id="location-form">
@@ -100,7 +111,7 @@
 
                         <div class="input-field">
                             <label>Location Name</label>
-                            <input type="text" id="loc-name" placeholder="e.g. NC-15, Central Cafe" required />
+                            <input type="text" id="loc-name" placeholder="e.g. Mechanical Lab, Food Court" required />
                         </div>
 
                         <div class="input-field">
@@ -136,25 +147,65 @@
                     </form>
                 </div>
 
-                <!-- Locations Directory Card -->
+                <!-- 2. ROUTE / WALKWAY FORM PANEL -->
+                <div id="route-panel" class="glass-card hidden">
+                    <div class="card-header">
+                        <span class="badge" style="background: #e0f2fe; color: #0284c7;">🧭 Path Grid</span>
+                        <h3 id="route-form-heading">Walkway Route Builder</h3>
+                        <p class="card-desc">Draw and adjust pedestrian corridors for Dijkstra navigation.</p>
+                    </div>
+
+                    <form id="route-form">
+                        <input type="hidden" id="route-id" />
+
+                        <div class="input-field">
+                            <label>Route / Walkway Name</label>
+                            <input type="text" id="route-name" placeholder="e.g. CSE to Central Library Corridor" required />
+                        </div>
+
+                        <div class="route-toolbar">
+                            <button type="button" class="btn-tool" id="start-drawing-btn">
+                                <i class="fa-solid fa-pen-nib"></i> <span>Draw Path</span>
+                            </button>
+                            <button type="button" class="btn-tool danger hidden" id="clear-drawing-btn">
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                            </button>
+                        </div>
+
+                        <div class="drawing-info-box" id="drawing-info">
+                            <i class="fa-solid fa-circle-info"></i> Click <strong>Draw Path</strong>, then click along walkways on the map to construct vertex points.
+                        </div>
+
+                        <div class="form-btn-actions">
+                            <button type="submit" class="btn-primary-gradient" id="save-route-btn" disabled>
+                                <i class="fa-solid fa-check-double"></i> Save Route
+                            </button>
+                            <button type="button" class="btn-cancel hidden" id="cancel-route-btn">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- DIRECTORY REGISTRY -->
                 <div class="glass-card directory-card">
                     <div class="directory-header">
                         <div>
-                            <h4>Campus GeoJSON Registry</h4>
-                            <small id="location-stats">Loading campus points...</small>
+                            <h4 id="registry-title">Campus Features</h4>
+                            <small id="registry-stats">Loading data...</small>
                         </div>
-                        <button id="export-geojson-btn" class="btn-chip" title="Export Modified GeoJSON">
+                        <button id="export-geojson-btn" class="btn-chip" title="Copy Modified GeoJSON">
                             <i class="fa-solid fa-file-export"></i> Export JSON
                         </button>
                     </div>
 
                     <div class="search-wrapper">
                         <i class="fa-solid fa-search"></i>
-                        <input type="text" id="search-filter" placeholder="Search buildings, hostels, grounds..." />
+                        <input type="text" id="search-filter" placeholder="Search buildings, roads, walkways..." />
                     </div>
 
                     <div class="registry-list" id="registry-list">
-                        <!-- Points populated by Admin.js -->
+                        <!-- Points or Routes rendered by Admin.js -->
                     </div>
                 </div>
             </aside>
@@ -164,7 +215,7 @@
                 <div id="admin-leaflet-map"></div>
                 <div class="map-status-pill">
                     <span class="pulse-dot"></span>
-                    <span>Live GPS Grid: <strong>GIET University, Gunupur</strong></span>
+                    <span id="map-mode-text">Spatial Registry: <strong>View / Inspect Mode</strong></span>
                 </div>
             </section>
         </div>
