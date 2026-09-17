@@ -43,29 +43,47 @@
             </button>
 
             <div class="nav-panel-header">
-                <h3>Find Route</h3>
+                <h3>Find Routes</h3>
                 <span class="badge">Satellite Live</span>
             </div>
 
             <div class="panel-body">
-                <div class="input-group">
-                    <label for="start-select">Starting Point</label>
-                    <select id="start-select">
-                        <option value="">Choose Starting Location</option>
-                    </select>
+                <!-- Live Search Box for Buildings / Places -->
+                <div class="search-container">
+                    <input type="text" id="building-search" class="search-input" placeholder="🔍 Search buildings, labs, gates..." autocomplete="off" />
+                    <div id="search-results" class="search-results-dropdown"></div>
                 </div>
 
-                <div class="input-group">
-                    <label for="end-select">Destination</label>
-                    <select id="end-select">
-                        <option value="">Choose Destination</option>
-                    </select>
+                <!-- Dynamic Waypoints Container -->
+                <div id="waypoints-container">
+                    <div class="input-group stop-row">
+                        <select class="location-select" data-stop="0">
+                            <option value="">Choose Starting Point</option>
+                        </select>
+                    </div>
+                    <div class="input-group stop-row">
+                        <select class="location-select" data-stop="1">
+                            <option value="">Choose Destination</option>
+                        </select>
+                    </div>
                 </div>
+
+                <button type="button" id="add-stop-btn" class="btn-add-stop">
+                    ➕ Add Via Point (Multi-Location)
+                </button>
 
                 <!-- Route Actions -->
                 <div class="action-buttons">
-                    <button id="find-route-btn" class="btn btn-primary">Find Route</button>
+                    <button id="find-route-btn" class="btn btn-primary">Find Routes</button>
                     <button id="clear-route-btn" class="btn btn-secondary">Clear</button>
+                </div>
+
+                <!-- Google Maps Alternative Route Selector Cards -->
+                <div id="route-options-container" style="display: none; margin-top: 10px;">
+                    <p style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">
+                        Suggested Routes (Click to switch):
+                    </p>
+                    <div id="route-cards-list"></div>
                 </div>
 
                 <!-- Navigation & Simulation Actions -->

@@ -71,7 +71,7 @@ html, body {
     color: #94a3b8;
 }
 
-/* ================= NAVBAR (SINGLE-LINE NO WRAP) ================= */
+/* ================= NAVBAR ================= */
 .header {
     display: flex;
     justify-content: space-between;
@@ -157,7 +157,7 @@ html, body {
     z-index: 1;
 }
 
-/* ================= DESKTOP FLOATING PANEL ================= */
+/* ================= FLOATING CONTROL PANEL ================= */
 .nav-panel {
     position: absolute;
     top: 20px;
@@ -165,6 +165,7 @@ html, body {
     z-index: 1000;
     width: 330px;
     background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 1px solid #e2e8f0;
     border-radius: 16px;
@@ -221,6 +222,56 @@ html, body {
     gap: 12px;
 }
 
+/* ================= LIVE SEARCH BAR ================= */
+.search-container {
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0 0 8px 8px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+}
+
+.search-item {
+    padding: 8px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.search-item:hover {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* ================= MULTI-STOP WAYPOINTS ================= */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -235,8 +286,17 @@ html, body {
     letter-spacing: 0.5px;
 }
 
+.stop-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.stop-row select,
 .input-group select {
     width: 100%;
+    flex: 1;
     padding: 9px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
@@ -248,9 +308,75 @@ html, body {
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.stop-row select:focus,
 .input-group select:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.btn-remove-stop {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #ef4444;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.btn-add-stop {
+    background: #f8fafc;
+    border: 1px dashed #94a3b8;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    width: 100%;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-add-stop:hover {
+    background: #e2e8f0;
+    border-color: #64748b;
+}
+
+/* ================= ROUTE CARDS ================= */
+.route-card {
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.route-card.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+}
+
+.route-card-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #1e293b;
+    display: flex;
+    justify-content: space-between;
+}
+
+.route-card.active .route-card-title {
+    color: #1d4ed8;
+}
+
+.route-card-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 2px;
 }
 
 /* ================= ACTION BUTTONS ================= */
@@ -284,6 +410,7 @@ html, body {
     background-color: #2563eb;
     color: #ffffff;
 }
+
 .btn-primary:hover {
     background-color: #1d4ed8;
 }
@@ -293,6 +420,7 @@ html, body {
     color: #475569;
     border: 1px solid #cbd5e1;
 }
+
 .btn-secondary:hover {
     background-color: #e2e8f0;
 }
@@ -301,6 +429,7 @@ html, body {
     background-color: #16a34a;
     color: #ffffff;
 }
+
 .btn-gps:hover {
     background-color: #15803d;
 }
@@ -309,6 +438,7 @@ html, body {
     background-color: #7c3aed;
     color: #ffffff;
 }
+
 .btn-simulate:hover {
     background-color: #6d28d9;
 }
@@ -326,11 +456,11 @@ html, body {
     line-height: 1.5;
 }
 
-/* ================= MODERN GLASSMORPHIC LABELS ================= */
+/* ================= SATELLITE MARKER LABELS ================= */
 .satellite-label {
     background: rgba(255, 255, 255, 0.94) !important;
-    backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     color: #0f172a !important;
     font-size: 11.5px !important;
@@ -350,7 +480,7 @@ html, body {
     border-top-color: rgba(255, 255, 255, 0.94) !important;
 }
 
-/* ================= PATHWAYS & ROUTE LINES ================= */
+/* ================= WALKWAYS & POLYLINES ================= */
 .campus-walkway-base {
     stroke: rgba(255, 255, 255, 0.7);
     stroke-width: 3.5px;
@@ -367,7 +497,7 @@ html, body {
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
-/* ================= MOBILE BOTTOM-DOCKED SHEET WITH SAFE AREA ================= */
+/* ================= MOBILE BOTTOM-DOCKED SHEET ================= */
 @media (max-width: 640px) {
     .header {
         padding: 0 12px;
