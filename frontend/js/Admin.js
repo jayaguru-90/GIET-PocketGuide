@@ -1,6 +1,6 @@
 /**
  * GIET University Admin Spatial Management Engine
- * Pure Satellite Imagery with Permanent Custom Map Badges
+ * Dual-Mode Location and Route/Walkway Interactive Editor
  */
 
 const INITIAL_GEOJSON = {
@@ -51,9 +51,19 @@ const INITIAL_GEOJSON = {
 
 const CAMPUS_VIEW = [19.0486, 83.8325];
 let map = null;
-let markersById = {};
+let currentMode = "locations"; // "locations" or "routes"
+
+// Layer trackers
+let pointMarkers = {};
+let routeLines = {};
 let temporaryMarker = null;
-let walkwaysLayerGroup = null;
+
+// Route Drawing & Editing States
+let isDrawingRoute = false;
+let draftedRoutePoints = []; // [[lat, lng], ...]
+let activeDrawPolyline = null;
+let activeEditVertexMarkers = [];
+let editingRouteIndex = null;
 
 const STORAGE_KEY = "gietu_campus_geojson";
 const ADMIN_USER = "admin";
@@ -67,6 +77,13 @@ const loginError = document.getElementById("login-error");
 const authActionBtn = document.getElementById("auth-action-btn");
 const authBtnText = document.getElementById("auth-btn-text");
 
+// Tabs
+const tabLocationsBtn = document.getElementById("tab-locations-btn");
+const tabRoutesBtn = document.getElementById("tab-routes-btn");
+const locationPanel = document.getElementById("location-panel");
+const routePanel = document.getElementById("route-panel");
+
+// Location Form
 const locationForm = document.getElementById("location-form");
 const locIdInput = document.getElementById("loc-id");
 const locNameInput = document.getElementById("loc-name");
@@ -75,10 +92,25 @@ const locLatInput = document.getElementById("loc-lat");
 const locLngInput = document.getElementById("loc-lng");
 const formHeading = document.getElementById("form-heading");
 const cancelEditBtn = document.getElementById("cancel-edit-btn");
+
+// Route Form
+const routeForm = document.getElementById("route-form");
+const routeIdInput = document.getElementById("route-id");
+const routeNameInput = document.getElementById("route-name");
+const routeFormHeading = document.getElementById("route-form-heading");
+const startDrawingBtn = document.getElementById("start-drawing-btn");
+const clearDrawingBtn = document.getElementById("clear-drawing-btn");
+const saveRouteBtn = document.getElementById("save-route-btn");
+const cancelRouteBtn = document.getElementById("cancel-route-btn");
+const drawingInfo = document.getElementById("drawing-info");
+
+// Directory
 const registryList = document.getElementById("registry-list");
+const registryTitle = document.getElementById("registry-title");
+const registryStats = document.getElementById("registry-stats");
 const searchFilter = document.getElementById("search-filter");
-const locationStats = document.getElementById("location-stats");
 const exportJsonBtn = document.getElementById("export-geojson-btn");
+const mapModeText = document.getElementById("map-mode-text");
 
 function getDataset() {
     const cached = localStorage.getItem(STORAGE_KEY);
@@ -93,6 +125,7 @@ function saveDataset(data) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+// Session
 function evaluateSession() {
     const isLoggedIn = sessionStorage.getItem("gietu_admin_logged_in") === "true";
     if (isLoggedIn) {
@@ -123,7 +156,7 @@ loginForm.addEventListener("submit", (e) => {
 
 authActionBtn.addEventListener("click", () => {
     if (sessionStorage.getItem("gietu_admin_logged_in") === "true") {
-        if (confirm("Do you want to log out of the GIETU Admin Portal?")) {
+        if (confirm("Log out of GIETU Admin Portal?")) {
             sessionStorage.removeItem("gietu_admin_logged_in");
             evaluateSession();
         }
@@ -132,6 +165,35 @@ authActionBtn.addEventListener("click", () => {
     }
 });
 
+// Mode Switching
+tabLocationsBtn.addEventListener("click", () => {
+    currentMode = "locations";
+    tabLocationsBtn.classList.add("active");
+    tabRoutesBtn.classList.remove("active");
+    locationPanel.classList.remove("hidden");
+    routePanel.classList.add("hidden");
+    registryTitle.textContent = "Campus Points";
+    mapModeText.innerHTML = `Mode: <strong>Point Placement / Inspection</strong>`;
+    abortDrawing();
+    renderAll();
+});
+
+tabRoutesBtn.addEventListener("click", () => {
+    currentMode = "routes";
+    tabRoutesBtn.classList.add("active");
+    tabLocationsBtn.classList.remove("active");
+    routePanel.classList.remove("hidden");
+    locationPanel.classList.add("hidden");
+    registryTitle.textContent = "Walkway Routes";
+    mapModeText.innerHTML = `Mode: <strong>Walkway Corridors</strong>`;
+    if (temporaryMarker) {
+        map.removeLayer(temporaryMarker);
+        temporaryMarker = null;
+    }
+    renderAll();
+});
+
+// Map Engine
 function setupMapEngine() {
     if (map) {
         setTimeout(() => map.invalidateSize(), 200);
@@ -143,57 +205,76 @@ function setupMapEngine() {
         maxZoom: 20
     }).setView(CAMPUS_VIEW, 17);
 
-    // Pure satellite tile layer without hardcoded labels
+    // Google Pure Satellite (no text labels)
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    walkwaysLayerGroup = L.layerGroup().addTo(map);
-
+    // Map Click Handler
     map.on("click", (e) => {
         const { lat, lng } = e.latlng;
-        locLatInput.value = lat.toFixed(7);
-        locLngInput.value = lng.toFixed(7);
 
-        if (temporaryMarker) map.removeLayer(temporaryMarker);
+        if (currentMode === "locations") {
+            locLatInput.value = lat.toFixed(7);
+            locLngInput.value = lng.toFixed(7);
 
-        temporaryMarker = L.circleMarker([lat, lng], {
-            radius: 8,
-            fillColor: "#ef4444",
-            color: "#ffffff",
-            weight: 2.5,
-            fillOpacity: 1
-        }).addTo(map);
+            if (temporaryMarker) map.removeLayer(temporaryMarker);
+
+            temporaryMarker = L.circleMarker([lat, lng], {
+                radius: 8,
+                fillColor: "#ef4444",
+                color: "#ffffff",
+                weight: 2.5,
+                fillOpacity: 1
+            }).addTo(map);
+        } 
+        else if (currentMode === "routes" && isDrawingRoute) {
+            draftedRoutePoints.push([lat, lng]);
+
+            if (activeDrawPolyline) map.removeLayer(activeDrawPolyline);
+
+            activeDrawPolyline = L.polyline(draftedRoutePoints, {
+                color: "#38bdf8",
+                weight: 4,
+                opacity: 0.95
+            }).addTo(map);
+
+            // Add vertex pin
+            const vMarker = L.circleMarker([lat, lng], {
+                radius: 5,
+                fillColor: "#ffffff",
+                color: "#0284c7",
+                weight: 2,
+                fillOpacity: 1
+            }).addTo(map);
+            activeEditVertexMarkers.push(vMarker);
+
+            saveRouteBtn.disabled = draftedRoutePoints.length < 2;
+            drawingInfo.innerHTML = `Points drawn: <strong>${draftedRoutePoints.length}</strong>. Click the next point on the road or click <strong>Save Route</strong> when finished.`;
+        }
     });
 
-    renderWorkspace();
+    renderAll();
 }
 
-function renderWorkspace(filterTerm = "") {
+function renderAll(searchTerm = "") {
     const data = getDataset();
     registryList.innerHTML = "";
 
-    Object.values(markersById).forEach(m => map.removeLayer(m));
-    markersById = {};
-    walkwaysLayerGroup.clearLayers();
+    // Clear previous points & lines
+    Object.values(pointMarkers).forEach(m => map.removeLayer(m));
+    Object.values(routeLines).forEach(r => map.removeLayer(r));
+    pointMarkers = {};
+    routeLines = {};
 
-    let pointCount = 0;
+    let ptCount = 0;
+    let rtCount = 0;
 
     data.features.forEach((feat, index) => {
-        if (feat.geometry.type === "LineString") {
-            const flippedCoords = feat.geometry.coordinates.map(c => [c[1], c[0]]);
-            L.polyline(flippedCoords, {
-                color: "#38bdf8",
-                weight: 3.5,
-                opacity: 0.85,
-                dashArray: "4, 6"
-            }).addTo(walkwaysLayerGroup);
-            return;
-        }
-
+        // 1. RENDER POINT
         if (feat.geometry.type === "Point") {
-            pointCount++;
+            ptCount++;
             const [lng, lat] = feat.geometry.coordinates;
             const name = feat.properties.name || "Unnamed Point";
             const category = feat.properties.category || "Campus Site";
@@ -206,7 +287,6 @@ function renderWorkspace(filterTerm = "") {
                 fillOpacity: 1
             }).addTo(map);
 
-            // Permanent text badge overlay
             marker.bindTooltip(`
                 <span class="campus-map-badge">
                     <span class="badge-dot"></span>
@@ -220,44 +300,95 @@ function renderWorkspace(filterTerm = "") {
             });
 
             marker.bindPopup(`
-                <div style="font-family: Inter, sans-serif; min-width: 140px;">
-                    <strong style="color: #1e3a8a; font-size: 0.95rem;">${name}</strong><br>
-                    <span style="font-size: 0.75rem; color: #64748b;">${category}</span><br>
-                    <code style="font-size: 0.7rem; color: #0284c7;">${lat.toFixed(6)}, ${lng.toFixed(6)}</code><br>
-                    <button onclick="editPoint(${index})" style="margin-top: 8px; padding: 4px 8px; font-size: 0.75rem; border: none; background: #2563eb; color: white; border-radius: 6px; cursor: pointer;">
-                        Rename / Edit
+                <div style="font-family: Inter, sans-serif;">
+                    <strong style="color: #1e3a8a;">${name}</strong><br>
+                    <small style="color: #64748b;">${category}</small><br>
+                    <button onclick="editPoint(${index})" style="margin-top: 6px; padding: 4px 8px; font-size: 0.75rem; border: none; background: #2563eb; color: white; border-radius: 4px; cursor: pointer;">
+                        Edit Point
                     </button>
                 </div>
             `);
 
-            markersById[index] = marker;
+            pointMarkers[index] = marker;
 
-            if (name.toLowerCase().includes(filterTerm.toLowerCase()) || category.toLowerCase().includes(filterTerm.toLowerCase())) {
-                const item = document.createElement("div");
-                item.className = "reg-item";
-                item.innerHTML = `
-                    <div class="reg-info">
-                        <span class="badge" style="font-size:0.65rem; padding: 2px 6px;">${category}</span>
-                        <h5>${name}</h5>
-                        <p>${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
-                    </div>
-                    <div class="reg-actions">
-                        <button class="action-btn edit" onclick="editPoint(${index})" title="Rename or Edit">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="action-btn del" onclick="removePoint(${index})" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                registryList.appendChild(item);
+            if (currentMode === "locations") {
+                if (name.toLowerCase().includes(searchTerm.toLowerCase()) || category.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    const el = document.createElement("div");
+                    el.className = "reg-item";
+                    el.innerHTML = `
+                        <div class="reg-info">
+                            <span class="badge" style="font-size:0.65rem; padding: 2px 6px;">${category}</span>
+                            <h5>${name}</h5>
+                            <p>${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+                        </div>
+                        <div class="reg-actions">
+                            <button class="action-btn edit" onclick="editPoint(${index})" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="action-btn del" onclick="removeFeature(${index})" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    registryList.appendChild(el);
+                }
+            }
+        }
+
+        // 2. RENDER LINESTRING (ROUTE)
+        if (feat.geometry.type === "LineString") {
+            rtCount++;
+            const name = feat.properties.name || "Walkway Corridor";
+            const latlngs = feat.geometry.coordinates.map(c => [c[1], c[0]]);
+
+            const polyline = L.polyline(latlngs, {
+                color: "#38bdf8",
+                weight: 4,
+                opacity: 0.85,
+                dashArray: "3, 6"
+            }).addTo(map);
+
+            polyline.bindPopup(`
+                <div style="font-family: Inter, sans-serif;">
+                    <strong style="color: #0284c7;">${name}</strong><br>
+                    <small style="color: #64748b;">${latlngs.length} Points Along Corridor</small><br>
+                    <button onclick="editRoute(${index})" style="margin-top: 6px; padding: 4px 8px; font-size: 0.75rem; border: none; background: #0284c7; color: white; border-radius: 4px; cursor: pointer;">
+                        Edit Route
+                    </button>
+                </div>
+            `);
+
+            routeLines[index] = polyline;
+
+            if (currentMode === "routes") {
+                if (name.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    const el = document.createElement("div");
+                    el.className = "reg-item";
+                    el.innerHTML = `
+                        <div class="reg-info">
+                            <span class="badge" style="font-size:0.65rem; padding: 2px 6px; background:#e0f2fe; color:#0284c7;">Route</span>
+                            <h5>${name}</h5>
+                            <p>${latlngs.length} Coordinates Nodes</p>
+                        </div>
+                        <div class="reg-actions">
+                            <button class="action-btn edit" onclick="editRoute(${index})" title="Edit Route">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="action-btn del" onclick="removeFeature(${index})" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    registryList.appendChild(el);
+                }
             }
         }
     });
 
-    locationStats.textContent = `${pointCount} verified campus spots`;
+    registryStats.textContent = currentMode === "locations" ? `${ptCount} campus points` : `${rtCount} pedestrian corridors`;
 }
 
+// ================= POINT CRUD =================
 locationForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const id = locIdInput.value;
@@ -278,24 +409,16 @@ locationForm.addEventListener("submit", (e) => {
             data.features[idx].geometry.coordinates = [lng, lat, 0];
         }
     } else {
-        const newFeature = {
+        data.features.push({
             "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [lng, lat, 0]
-            },
-            "properties": {
-                "name": name,
-                "category": category,
-                "icon-color": "#0288d1"
-            }
-        };
-        data.features.push(newFeature);
+            "geometry": { "type": "Point", "coordinates": [lng, lat, 0] },
+            "properties": { "name": name, "category": category, "icon-color": "#0288d1" }
+        });
     }
 
     saveDataset(data);
-    resetForm();
-    renderWorkspace(searchFilter.value);
+    resetPointForm();
+    renderAll(searchFilter.value);
 
     if (temporaryMarker) {
         map.removeLayer(temporaryMarker);
@@ -304,6 +427,9 @@ locationForm.addEventListener("submit", (e) => {
 });
 
 window.editPoint = function(index) {
+    if (currentMode !== "locations") {
+        tabLocationsBtn.click();
+    }
     const data = getDataset();
     const feat = data.features[index];
     if (!feat) return;
@@ -314,39 +440,189 @@ window.editPoint = function(index) {
     locLatInput.value = feat.geometry.coordinates[1];
     locLngInput.value = feat.geometry.coordinates[0];
 
-    formHeading.textContent = "Rename / Edit Spot";
+    formHeading.textContent = "Rename / Edit Point";
     cancelEditBtn.classList.remove("hidden");
 
-    const [lng, lat] = feat.geometry.coordinates;
-    map.setView([lat, lng], 19);
-    if (markersById[index]) {
-        markersById[index].openPopup();
-    }
+    map.setView([feat.geometry.coordinates[1], feat.geometry.coordinates[0]], 19);
+    if (pointMarkers[index]) pointMarkers[index].openPopup();
 };
 
-window.removePoint = function(index) {
+function resetPointForm() {
+    locationForm.reset();
+    locIdInput.value = "";
+    formHeading.textContent = "Add Location";
+    cancelEditBtn.classList.add("hidden");
+}
+
+cancelEditBtn.addEventListener("click", resetPointForm);
+
+// ================= ROUTE CRUD =================
+startDrawingBtn.addEventListener("click", () => {
+    isDrawingRoute = !isDrawingRoute;
+    if (isDrawingRoute) {
+        startDrawingBtn.classList.add("active");
+        startDrawingBtn.innerHTML = `<i class="fa-solid fa-hand"></i> <span>Drawing Active</span>`;
+        clearDrawingBtn.classList.remove("hidden");
+        mapModeText.innerHTML = `Mode: <strong>Click anywhere on paths to draft route points</strong>`;
+    } else {
+        startDrawingBtn.classList.remove("active");
+        startDrawingBtn.innerHTML = `<i class="fa-solid fa-pen-nib"></i> <span>Draw Path</span>`;
+        mapModeText.innerHTML = `Mode: <strong>Walkway Corridors</strong>`;
+    }
+});
+
+clearDrawingBtn.addEventListener("click", () => {
+    abortDrawing();
+});
+
+function abortDrawing() {
+    isDrawingRoute = false;
+    draftedRoutePoints = [];
+    if (activeDrawPolyline) {
+        map.removeLayer(activeDrawPolyline);
+        activeDrawPolyline = null;
+    }
+    activeEditVertexMarkers.forEach(m => map.removeLayer(m));
+    activeEditVertexMarkers = [];
+
+    startDrawingBtn.classList.remove("active");
+    startDrawingBtn.innerHTML = `<i class="fa-solid fa-pen-nib"></i> <span>Draw Path</span>`;
+    clearDrawingBtn.classList.add("hidden");
+    saveRouteBtn.disabled = true;
+    drawingInfo.innerHTML = `<i class="fa-solid fa-circle-info"></i> Click <strong>Draw Path</strong>, then click along walkways on the map to construct vertex points.`;
+}
+
+// Edit Existing Route / Walkway
+window.editRoute = function(index) {
+    if (currentMode !== "routes") {
+        tabRoutesBtn.click();
+    }
+    abortDrawing();
+
+    const data = getDataset();
+    const feat = data.features[index];
+    if (!feat || feat.geometry.type !== "LineString") return;
+
+    editingRouteIndex = index;
+    routeIdInput.value = index;
+    routeNameInput.value = feat.properties.name || "";
+    routeFormHeading.textContent = "Edit Walkway Corridor";
+    cancelRouteBtn.classList.remove("hidden");
+    clearDrawingBtn.classList.remove("hidden");
+
+    // Load points into editor
+    draftedRoutePoints = feat.geometry.coordinates.map(c => [c[1], c[0]]);
+
+    if (activeDrawPolyline) map.removeLayer(activeDrawPolyline);
+    activeDrawPolyline = L.polyline(draftedRoutePoints, {
+        color: "#f59e0b",
+        weight: 5,
+        opacity: 1
+    }).addTo(map);
+
+    // Make all vertex handles draggable
+    draftedRoutePoints.forEach((pt, pIdx) => {
+        const marker = L.circleMarker(pt, {
+            radius: 6,
+            fillColor: "#ffffff",
+            color: "#d97706",
+            weight: 2,
+            fillOpacity: 1,
+            interactive: true
+        }).addTo(map);
+
+        // Turn vertices into draggable control handles
+        let isDragging = false;
+        marker.on("mousedown", () => {
+            isDragging = true;
+            map.dragging.disable();
+            const onMove = (e) => {
+                if (!isDragging) return;
+                marker.setLatLng(e.latlng);
+                draftedRoutePoints[pIdx] = [e.latlng.lat, e.latlng.lng];
+                activeDrawPolyline.setLatLngs(draftedRoutePoints);
+            };
+            const onUp = () => {
+                isDragging = false;
+                map.dragging.enable();
+                map.off("mousemove", onMove);
+                map.off("mouseup", onUp);
+            };
+            map.on("mousemove", onMove);
+            map.on("mouseup", onUp);
+        });
+
+        activeEditVertexMarkers.push(marker);
+    });
+
+    saveRouteBtn.disabled = false;
+    drawingInfo.innerHTML = `Editing: <strong>${feat.properties.name}</strong>. Drag any yellow handle along the route to adjust path turning points.`;
+    map.fitBounds(activeDrawPolyline.getBounds(), { padding: [40, 40] });
+};
+
+routeForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = routeNameInput.value.trim();
+    if (!name || draftedRoutePoints.length < 2) return;
+
+    const data = getDataset();
+    // Convert back to GeoJSON standard [lng, lat]
+    const geoCoordinates = draftedRoutePoints.map(p => [p[1], p[0]]);
+
+    if (routeIdInput.value !== "") {
+        // Update route
+        const idx = parseInt(routeIdInput.value);
+        if (data.features[idx]) {
+            data.features[idx].properties.name = name;
+            data.features[idx].geometry.coordinates = geoCoordinates;
+        }
+    } else {
+        // Add new route
+        data.features.push({
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": geoCoordinates
+            },
+            "properties": {
+                "name": name,
+                "stroke": "#0284c7",
+                "stroke-width": 3
+            }
+        });
+    }
+
+    saveDataset(data);
+    resetRouteForm();
+    renderAll(searchFilter.value);
+});
+
+function resetRouteForm() {
+    routeForm.reset();
+    routeIdInput.value = "";
+    editingRouteIndex = null;
+    routeFormHeading.textContent = "Walkway Route Builder";
+    cancelRouteBtn.classList.add("hidden");
+    abortDrawing();
+}
+
+cancelRouteBtn.addEventListener("click", resetRouteForm);
+
+// Universal Remove (Points or Routes)
+window.removeFeature = function(index) {
     const data = getDataset();
     const feat = data.features[index];
     if (!feat) return;
 
-    if (confirm(`Remove "${feat.properties.name}" from GIET University map?`)) {
+    if (confirm(`Are you sure you want to remove "${feat.properties.name}"?`)) {
         data.features.splice(index, 1);
         saveDataset(data);
-        renderWorkspace(searchFilter.value);
+        renderAll(searchFilter.value);
     }
 };
 
-function resetForm() {
-    locationForm.reset();
-    locIdInput.value = "";
-    formHeading.textContent = "Add New Location";
-    cancelEditBtn.classList.add("hidden");
-}
-
-cancelEditBtn.addEventListener("click", resetForm);
-
 searchFilter.addEventListener("input", (e) => {
-    renderWorkspace(e.target.value);
+    renderAll(e.target.value);
 });
 
 exportJsonBtn.addEventListener("click", () => {
