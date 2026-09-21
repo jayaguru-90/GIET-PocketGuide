@@ -157,13 +157,13 @@ html, body {
     z-index: 1;
 }
 
-/* ================= FLOATING CONTROL PANEL ================= */
+/* ================= FLOATING CONTROL PANEL (DESKTOP) ================= */
 .nav-panel {
     position: absolute;
     top: 20px;
     left: 20px;
     z-index: 1000;
-    width: 330px;
+    width: 340px;
     background: rgba(255, 255, 255, 0.96);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -174,6 +174,10 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
 }
 
 .panel-toggle-btn {
@@ -198,6 +202,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .nav-panel-header h3 {
@@ -272,6 +277,12 @@ html, body {
 }
 
 /* ================= MULTI-STOP WAYPOINTS ================= */
+#waypoints-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .input-group {
     display: flex;
     flex-direction: column;
@@ -290,7 +301,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .stop-row select,
@@ -323,6 +334,7 @@ html, body {
     font-weight: 700;
     cursor: pointer;
     line-height: 1;
+    flex-shrink: 0;
 }
 
 .btn-add-stop {
@@ -331,11 +343,12 @@ html, body {
     color: #334155;
     font-size: 12px;
     font-weight: 600;
-    padding: 6px 10px;
-    border-radius: 6px;
+    padding: 8px 10px;
+    border-radius: 8px;
     width: 100%;
     cursor: pointer;
-    margin-bottom: 6px;
+    margin-top: 4px;
+    margin-bottom: 4px;
     transition: all 0.2s ease;
 }
 
@@ -497,7 +510,33 @@ html, body {
     filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
 }
 
-/* ================= MOBILE BOTTOM-DOCKED SHEET ================= */
+/* ================= SCROLLBAR STYLING ================= */
+.nav-panel::-webkit-scrollbar,
+.panel-body::-webkit-scrollbar,
+#waypoints-container::-webkit-scrollbar {
+    width: 5px;
+}
+
+.nav-panel::-webkit-scrollbar-track,
+.panel-body::-webkit-scrollbar-track,
+#waypoints-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nav-panel::-webkit-scrollbar-thumb,
+.panel-body::-webkit-scrollbar-thumb,
+#waypoints-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.nav-panel::-webkit-scrollbar-thumb:hover,
+.panel-body::-webkit-scrollbar-thumb:hover,
+#waypoints-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ================= MOBILE BOTTOM-DOCKED SHEET (MAX 50% HEIGHT) ================= */
 @media (max-width: 640px) {
     .header {
         padding: 0 12px;
@@ -523,21 +562,25 @@ html, body {
     }
 
     .nav-panel {
-        top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 0px;
-        width: auto;
-        padding: 6px 16px 18px 16px;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-top-left-radius: 22px;
-        border-top-right-radius: 22px;
-        max-height: 80vh;
-        touch-action: none;
+        top: auto !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        padding: 6px 16px 16px 16px !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-top-left-radius: 24px !important;
+        border-top-right-radius: 24px !important;
+        max-height: 52vh !important;               /* Locks height to ~half the screen */
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;               /* Keeps outer shell cleanly rounded */
         transform: translateY(0);
         will-change: transform;
-        transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+        transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35) !important;
     }
 
     .nav-panel.dragging {
@@ -547,8 +590,9 @@ html, body {
     .panel-toggle-btn {
         display: block;
         cursor: grab;
-        padding: 8px 0 6px 0;
+        padding: 6px 0 4px 0;
         touch-action: none;
+        flex-shrink: 0;
     }
 
     .panel-toggle-btn:active {
@@ -558,47 +602,38 @@ html, body {
     .toggle-bar {
         background: #94a3b8;
     }
-}
 
-/* ================= FLOATING NAVIGATION PANEL ================= */
-.nav-panel {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
-    width: 330px;
-    background: rgba(255, 255, 255, 0.96);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    .nav-panel-header {
+        flex-shrink: 0;
+        margin-bottom: 4px;
+    }
 
-    /* Enable scrolling when content exceeds the screen height */
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-}
+    /* Scrollable body content inside the half-screen sheet */
+    .panel-body {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;            /* Restores native vertical scrolling */
+        overscroll-behavior: contain !important;
+        padding-right: 4px;
+    }
 
-/* Sleek modern scrollbar for the card */
-.nav-panel::-webkit-scrollbar {
-    width: 5px;
-}
+    #waypoints-container {
+        overflow-y: visible !important;            /* Lets the panel-body handle smooth scrolling */
+    }
 
-.nav-panel::-webkit-scrollbar-track {
-    background: transparent;
-}
+    .stop-row select,
+    .input-group select {
+        font-size: 13px !important;
+        padding: 7px 10px !important;
+    }
 
-.nav-panel::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 9999px;
-}
+    .btn-remove-stop {
+        padding: 5px 8px !important;
+    }
 
-.nav-panel::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    .action-buttons {
+        flex-shrink: 0;
+        padding-top: 6px;
+    }
 }

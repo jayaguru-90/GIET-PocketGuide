@@ -1,5 +1,6 @@
-// Navigation.js (FastAPI Integration with Next Destination Sequential Routing)
+// Navigation.js (Mobile Half-Screen Scrollable + Multi-Stop Optimized)
 document.addEventListener('DOMContentLoaded', () => {
+    // Replace with your live cloud backend or Wi-Fi IP (e.g., http://192.168.1.XX:8000)
     const API_URL = "http://127.0.0.1:8000";
 
     // ================= 1. DOM REFERENCES & STATE =================
@@ -19,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const togglePanelBtn = document.getElementById('toggle-panel-btn');
 
     const GIET_CENTER = [19.0485, 83.8320];
-
     const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
     let buildings = {};
@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================= 2. MAP & SATELLITE TILES =================
     const map = L.map('map', {
         zoomControl: false,
-        maxZoom: 22
+        maxZoom: 22,
+        tap: false
     }).setView(GIET_CENTER, 18);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -84,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. LOAD CAMPUS DATA FROM FASTAPI =================
+    // ================= 4. LOAD CAMPUS DATA =================
     fetch(`${API_URL}/api/campus-data`)
         .then(res => {
             if (!res.ok) throw new Error("Could not load campus data from FastAPI backend");
@@ -208,30 +209,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (addStopBtn) {
-        addStopBtn.addEventListener('click', () => {
+        addStopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             const existingExtraStops = waypointsContainer.querySelectorAll('.stop-row').length;
             const destNumber = existingExtraStops + 2;
 
             const div = document.createElement('div');
             div.className = 'input-group stop-row';
-            div.style.display = 'flex';
-            div.style.alignItems = 'center';
-            div.style.gap = '6px';
-            div.style.marginTop = '8px';
 
             div.innerHTML = `
                 <select class="location-select" style="flex: 1;"></select>
-                <button type="button" class="btn-remove-stop" title="Remove destination" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #ef4444; font-weight: bold; padding: 4px 8px;">✕</button>
+                <button type="button" class="btn-remove-stop" title="Remove stop" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #ef4444; font-weight: bold; padding: 4px 8px;">✕</button>
             `;
 
-            // Append directly to the end of the waypoints sequence
             waypointsContainer.appendChild(div);
             populateSelectElement(div.querySelector('select'), `Next Destination ${destNumber}`);
 
             div.querySelector('.btn-remove-stop').addEventListener('click', () => {
                 div.remove();
                 updateDestinationLabels();
+                calculateLimits();
             });
+
+            // Smoothly scroll the panel body to show the newly added field
+            const panelBody = document.querySelector('.panel-body');
+            if (panelBody) {
+                panelBody.scrollTop = panelBody.scrollHeight;
+            }
+            calculateLimits();
         });
     }
 
@@ -342,6 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (renderedPolylines[0]) {
             map.fitBounds(renderedPolylines[0].visibleLine.getBounds(), { padding: [60, 60] });
         }
+        calculateLimits();
     }
 
     function updateUserPosition(lat, lng, accuracy = 5) {
@@ -371,7 +377,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ================= 8. ROUTE COMPUTATION =================
     if (findRouteBtn) {
-        findRouteBtn.addEventListener('click', async () => {
+        findRouteBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
             const selects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
             const selectedPoints = selects.map(s => s.value).filter(val => val !== '');
 
@@ -393,8 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 calculatedRoutes = data.routes;
                 renderRoutes(calculatedRoutes);
 
+                // On mobile, collapse gently so the user sees the map route
                 if (window.innerWidth <= 640 && navPanel) {
-                    setTimeout(snapToCollapsed, 250);
+                    setTimeout(snapToCollapsed, 300);
                 }
             } catch (err) {
                 alert("Routing Error: " + err.message);
@@ -403,7 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (clearRouteBtn) {
-        clearRouteBtn.addEventListener('click', () => {
+        clearRouteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
             renderedPolylines.forEach(group => {
                 if (group && group.visibleLine) map.removeLayer(group.visibleLine);
                 if (group && group.hitArea) map.removeLayer(group.hitArea);
@@ -432,27 +441,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (buildingSearch) buildingSearch.value = '';
             if (searchResults) searchResults.style.display = 'none';
 
-            // Reset initial inputs
             const selects = waypointsContainer.querySelectorAll('.location-select');
             selects.forEach(s => s.value = '');
 
-            // Remove all dynamically added "Next Destination" rows
             const extraRows = waypointsContainer.querySelectorAll('.stop-row');
             extraRows.forEach(row => row.remove());
 
             if (routeOutput) routeOutput.style.display = 'none';
             if (routeOptionsContainer) routeOptionsContainer.style.display = 'none';
             map.setView(GIET_CENTER, 18);
+            calculateLimits();
         });
     }
 
-    // ================= 9. BOTTOM SHEET GESTURES =================
+    // ================= 9. SAFE MOBILE BOTTOM SHEET GESTURES =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
     let maxTranslate = 0;
     let isCollapsed = false;
-    const VISIBLE_PEEK_HEIGHT = 68;
+    const VISIBLE_PEEK_HEIGHT = 70;
 
     function calculateLimits() {
         if (!navPanel) return;
@@ -473,76 +481,68 @@ document.addEventListener('DOMContentLoaded', () => {
         navPanel.style.transform = 'translateY(0px)';
     }
 
-    function onDragStart(e) {
-        if (window.innerWidth > 640) return;
-        isDragging = true;
-        startY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-        calculateLimits();
-        navPanel.classList.add('dragging');
-    }
+    // Only attach drag gesture to the top toggle bar, never to the scrollable form elements
+    const dragHandle = document.querySelector('.panel-toggle-btn') || togglePanelBtn;
 
-    function onDragMove(e) {
-        if (!isDragging) return;
-        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-        const deltaY = clientY - startY;
+    if (dragHandle && navPanel) {
+        dragHandle.addEventListener('touchstart', (e) => {
+            if (window.innerWidth > 640) return;
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            calculateLimits();
+            navPanel.style.transition = 'none';
+        }, { passive: true });
 
-        let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
-        if (newTranslate < 0) newTranslate = 0;
-        if (newTranslate > maxTranslate) newTranslate = maxTranslate;
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.touches[0].clientY - startY;
+            let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
 
-        currentTranslateY = newTranslate;
-        navPanel.style.transform = `translateY(${newTranslate}px)`;
-        if (e.cancelable) e.preventDefault();
-    }
+            if (newTranslate < 0) newTranslate = 0;
+            if (newTranslate > maxTranslate) newTranslate = maxTranslate;
 
-    function onDragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        navPanel.classList.remove('dragging');
-        calculateLimits();
+            currentTranslateY = newTranslate;
+            navPanel.style.transform = `translateY(${newTranslate}px)`;
+        }, { passive: true });
 
-        const snapThreshold = maxTranslate * 0.35;
-        if (!isCollapsed) {
-            if (currentTranslateY > snapThreshold) snapToCollapsed();
-            else snapToExpanded();
-        } else {
-            if (currentTranslateY < maxTranslate - snapThreshold) snapToExpanded();
-            else snapToCollapsed();
-        }
-    }
+        window.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            navPanel.style.transition = '';
+            calculateLimits();
 
-    if (togglePanelBtn && navPanel) {
-        const dragHandleArea = document.querySelector('.nav-panel-header') || togglePanelBtn;
-
-        togglePanelBtn.addEventListener('mousedown', onDragStart);
-        togglePanelBtn.addEventListener('touchstart', onDragStart, { passive: true });
-        dragHandleArea.addEventListener('mousedown', onDragStart);
-        dragHandleArea.addEventListener('touchstart', onDragStart, { passive: true });
-
-        window.addEventListener('mousemove', onDragMove);
-        window.addEventListener('touchmove', onDragMove, { passive: false });
-        window.addEventListener('mouseup', onDragEnd);
-        window.addEventListener('touchend', onDragEnd);
-
-        togglePanelBtn.addEventListener('click', () => {
-            if (isCollapsed) snapToExpanded();
-            else snapToCollapsed();
-        });
-
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 640) {
-                navPanel.style.transform = '';
-            } else if (isCollapsed) {
-                snapToCollapsed();
+            const snapThreshold = maxTranslate * 0.35;
+            if (!isCollapsed) {
+                if (currentTranslateY > snapThreshold) snapToCollapsed();
+                else snapToExpanded();
+            } else {
+                if (currentTranslateY < maxTranslate - snapThreshold) snapToExpanded();
+                else snapToCollapsed();
             }
         });
     }
+
+    if (togglePanelBtn) {
+        togglePanelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isCollapsed) snapToExpanded();
+            else snapToCollapsed();
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 640) {
+            navPanel.style.transform = '';
+        } else if (isCollapsed) {
+            snapToCollapsed();
+        }
+    });
 
     // ================= 10. GPS LIVE & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
-                alert("Geolocation is not supported by your browser.");
+                alert("Geolocation is not supported by your mobile browser.");
                 return;
             }
 
