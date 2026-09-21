@@ -1,6 +1,5 @@
-// Navigation.js (Mobile Half-Screen Scrollable + Multi-Stop Optimized)
+// Navigation.js (FastAPI Backend + Static Fallback + Mobile Half-Screen Scrollable)
 document.addEventListener('DOMContentLoaded', () => {
-    // Replace with your live cloud backend or Wi-Fi IP (e.g., http://192.168.1.XX:8000)
     const API_URL = "http://127.0.0.1:8000";
 
     // ================= 1. DOM REFERENCES & STATE =================
@@ -85,67 +84,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. LOAD CAMPUS DATA =================
+    // ================= 4. LOAD CAMPUS DATA (WITH STATIC FALLBACK) =================
+    function processGeoJSONData(data) {
+        buildings = {};
+        placeNamesSorted = [];
+
+        L.geoJSON(data, {
+            style: (feature) => {
+                if (feature.geometry.type === 'LineString') {
+                    return {
+                        color: '#f8fafc',
+                        weight: 3.5,
+                        opacity: 0.8,
+                        dashArray: '5, 5',
+                        className: 'campus-walkway-base'
+                    };
+                }
+                return { color: '#3b82f6', weight: 2 };
+            },
+            pointToLayer: (feature, latlng) => {
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    fillColor: '#ffffff',
+                    color: '#2563eb',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1
+                });
+            },
+            onEachFeature: (feature, layer) => {
+                const name = feature.properties?.name?.trim();
+                if (feature.geometry.type === 'Point' && name) {
+                    markerLayers[name] = layer;
+                    buildings[name] = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
+                    placeNamesSorted.push(name);
+
+                    const icon = getPlaceIcon(name);
+                    layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
+                        permanent: true,
+                        direction: 'top',
+                        offset: [0, -6],
+                        className: 'satellite-label'
+                    });
+                }
+            }
+        }).addTo(map);
+
+        placeNamesSorted.sort();
+
+        const selects = waypointsContainer.querySelectorAll('.location-select');
+        if (selects[0]) populateSelectElement(selects[0], "Choose Starting Point");
+        if (selects[1]) populateSelectElement(selects[1], "Choose Destination");
+
+        clearTimeout(safetyTimer);
+        hideLoader();
+    }
+
     fetch(`${API_URL}/api/campus-data`)
         .then(res => {
-            if (!res.ok) throw new Error("Could not load campus data from FastAPI backend");
+            if (!res.ok) throw new Error("Backend offline");
             return res.json();
         })
         .then(data => {
-            buildings = data.buildings;
-            placeNamesSorted = data.placeNames;
-
-            L.geoJSON(data.geojson, {
-                style: (feature) => {
-                    if (feature.geometry.type === 'LineString') {
-                        const isFootway = feature.properties?.highway === 'footway';
-                        return {
-                            color: isFootway ? '#94a3b8' : '#f8fafc',
-                            weight: isFootway ? 2.5 : 4,
-                            opacity: 0.7,
-                            dashArray: isFootway ? '4, 4' : '6, 6',
-                            className: 'campus-walkway-base'
-                        };
-                    }
-                    return { color: '#3b82f6', weight: 2 };
-                },
-                pointToLayer: (feature, latlng) => {
-                    return L.circleMarker(latlng, {
-                        radius: 5,
-                        fillColor: '#ffffff',
-                        color: '#2563eb',
-                        weight: 3,
-                        opacity: 1,
-                        fillOpacity: 1
-                    });
-                },
-                onEachFeature: (feature, layer) => {
-                    const name = feature.properties?.name?.trim();
-                    if (feature.geometry.type === 'Point' && name) {
-                        markerLayers[name] = layer;
-                        const icon = getPlaceIcon(name);
-
-                        layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
-                            permanent: true,
-                            direction: 'top',
-                            offset: [0, -6],
-                            className: 'satellite-label'
-                        });
-                    }
-                }
-            }).addTo(map);
-
-            const selects = waypointsContainer.querySelectorAll('.location-select');
-            if (selects[0]) populateSelectElement(selects[0], "Choose Starting Point");
-            if (selects[1]) populateSelectElement(selects[1], "Choose Destination");
-
-            clearTimeout(safetyTimer);
-            hideLoader();
+            processGeoJSONData(data.geojson);
         })
-        .catch(err => {
-            console.error("Backend Connection Error:", err);
-            clearTimeout(safetyTimer);
-            hideLoader();
+        .catch(() => {
+            console.warn("Backend unavailable. Loading static campus GeoJSON directly.");
+            fetch('assets/data/giet_campus.geojson')
+                .then(res => res.json())
+                .then(data => processGeoJSONData(data))
+                .catch(err => {
+                    console.error("Critical error loading map data:", err);
+                    clearTimeout(safetyTimer);
+                    hideLoader();
+                });
         });
 
     // ================= 5. LIVE SEARCH =================
@@ -231,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 calculateLimits();
             });
 
-            // Smoothly scroll the panel body to show the newly added field
             const panelBody = document.querySelector('.panel-body');
             if (panelBody) {
                 panelBody.scrollTop = panelBody.scrollHeight;
@@ -400,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 calculatedRoutes = data.routes;
                 renderRoutes(calculatedRoutes);
 
-                // On mobile, collapse gently so the user sees the map route
                 if (window.innerWidth <= 640 && navPanel) {
                     setTimeout(snapToCollapsed, 300);
                 }
@@ -454,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 9. SAFE MOBILE BOTTOM SHEET GESTURES =================
+    // ================= 9. MOBILE BOTTOM SHEET GESTURES =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
@@ -481,7 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navPanel.style.transform = 'translateY(0px)';
     }
 
-    // Only attach drag gesture to the top toggle bar, never to the scrollable form elements
     const dragHandle = document.querySelector('.panel-toggle-btn') || togglePanelBtn;
 
     if (dragHandle && navPanel) {

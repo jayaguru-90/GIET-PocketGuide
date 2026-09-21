@@ -1,6 +1,6 @@
 /**
  * GIET University Admin Spatial Management Engine
- * Dual-Mode Location and Route/Walkway Interactive Editor (FastAPI Integrated)
+ * Dual-Mode Location and Route/Walkway Interactive Editor (FastAPI with Local Fallback)
  */
 
 const API_URL = "http://127.0.0.1:8000";
@@ -67,19 +67,24 @@ const searchFilter = document.getElementById("search-filter");
 const exportJsonBtn = document.getElementById("export-geojson-btn");
 const mapModeText = document.getElementById("map-mode-text");
 
-// Live GeoJSON cache loaded from backend
 let serverGeoJSON = { type: "FeatureCollection", features: [] };
 
 async function fetchServerDataset() {
     try {
         const res = await fetch(`${API_URL}/api/admin/features`);
-        if (!res.ok) throw new Error("Failed to fetch campus data from server");
+        if (!res.ok) throw new Error("Backend offline");
         serverGeoJSON = await res.json();
         return serverGeoJSON;
-    } catch (err) {
-        console.error("Backend Error:", err);
-        alert("Error connecting to FastAPI backend. Ensure uvicorn is running.");
-        return serverGeoJSON;
+    } catch {
+        console.warn("Backend unavailable. Loading static giet_campus.geojson directly.");
+        try {
+            const fallbackRes = await fetch("assets/data/giet_campus.geojson");
+            serverGeoJSON = await fallbackRes.json();
+            return serverGeoJSON;
+        } catch (err) {
+            console.error("Critical error reading static GeoJSON:", err);
+            return serverGeoJSON;
+        }
     }
 }
 
@@ -163,13 +168,12 @@ function setupMapEngine() {
         maxZoom: 22
     }).setView(CAMPUS_VIEW, 18);
 
-    L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
         maxZoom: 22,
         maxNativeZoom: 20,
-        attribution: '&copy; Google Satellite &mdash; GIET University'
+        attribution: "&copy; Google Satellite &mdash; GIET University"
     }).addTo(map);
 
-    // Map Click Handler
     map.on("click", (e) => {
         const { lat, lng } = e.latlng;
 
@@ -186,8 +190,7 @@ function setupMapEngine() {
                 weight: 2.5,
                 fillOpacity: 1
             }).addTo(map);
-        } 
-        else if (currentMode === "routes" && isDrawingRoute) {
+        } else if (currentMode === "routes" && isDrawingRoute) {
             draftedRoutePoints.push([lat, lng]);
 
             if (activeDrawPolyline) map.removeLayer(activeDrawPolyline);
@@ -208,7 +211,7 @@ function setupMapEngine() {
             activeEditVertexMarkers.push(vMarker);
 
             saveRouteBtn.disabled = draftedRoutePoints.length < 2;
-            drawingInfo.innerHTML = `Points drawn: <strong>${draftedRoutePoints.length}</strong>. Click the next point on the road or click <strong>Save Route</strong> when finished.`;
+            drawingInfo.innerHTML = `Points drawn: <strong>${draftedRoutePoints.length}</strong>. Click next point or click <strong>Save Route</strong>.`;
         }
     });
 
@@ -219,7 +222,6 @@ async function renderAll(searchTerm = "") {
     await fetchServerDataset();
     registryList.innerHTML = "";
 
-    // Clear previous points & lines
     Object.values(pointMarkers).forEach(m => map.removeLayer(m));
     Object.values(routeLines).forEach(r => map.removeLayer(r));
     pointMarkers = {};
@@ -229,7 +231,6 @@ async function renderAll(searchTerm = "") {
     let rtCount = 0;
 
     serverGeoJSON.features.forEach((feat, index) => {
-        // 1. RENDER POINT
         if (feat.geometry.type === "Point") {
             ptCount++;
             const [lng, lat] = feat.geometry.coordinates;
@@ -292,7 +293,6 @@ async function renderAll(searchTerm = "") {
             }
         }
 
-        // 2. RENDER LINESTRING (ROUTE)
         if (feat.geometry.type === "LineString") {
             rtCount++;
             const name = feat.properties.name || "Walkway Corridor";
@@ -345,7 +345,7 @@ async function renderAll(searchTerm = "") {
     registryStats.textContent = currentMode === "locations" ? `${ptCount} campus points` : `${rtCount} pedestrian corridors`;
 }
 
-// ================= POINT CRUD (FASTAPI) =================
+// ================= POINT CRUD =================
 locationForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const idVal = locIdInput.value;
@@ -366,8 +366,8 @@ locationForm.addEventListener("submit", async (e) => {
         };
 
         const res = await fetch(`${API_URL}/api/admin/save-point`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
@@ -381,7 +381,7 @@ locationForm.addEventListener("submit", async (e) => {
         }
         await renderAll(searchFilter.value);
     } catch (err) {
-        alert("Error saving location: " + err.message);
+        alert("Backend sync unavailable: " + err.message);
     }
 });
 
@@ -414,7 +414,7 @@ function resetPointForm() {
 
 cancelEditBtn.addEventListener("click", resetPointForm);
 
-// ================= ROUTE CRUD (FASTAPI) =================
+// ================= ROUTE CRUD =================
 startDrawingBtn.addEventListener("click", () => {
     isDrawingRoute = !isDrawingRoute;
     if (isDrawingRoute) {
@@ -527,8 +527,8 @@ routeForm.addEventListener("submit", async (e) => {
         };
 
         const res = await fetch(`${API_URL}/api/admin/save-route`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
@@ -538,7 +538,7 @@ routeForm.addEventListener("submit", async (e) => {
         resetRouteForm();
         await renderAll(searchFilter.value);
     } catch (err) {
-        alert("Error saving walkway route: " + err.message);
+        alert("Backend sync unavailable: " + err.message);
     }
 });
 
@@ -553,7 +553,6 @@ function resetRouteForm() {
 
 cancelRouteBtn.addEventListener("click", resetRouteForm);
 
-// Universal Remove (Points or Routes via FastAPI)
 window.removeFeature = async function(index) {
     const feat = serverGeoJSON.features[index];
     if (!feat) return;
@@ -561,14 +560,14 @@ window.removeFeature = async function(index) {
     if (confirm(`Are you sure you want to remove "${feat.properties.name}" permanently?`)) {
         try {
             const res = await fetch(`${API_URL}/api/admin/feature/${index}`, {
-                method: 'DELETE'
+                method: "DELETE"
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || "Could not delete");
 
             await renderAll(searchFilter.value);
         } catch (err) {
-            alert("Delete Error: " + err.message);
+            alert("Backend sync unavailable: " + err.message);
         }
     }
 };
