@@ -1,4 +1,6 @@
+// Navigation.js (FastAPI Integration with Next Destination Sequential Routing)
 document.addEventListener('DOMContentLoaded', () => {
+    const API_URL = "http://127.0.0.1:8000";
 
     // ================= 1. DOM REFERENCES & STATE =================
     const waypointsContainer = document.getElementById('waypoints-container');
@@ -18,13 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const GIET_CENTER = [19.0485, 83.8320];
 
+    const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
+
     let buildings = {};
     let markerLayers = {};
     let placeNamesSorted = [];
-    let graph = {};
-    let allGraphNodes = [];
-    let nodeSet = new Set();
-    let rawLineSegments = [];
     let calculatedRoutes = [];
     let renderedPolylines = [];
     let activeRouteIndex = 0;
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 200);
     }
 
-    const safetyTimer = setTimeout(hideLoader, 2500);
+    const safetyTimer = setTimeout(hideLoader, 3000);
 
     // ================= 2. MAP & SATELLITE TILES =================
     const map = L.map('map', {
@@ -60,99 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; Google Maps'
     }).addTo(map);
 
-    // ================= 3. UTILITY & TOPOLOGY FUNCTIONS =================
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function toKey(lat, lng) {
-        return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
-    }
-
-    function registerNode(key) {
-        if (!nodeSet.has(key)) {
-            nodeSet.add(key);
-            allGraphNodes.push(key);
-        }
-    }
-
-    function addEdge(uKey, vKey, uCoord, vCoord, weightMultiplier = 1.0) {
-        if (uKey === vKey) return;
-        const dist = getDistance(uCoord[0], uCoord[1], vCoord[0], vCoord[1]);
-        const weight = dist * weightMultiplier;
-
-        if (!graph[uKey]) graph[uKey] = [];
-        if (!graph[vKey]) graph[vKey] = [];
-
-        registerNode(uKey);
-        registerNode(vKey);
-
-        if (!graph[uKey].some(e => e.node === vKey)) {
-            graph[uKey].push({ node: vKey, dist, weight, coord: vCoord });
-        }
-        if (!graph[vKey].some(e => e.node === uKey)) {
-            graph[vKey].push({ node: uKey, dist, weight, coord: uCoord });
-        }
-    }
-
-    function projectPointOnSegment(p, a, b) {
-        const x = p[1], y = p[0];
-        const x1 = a[1], y1 = a[0];
-        const x2 = b[1], y2 = b[0];
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const lenSq = dx * dx + dy * dy;
-        if (lenSq === 0) return a;
-        let t = ((x - x1) * dx + (y - y1) * dy) / lenSq;
-        t = Math.max(0, Math.min(1, t));
-        return [y1 + t * dy, x1 + t * dx];
-    }
-
-    function findBestEntryNode(targetLat, targetLng) {
-        let bestCoord = null;
-        let minDist = Infinity;
-        let matchedSegment = null;
-
-        for (let key of allGraphNodes) {
-            const [lat, lng] = key.split(',').map(Number);
-            const d = getDistance(targetLat, targetLng, lat, lng);
-            if (d < minDist) {
-                minDist = d;
-                bestCoord = [lat, lng];
-            }
-        }
-
-        for (let seg of rawLineSegments) {
-            const proj = projectPointOnSegment([targetLat, targetLng], seg.u, seg.v);
-            const d = getDistance(targetLat, targetLng, proj[0], proj[1]);
-            if (d < minDist) {
-                minDist = d;
-                bestCoord = proj;
-                matchedSegment = seg;
-            }
-        }
-
-        if (bestCoord) {
-            const bestKey = toKey(bestCoord[0], bestCoord[1]);
-            registerNode(bestKey);
-
-            if (matchedSegment) {
-                const uKey = toKey(matchedSegment.u[0], matchedSegment.u[1]);
-                const vKey = toKey(matchedSegment.v[0], matchedSegment.v[1]);
-                addEdge(uKey, bestKey, matchedSegment.u, bestCoord, matchedSegment.weightMultiplier);
-                addEdge(bestKey, vKey, bestCoord, matchedSegment.v, matchedSegment.weightMultiplier);
-            }
-            return { key: bestKey, coord: bestCoord, dist: minDist };
-        }
-        return { key: null, coord: null, dist: Infinity };
-    }
-
+    // ================= 3. UTILITY FUNCTIONS =================
     function getPlaceIcon(name) {
         const n = name.toLowerCase();
         if (n.includes('gate')) return '🚪';
@@ -176,54 +84,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. FETCH GEOJSON & APPLY ROAD WEIGHTS =================
-    fetch('assets/data/giet_campus.geojson')
+    // ================= 4. LOAD CAMPUS DATA FROM FASTAPI =================
+    fetch(`${API_URL}/api/campus-data`)
         .then(res => {
-            if (!res.ok) throw new Error("Could not load assets/data/giet_campus.geojson");
+            if (!res.ok) throw new Error("Could not load campus data from FastAPI backend");
             return res.json();
         })
         .then(data => {
-            const placeNames = [];
+            buildings = data.buildings;
+            placeNamesSorted = data.placeNames;
 
-            // A. Ingest Lines with Priority Weights
-            data.features.forEach(feature => {
-                if (feature.geometry && feature.geometry.type === 'LineString') {
-                    const coords = feature.geometry.coordinates;
-                    const props = feature.properties || {};
-                    const name = (props.name || '').toLowerCase();
-                    const highway = (props.highway || '').toLowerCase();
-
-                    // Line 51, 52, 53 are penalized footways; all others are primary
-                    let weightMultiplier = 1.0;
-                    if (props.weight_cost) {
-                        weightMultiplier = Number(props.weight_cost);
-                    } else if (highway === 'footway' || name.includes('line 51') || name.includes('line 52') || name.includes('line 53')) {
-                        weightMultiplier = 4.5;
-                    }
-
-                    for (let i = 0; i < coords.length - 1; i++) {
-                        const u = [coords[i][1], coords[i][0]];
-                        const v = [coords[i + 1][1], coords[i + 1][0]];
-                        addEdge(toKey(u[0], u[1]), toKey(v[0], v[1]), u, v, weightMultiplier);
-                        rawLineSegments.push({ u, v, weightMultiplier });
-                    }
-                }
-            });
-
-            // B. Auto-bridge physical junctions within 6 meters (strictly prevents grass-crossing shortcuts)
-            for (let i = 0; i < allGraphNodes.length; i++) {
-                const [lat1, lng1] = allGraphNodes[i].split(',').map(Number);
-                for (let j = i + 1; j < allGraphNodes.length; j++) {
-                    const [lat2, lng2] = allGraphNodes[j].split(',').map(Number);
-                    const d = getDistance(lat1, lng1, lat2, lng2);
-                    if (d <= 6) {
-                        addEdge(allGraphNodes[i], allGraphNodes[j], [lat1, lng1], [lat2, lng2], 1.0);
-                    }
-                }
-            }
-
-            // C. Layer Rendering
-            L.geoJSON(data, {
+            L.geoJSON(data.geojson, {
                 style: (feature) => {
                     if (feature.geometry.type === 'LineString') {
                         const isFootway = feature.properties?.highway === 'footway';
@@ -250,11 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 onEachFeature: (feature, layer) => {
                     const name = feature.properties?.name?.trim();
                     if (feature.geometry.type === 'Point' && name) {
-                        const lat = feature.geometry.coordinates[1];
-                        const lng = feature.geometry.coordinates[0];
-                        buildings[name] = [lat, lng];
                         markerLayers[name] = layer;
-
                         const icon = getPlaceIcon(name);
 
                         layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
@@ -263,14 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             offset: [0, -6],
                             className: 'satellite-label'
                         });
-
-                        placeNames.push(name);
                     }
                 }
             }).addTo(map);
-
-            placeNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-            placeNamesSorted = placeNames;
 
             const selects = waypointsContainer.querySelectorAll('.location-select');
             if (selects[0]) populateSelectElement(selects[0], "Choose Starting Point");
@@ -280,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoader();
         })
         .catch(err => {
-            console.error("GeoJSON load error:", err);
+            console.error("Backend Connection Error:", err);
             clearTimeout(safetyTimer);
             hideLoader();
         });
@@ -319,9 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const coords = buildings[place];
                     if (coords) {
                         map.flyTo(coords, 20, { duration: 1.2 });
-                        if (markerLayers[place]) {
-                            markerLayers[place].openTooltip();
-                        }
+                        if (markerLayers[place]) markerLayers[place].openTooltip();
                     }
                 });
                 searchResults.appendChild(item);
@@ -336,148 +196,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 6. DYNAMIC STOPS =================
+    // ================= 6. NEXT DESTINATION MANAGER =================
+    function updateDestinationLabels() {
+        const selects = waypointsContainer.querySelectorAll('.stop-row .location-select');
+        selects.forEach((sel, idx) => {
+            const destNum = idx + 2;
+            const currentVal = sel.value;
+            populateSelectElement(sel, `Next Destination ${destNum}`);
+            sel.value = currentVal;
+        });
+    }
+
     if (addStopBtn) {
         addStopBtn.addEventListener('click', () => {
-            const rows = waypointsContainer.querySelectorAll('.stop-row');
-            const newIndex = rows.length;
+            const existingExtraStops = waypointsContainer.querySelectorAll('.stop-row').length;
+            const destNumber = existingExtraStops + 2;
 
             const div = document.createElement('div');
             div.className = 'input-group stop-row';
+            div.style.display = 'flex';
+            div.style.alignItems = 'center';
+            div.style.gap = '6px';
+            div.style.marginTop = '8px';
+
             div.innerHTML = `
-                <select class="location-select" data-stop="${newIndex}"></select>
-                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
+                <select class="location-select" style="flex: 1;"></select>
+                <button type="button" class="btn-remove-stop" title="Remove destination" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #ef4444; font-weight: bold; padding: 4px 8px;">✕</button>
             `;
 
-            const lastRow = rows[rows.length - 1];
-            waypointsContainer.insertBefore(div, lastRow);
-            populateSelectElement(div.querySelector('select'), `Via Point ${newIndex}`);
+            // Append directly to the end of the waypoints sequence
+            waypointsContainer.appendChild(div);
+            populateSelectElement(div.querySelector('select'), `Next Destination ${destNumber}`);
 
             div.querySelector('.btn-remove-stop').addEventListener('click', () => {
                 div.remove();
+                updateDestinationLabels();
             });
         });
     }
 
-    // ================= 7. WEIGHTED DIJKSTRA ROUTER =================
-    function dijkstra(startKey, endKey, penalizedEdges = new Set(), penaltyFactor = 2.5) {
-        const distances = {};
-        const previous = {};
-        const unvisited = new Set(allGraphNodes);
-
-        allGraphNodes.forEach(node => {
-            distances[node] = Infinity;
-            previous[node] = null;
-        });
-
-        distances[startKey] = 0;
-
-        while (unvisited.size > 0) {
-            let current = null;
-            let smallestDist = Infinity;
-
-            for (let node of unvisited) {
-                if (distances[node] < smallestDist) {
-                    smallestDist = distances[node];
-                    current = node;
-                }
-            }
-
-            if (current === null || distances[current] === Infinity || current === endKey) break;
-            unvisited.delete(current);
-
-            const neighbors = graph[current] || [];
-            for (let edge of neighbors) {
-                if (unvisited.has(edge.node)) {
-                    const edgeKeyF = `${current}->${edge.node}`;
-                    const edgeKeyB = `${edge.node}->${current}`;
-
-                    const isPenalized = penalizedEdges.has(edgeKeyF) || penalizedEdges.has(edgeKeyB);
-
-                    let edgeCost = edge.weight;
-                    if (isPenalized) {
-                        edgeCost *= penaltyFactor;
-                    }
-
-                    const alt = distances[current] + edgeCost;
-                    if (alt < distances[edge.node]) {
-                        distances[edge.node] = alt;
-                        previous[edge.node] = current;
-                    }
-                }
-            }
-        }
-
-        const path = [];
-        let curr = endKey;
-        while (curr) {
-            const [lat, lng] = curr.split(',').map(Number);
-            path.unshift([lat, lng]);
-            curr = previous[curr];
-        }
-
-        return { path, totalDistance: distances[endKey] };
-    }
-
-    function calculateSingleLeg(startCoords, endCoords, penalizedEdges = new Set()) {
-        const startNode = findBestEntryNode(startCoords[0], startCoords[1]);
-        const endNode = findBestEntryNode(endCoords[0], endCoords[1]);
-        if (!startNode.key || !endNode.key) return null;
-
-        const leg = dijkstra(startNode.key, endNode.key, penalizedEdges);
-        if (!leg.path || leg.path.length < 1) return null;
-
-        let actualDist = 0;
-        for (let p = 0; p < leg.path.length - 1; p++) {
-            actualDist += getDistance(leg.path[p][0], leg.path[p][1], leg.path[p + 1][0], leg.path[p + 1][1]);
-        }
-
-        return {
-            path: [startCoords, ...leg.path, endCoords],
-            totalDistance: Math.round(actualDist + startNode.dist + endNode.dist)
-        };
-    }
-
-    function calculateMultiStopRoute(points, penalizedEdges = new Set()) {
-        let fullPath = [];
-        let totalDist = 0;
-
-        for (let i = 0; i < points.length - 1; i++) {
-            const leg = calculateSingleLeg(buildings[points[i]], buildings[points[i + 1]], penalizedEdges);
-            if (!leg) return null;
-
-            if (fullPath.length > 0) {
-                fullPath.push(...leg.path.slice(1));
-            } else {
-                fullPath.push(...leg.path);
-            }
-            totalDist += leg.totalDistance;
-        }
-
-        return { path: fullPath, totalDistance: totalDist };
-    }
-
-    function findAlternativeRoute(points, primaryRoute) {
-        const penalizedEdges = new Set();
-        for (let i = 1; i < primaryRoute.path.length - 2; i++) {
-            const u = toKey(primaryRoute.path[i][0], primaryRoute.path[i][1]);
-            const v = toKey(primaryRoute.path[i + 1][0], primaryRoute.path[i + 1][1]);
-            penalizedEdges.add(`${u}->${v}`);
-            penalizedEdges.add(`${v}->${u}`);
-        }
-
-        const alt = calculateMultiStopRoute(points, penalizedEdges);
-        const primarySig = primaryRoute.path.map(p => toKey(p[0], p[1])).join('|');
-
-        if (alt && alt.path.map(p => toKey(p[0], p[1])).join('|') !== primarySig) {
-            if (alt.totalDistance <= primaryRoute.totalDistance * 1.35) {
-                return alt;
-            }
-        }
-        return null;
-    }
-
-    // ================= 8. DUAL-ROUTE RENDERING =================
+    // ================= 7. ROUTE RENDERING & SWITCHING =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -489,18 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isSelected) {
                 visibleLine.setStyle({
-                    color: '#2563eb', // Google Active Blue
-                    weight: 7,
-                    opacity: 0.95,
+                    color: polyGroup.color,
+                    weight: 8,
+                    opacity: 1.0,
                     dashArray: null
                 });
                 visibleLine.bringToFront();
             } else {
                 visibleLine.setStyle({
-                    color: '#94a3b8', // Alternate Gray
+                    color: polyGroup.color,
                     weight: 5,
-                    opacity: 0.8,
-                    dashArray: '8, 6'
+                    opacity: 0.75,
+                    dashArray: '8, 8'
                 });
             }
         });
@@ -514,8 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             routeOutput.style.display = 'block';
             routeOutput.innerHTML = `
                 <div style="font-size: 13px;">
-                    <strong>${selectedRoute.name}</strong><br>
-                    Walking Distance: ~${selectedRoute.totalDistance} meters<br>
+                    <strong style="color: ${ROUTE_PALETTE[index] || '#2563eb'}">${selectedRoute.name}</strong><br>
+                    Walking Distance: <strong>${selectedRoute.totalDistance} meters</strong><br>
                     Estimated Time: ~${Math.ceil(selectedRoute.totalDistance / 75)} mins
                 </div>
             `;
@@ -526,43 +284,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderRoutes(routes) {
         renderedPolylines.forEach(group => {
-            map.removeLayer(group.visibleLine);
-            map.removeLayer(group.hitArea);
+            if (group && group.visibleLine) map.removeLayer(group.visibleLine);
+            if (group && group.hitArea) map.removeLayer(group.hitArea);
         });
         renderedPolylines = [];
         routeCardsList.innerHTML = '';
 
-        routes.forEach((route, idx) => {
-            const isPrimary = idx === 0;
+        for (let idx = routes.length - 1; idx >= 0; idx--) {
+            const route = routes[idx];
+            const isShortest = idx === 0;
+            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
 
             const visibleLine = L.polyline(route.path, {
-                color: isPrimary ? '#2563eb' : '#94a3b8',
-                weight: isPrimary ? 7 : 5,
-                opacity: isPrimary ? 0.95 : 0.8,
-                dashArray: isPrimary ? null : '8, 6',
+                color: routeColor,
+                weight: isShortest ? 8 : 5,
+                opacity: isShortest ? 1.0 : 0.75,
+                dashArray: isShortest ? null : '8, 8',
                 lineCap: 'round',
                 lineJoin: 'round'
             }).addTo(map);
 
             const hitArea = L.polyline(route.path, {
                 color: 'transparent',
-                weight: 22,
+                weight: 24,
                 opacity: 0
             }).addTo(map);
 
             hitArea.on('click', () => selectActiveRoute(idx));
             visibleLine.on('click', () => selectActiveRoute(idx));
 
-            renderedPolylines.push({ visibleLine, hitArea });
+            renderedPolylines[idx] = { visibleLine, hitArea, color: routeColor };
+        }
+
+        routes.forEach((route, idx) => {
+            const isShortest = idx === 0;
+            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
 
             const card = document.createElement('div');
-            card.className = `route-card ${isPrimary ? 'active' : ''}`;
+            card.className = `route-card ${isShortest ? 'active' : ''}`;
             card.innerHTML = `
-                <div class="route-card-title">
-                    <span>${route.name}</span>
+                <div class="route-card-title" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${routeColor};"></span>
+                        <strong>${route.name}</strong>
+                    </span>
                     <span>~${Math.ceil(route.totalDistance / 75)} min</span>
                 </div>
-                <div class="route-card-sub">${route.totalDistance} meters • Road verified</div>
+                <div class="route-card-sub" style="margin-left: 16px;">${route.totalDistance} meters • Road verified</div>
             `;
             card.addEventListener('click', () => selectActiveRoute(idx));
             routeCardsList.appendChild(card);
@@ -601,9 +369,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 9. ROUTE ACTIONS =================
+    // ================= 8. ROUTE COMPUTATION =================
     if (findRouteBtn) {
-        findRouteBtn.addEventListener('click', () => {
+        findRouteBtn.addEventListener('click', async () => {
             const selects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
             const selectedPoints = selects.map(s => s.value).filter(val => val !== '');
 
@@ -612,28 +380,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            calculatedRoutes = [];
+            try {
+                const res = await fetch(`${API_URL}/api/routes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ waypoints: selectedPoints })
+                });
 
-            // 1. Primary Route (Follows main road automatically)
-            const primary = calculateMultiStopRoute(selectedPoints);
-            if (!primary) {
-                alert("No connected walking path found across these locations.");
-                return;
-            }
-            primary.name = selectedPoints.length > 2 ? "Multi-Stop (Main Road)" : "Fastest (Main Road)";
-            calculatedRoutes.push(primary);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "Routing failed");
 
-            // 2. Alternative Route
-            const alternative = findAlternativeRoute(selectedPoints, primary);
-            if (alternative) {
-                alternative.name = selectedPoints.length > 2 ? "Multi-Stop (Alternative)" : "Alternative Route";
-                calculatedRoutes.push(alternative);
-            }
+                calculatedRoutes = data.routes;
+                renderRoutes(calculatedRoutes);
 
-            renderRoutes(calculatedRoutes);
-
-            if (window.innerWidth <= 640 && navPanel) {
-                setTimeout(snapToCollapsed, 250);
+                if (window.innerWidth <= 640 && navPanel) {
+                    setTimeout(snapToCollapsed, 250);
+                }
+            } catch (err) {
+                alert("Routing Error: " + err.message);
             }
         });
     }
@@ -641,8 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearRouteBtn) {
         clearRouteBtn.addEventListener('click', () => {
             renderedPolylines.forEach(group => {
-                map.removeLayer(group.visibleLine);
-                map.removeLayer(group.hitArea);
+                if (group && group.visibleLine) map.removeLayer(group.visibleLine);
+                if (group && group.hitArea) map.removeLayer(group.hitArea);
             });
             renderedPolylines = [];
             calculatedRoutes = [];
@@ -668,13 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (buildingSearch) buildingSearch.value = '';
             if (searchResults) searchResults.style.display = 'none';
 
+            // Reset initial inputs
             const selects = waypointsContainer.querySelectorAll('.location-select');
             selects.forEach(s => s.value = '');
 
-            const rows = waypointsContainer.querySelectorAll('.stop-row');
-            for (let i = 1; i < rows.length - 1; i++) {
-                rows[i].remove();
-            }
+            // Remove all dynamically added "Next Destination" rows
+            const extraRows = waypointsContainer.querySelectorAll('.stop-row');
+            extraRows.forEach(row => row.remove());
 
             if (routeOutput) routeOutput.style.display = 'none';
             if (routeOptionsContainer) routeOptionsContainer.style.display = 'none';
@@ -682,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 10. BOTTOM SHEET GESTURES =================
+    // ================= 9. BOTTOM SHEET GESTURES =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
@@ -774,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 11. GPS & SIMULATION =================
+    // ================= 10. GPS LIVE & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {

@@ -1,55 +1,11 @@
 /**
  * GIET University Admin Spatial Management Engine
- * Dual-Mode Location and Route/Walkway Interactive Editor
+ * Dual-Mode Location and Route/Walkway Interactive Editor (FastAPI Integrated)
  */
 
-const INITIAL_GEOJSON = {
-  "type": "FeatureCollection",
-  "features": [
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8315621, 19.0484843, 0] }, "properties": { "name": "CSE Building", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8317289, 19.0491051, 0] }, "properties": { "name": "BSH Building", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8307759, 19.0486052, 0] }, "properties": { "name": "GIET Temple", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.831949, 19.0494422, 0] }, "properties": { "name": "AME", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8323966, 19.0499166, 0] }, "properties": { "name": "Bio tech Building", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8327545, 19.0496662, 0] }, "properties": { "name": "RDB Building", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8323803, 19.0492385, 0] }, "properties": { "name": "Library", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8324027, 19.0495653, 0] }, "properties": { "name": "ECE Block", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8323102, 19.0481287, 0] }, "properties": { "name": "Admin Block", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8333488, 19.0487696, 0] }, "properties": { "name": "Agriculture Block", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8333083, 19.0494166, 0] }, "properties": { "name": "Mechanical building", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8338592, 19.0485406, 0] }, "properties": { "name": "Hardware section", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8330964, 19.0481867, 0] }, "properties": { "name": "Canteen", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8311909, 19.0474079, 0] }, "properties": { "name": "Main Gate", "category": "Gate / Road" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8313916, 19.0474252, 0] }, "properties": { "name": "Parking", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8327627, 19.0490728, 0] }, "properties": { "name": "Cool Parloor", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8319928, 19.0493369, 0] }, "properties": { "name": "CSA block", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8322256, 19.0494327, 0] }, "properties": { "name": "Dept. Manegment", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8338431, 19.048839, 0] }, "properties": { "name": "Bus-stop ", "category": "Gate / Road" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8311413, 19.0482229, 0] }, "properties": { "name": "Temple Garden/Open Gym", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8375139, 19.0464626, 0] }, "properties": { "name": "GPS School ", "category": "Academic" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8357854, 19.0481121, 0] }, "properties": { "name": "Guest House ", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8333334, 19.0497383, 0] }, "properties": { "name": "Swimming pool", "category": "Sports" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8335484, 19.0494991, 0] }, "properties": { "name": "Badminton court", "category": "Sports" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8337963, 19.0491213, 0] }, "properties": { "name": "Basket ball court", "category": "Sports" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8348255, 19.0494455, 0] }, "properties": { "name": "Giet main ground ", "category": "Sports" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8333162, 19.048406, 0] }, "properties": { "name": "Car parking", "category": "Amenities" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8341547, 19.0481938, 0] }, "properties": { "name": "NC-8", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8342341, 19.0478023, 0] }, "properties": { "name": "NC-9", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8344851, 19.0476786, 0] }, "properties": { "name": "NC-10", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8346289, 19.047421, 0] }, "properties": { "name": "NC-13", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8354956, 19.0477114, 0] }, "properties": { "name": "NC-14", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8346674, 19.0476917, 0] }, "properties": { "name": "Central Mess", "category": "Hostel / Mess" } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [83.8324824, 19.0478957, 0] }, "properties": { "name": "Gandhi Park ", "category": "Amenities" } },
-
-    // Walkways & Primary Roads
-    { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [ [83.8311909, 19.0474079], [83.831233, 19.047431], [83.8319401, 19.0478154], [83.8323675, 19.0480433], [83.8326122, 19.048178], [83.8330831, 19.0484282], [83.8338431, 19.048839] ] }, "properties": { "name": "GIET Main Road" } },
-    { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [ [83.8338431, 19.048839], [83.8336751, 19.0490553], [83.8334089, 19.0494724], [83.8330777, 19.0499791] ] }, "properties": { "name": "Swimming pool road" } },
-    { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [ [83.8315166, 19.0484685], [83.8319661, 19.0486661], [83.8324291, 19.0489214], [83.8328102, 19.0491188] ] }, "properties": { "name": "CSE to Library Walkway" } },
-    { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [ [83.8338431, 19.048839], [83.8343097, 19.0490597], [83.8355225, 19.048267], [83.8364817, 19.0466832], [83.8375174, 19.046465] ] }, "properties": { "name": "Hostel Corridor Walkway" } }
-  ]
-};
-
+const API_URL = "http://127.0.0.1:8000";
 const CAMPUS_VIEW = [19.0486, 83.8325];
+
 let map = null;
 let currentMode = "locations"; // "locations" or "routes"
 
@@ -65,7 +21,6 @@ let activeDrawPolyline = null;
 let activeEditVertexMarkers = [];
 let editingRouteIndex = null;
 
-const STORAGE_KEY = "gietu_campus_geojson";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "gietu@123";
 
@@ -112,17 +67,20 @@ const searchFilter = document.getElementById("search-filter");
 const exportJsonBtn = document.getElementById("export-geojson-btn");
 const mapModeText = document.getElementById("map-mode-text");
 
-function getDataset() {
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (!cached) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_GEOJSON));
-        return INITIAL_GEOJSON;
-    }
-    return JSON.parse(cached);
-}
+// Live GeoJSON cache loaded from backend
+let serverGeoJSON = { type: "FeatureCollection", features: [] };
 
-function saveDataset(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+async function fetchServerDataset() {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/features`);
+        if (!res.ok) throw new Error("Failed to fetch campus data from server");
+        serverGeoJSON = await res.json();
+        return serverGeoJSON;
+    } catch (err) {
+        console.error("Backend Error:", err);
+        alert("Error connecting to FastAPI backend. Ensure uvicorn is running.");
+        return serverGeoJSON;
+    }
 }
 
 // Session
@@ -175,7 +133,7 @@ tabLocationsBtn.addEventListener("click", () => {
     registryTitle.textContent = "Campus Points";
     mapModeText.innerHTML = `Mode: <strong>Point Placement / Inspection</strong>`;
     abortDrawing();
-    renderAll();
+    renderAll(searchFilter.value);
 });
 
 tabRoutesBtn.addEventListener("click", () => {
@@ -190,7 +148,7 @@ tabRoutesBtn.addEventListener("click", () => {
         map.removeLayer(temporaryMarker);
         temporaryMarker = null;
     }
-    renderAll();
+    renderAll(searchFilter.value);
 });
 
 // Map Engine
@@ -202,12 +160,12 @@ function setupMapEngine() {
 
     map = L.map("admin-leaflet-map", {
         zoomControl: true,
-        maxZoom: 20
-    }).setView(CAMPUS_VIEW, 17);
+        maxZoom: 22
+    }).setView(CAMPUS_VIEW, 18);
 
-    // Google Pure Satellite (no text labels)
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
+        maxZoom: 22,
+        maxNativeZoom: 20,
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
@@ -240,7 +198,6 @@ function setupMapEngine() {
                 opacity: 0.95
             }).addTo(map);
 
-            // Add vertex pin
             const vMarker = L.circleMarker([lat, lng], {
                 radius: 5,
                 fillColor: "#ffffff",
@@ -258,8 +215,8 @@ function setupMapEngine() {
     renderAll();
 }
 
-function renderAll(searchTerm = "") {
-    const data = getDataset();
+async function renderAll(searchTerm = "") {
+    await fetchServerDataset();
     registryList.innerHTML = "";
 
     // Clear previous points & lines
@@ -271,7 +228,7 @@ function renderAll(searchTerm = "") {
     let ptCount = 0;
     let rtCount = 0;
 
-    data.features.forEach((feat, index) => {
+    serverGeoJSON.features.forEach((feat, index) => {
         // 1. RENDER POINT
         if (feat.geometry.type === "Point") {
             ptCount++;
@@ -368,7 +325,7 @@ function renderAll(searchTerm = "") {
                         <div class="reg-info">
                             <span class="badge" style="font-size:0.65rem; padding: 2px 6px; background:#e0f2fe; color:#0284c7;">Route</span>
                             <h5>${name}</h5>
-                            <p>${latlngs.length} Coordinates Nodes</p>
+                            <p>${latlngs.length} Coordinate Nodes</p>
                         </div>
                         <div class="reg-actions">
                             <button class="action-btn edit" onclick="editRoute(${index})" title="Edit Route">
@@ -388,10 +345,10 @@ function renderAll(searchTerm = "") {
     registryStats.textContent = currentMode === "locations" ? `${ptCount} campus points` : `${rtCount} pedestrian corridors`;
 }
 
-// ================= POINT CRUD =================
-locationForm.addEventListener("submit", (e) => {
+// ================= POINT CRUD (FASTAPI) =================
+locationForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const id = locIdInput.value;
+    const idVal = locIdInput.value;
     const name = locNameInput.value.trim();
     const category = locCatInput.value;
     const lat = parseFloat(locLatInput.value);
@@ -399,30 +356,32 @@ locationForm.addEventListener("submit", (e) => {
 
     if (!name || isNaN(lat) || isNaN(lng)) return;
 
-    const data = getDataset();
+    try {
+        const payload = {
+            id: idVal !== "" ? parseInt(idVal) : null,
+            name: name,
+            category: category,
+            latitude: lat,
+            longitude: lng
+        };
 
-    if (id !== "") {
-        const idx = parseInt(id);
-        if (data.features[idx]) {
-            data.features[idx].properties.name = name;
-            data.features[idx].properties.category = category;
-            data.features[idx].geometry.coordinates = [lng, lat, 0];
-        }
-    } else {
-        data.features.push({
-            "type": "Feature",
-            "geometry": { "type": "Point", "coordinates": [lng, lat, 0] },
-            "properties": { "name": name, "category": category, "icon-color": "#0288d1" }
+        const res = await fetch(`${API_URL}/api/admin/save-point`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-    }
 
-    saveDataset(data);
-    resetPointForm();
-    renderAll(searchFilter.value);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Could not save point");
 
-    if (temporaryMarker) {
-        map.removeLayer(temporaryMarker);
-        temporaryMarker = null;
+        resetPointForm();
+        if (temporaryMarker) {
+            map.removeLayer(temporaryMarker);
+            temporaryMarker = null;
+        }
+        await renderAll(searchFilter.value);
+    } catch (err) {
+        alert("Error saving location: " + err.message);
     }
 });
 
@@ -430,8 +389,7 @@ window.editPoint = function(index) {
     if (currentMode !== "locations") {
         tabLocationsBtn.click();
     }
-    const data = getDataset();
-    const feat = data.features[index];
+    const feat = serverGeoJSON.features[index];
     if (!feat) return;
 
     locIdInput.value = index;
@@ -456,7 +414,7 @@ function resetPointForm() {
 
 cancelEditBtn.addEventListener("click", resetPointForm);
 
-// ================= ROUTE CRUD =================
+// ================= ROUTE CRUD (FASTAPI) =================
 startDrawingBtn.addEventListener("click", () => {
     isDrawingRoute = !isDrawingRoute;
     if (isDrawingRoute) {
@@ -492,15 +450,13 @@ function abortDrawing() {
     drawingInfo.innerHTML = `<i class="fa-solid fa-circle-info"></i> Click <strong>Draw Path</strong>, then click along walkways on the map to construct vertex points.`;
 }
 
-// Edit Existing Route / Walkway
 window.editRoute = function(index) {
     if (currentMode !== "routes") {
         tabRoutesBtn.click();
     }
     abortDrawing();
 
-    const data = getDataset();
-    const feat = data.features[index];
+    const feat = serverGeoJSON.features[index];
     if (!feat || feat.geometry.type !== "LineString") return;
 
     editingRouteIndex = index;
@@ -510,7 +466,6 @@ window.editRoute = function(index) {
     cancelRouteBtn.classList.remove("hidden");
     clearDrawingBtn.classList.remove("hidden");
 
-    // Load points into editor
     draftedRoutePoints = feat.geometry.coordinates.map(c => [c[1], c[0]]);
 
     if (activeDrawPolyline) map.removeLayer(activeDrawPolyline);
@@ -520,7 +475,6 @@ window.editRoute = function(index) {
         opacity: 1
     }).addTo(map);
 
-    // Make all vertex handles draggable
     draftedRoutePoints.forEach((pt, pIdx) => {
         const marker = L.circleMarker(pt, {
             radius: 6,
@@ -531,7 +485,6 @@ window.editRoute = function(index) {
             interactive: true
         }).addTo(map);
 
-        // Turn vertices into draggable control handles
         let isDragging = false;
         marker.on("mousedown", () => {
             isDragging = true;
@@ -560,41 +513,33 @@ window.editRoute = function(index) {
     map.fitBounds(activeDrawPolyline.getBounds(), { padding: [40, 40] });
 };
 
-routeForm.addEventListener("submit", (e) => {
+routeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = routeNameInput.value.trim();
     if (!name || draftedRoutePoints.length < 2) return;
 
-    const data = getDataset();
-    // Convert back to GeoJSON standard [lng, lat]
-    const geoCoordinates = draftedRoutePoints.map(p => [p[1], p[0]]);
+    try {
+        const geoCoordinates = draftedRoutePoints.map(p => [p[1], p[0]]);
+        const payload = {
+            id: routeIdInput.value !== "" ? parseInt(routeIdInput.value) : null,
+            name: name,
+            coordinates: geoCoordinates
+        };
 
-    if (routeIdInput.value !== "") {
-        // Update route
-        const idx = parseInt(routeIdInput.value);
-        if (data.features[idx]) {
-            data.features[idx].properties.name = name;
-            data.features[idx].geometry.coordinates = geoCoordinates;
-        }
-    } else {
-        // Add new route
-        data.features.push({
-            "type": "Feature",
-            "geometry": {
-                "type": "LineString",
-                "coordinates": geoCoordinates
-            },
-            "properties": {
-                "name": name,
-                "stroke": "#0284c7",
-                "stroke-width": 3
-            }
+        const res = await fetch(`${API_URL}/api/admin/save-route`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-    }
 
-    saveDataset(data);
-    resetRouteForm();
-    renderAll(searchFilter.value);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Could not save route");
+
+        resetRouteForm();
+        await renderAll(searchFilter.value);
+    } catch (err) {
+        alert("Error saving walkway route: " + err.message);
+    }
 });
 
 function resetRouteForm() {
@@ -608,16 +553,23 @@ function resetRouteForm() {
 
 cancelRouteBtn.addEventListener("click", resetRouteForm);
 
-// Universal Remove (Points or Routes)
-window.removeFeature = function(index) {
-    const data = getDataset();
-    const feat = data.features[index];
+// Universal Remove (Points or Routes via FastAPI)
+window.removeFeature = async function(index) {
+    const feat = serverGeoJSON.features[index];
     if (!feat) return;
 
-    if (confirm(`Are you sure you want to remove "${feat.properties.name}"?`)) {
-        data.features.splice(index, 1);
-        saveDataset(data);
-        renderAll(searchFilter.value);
+    if (confirm(`Are you sure you want to remove "${feat.properties.name}" permanently?`)) {
+        try {
+            const res = await fetch(`${API_URL}/api/admin/feature/${index}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Could not delete");
+
+            await renderAll(searchFilter.value);
+        } catch (err) {
+            alert("Delete Error: " + err.message);
+        }
     }
 };
 
@@ -626,9 +578,9 @@ searchFilter.addEventListener("input", (e) => {
 });
 
 exportJsonBtn.addEventListener("click", () => {
-    const data = JSON.stringify(getDataset(), null, 2);
+    const data = JSON.stringify(serverGeoJSON, null, 2);
     navigator.clipboard.writeText(data);
-    alert("Updated GIET University GeoJSON has been copied to your clipboard!");
+    alert("Live server GeoJSON copied to your clipboard!");
 });
 
 evaluateSession();
