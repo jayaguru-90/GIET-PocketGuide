@@ -1,4 +1,4 @@
-// Navigation.js (FastAPI Backend + Static Fallback + Mobile Half-Screen Scrollable)
+// Navigation.js (FastAPI + Client-Side Dijkstra Fallback for Standalone Vercel Support)
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = "http://127.0.0.1:8000";
 
@@ -29,6 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeRouteIndex = 0;
     let currentRouteCoords = [];
 
+    // Client-side graph store for standalone Dijkstra
+    let clientGraph = {};
+    let clientNodes = [];
+    let clientSegments = [];
+    let rawGeoJSON = null;
+
     let userMarker = null;
     let userAccuracyCircle = null;
     let watchId = null;
@@ -45,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const safetyTimer = setTimeout(hideLoader, 3000);
 
-    // ================= 2. MAP & SATELLITE TILES =================
+    // ================= 2. LEAFLET MAP =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22,
@@ -60,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; Google Maps'
     }).addTo(map);
 
-    // ================= 3. UTILITY FUNCTIONS =================
+    // ================= 3. UTILITIES & GEOMETRY =================
     function getPlaceIcon(name) {
         const n = name.toLowerCase();
         if (n.includes('gate')) return '🚪';
@@ -84,8 +90,234 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. LOAD CAMPUS DATA (WITH STATIC FALLBACK) =================
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function toKey(lat, lng) {
+        return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+    }
+
+    function parseKey(key) {
+        return key.split(',').map(Number);
+    }
+
+    function projectPointOnSegment(p, a, b) {
+        const x = p[1], y = p[0];
+        const x1 = a[1], y1 = a[0];
+        const x2 = b[1], y2 = b[0];
+        const dx = x2 - x1, dy = y2 - y1;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq === 0) return a;
+        const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / lenSq));
+        return [y1 + t * dy, x1 + t * dx];
+    }
+
+    // ================= 4. BUILD CLIENT GRAPH (OFFLINE ROUTING) =================
+    function buildClientGraph(geojson) {
+        clientGraph = {};
+        clientNodes = [];
+        clientSegments = [];
+        const nodeSet = new Set();
+
+        function regNode(k) {
+            if (!nodeSet.has(k)) {
+                nodeSet.add(k);
+                clientNodes.push(k);
+            }
+        }
+
+        function addEdge(uKey, vKey, uCoord, vCoord) {
+            if (uKey === vKey) return;
+            const d = getDistance(uCoord[0], uCoord[1], vCoord[0], vCoord[1]);
+            regNode(uKey);
+            regNode(vKey);
+            if (!clientGraph[uKey]) clientGraph[uKey] = [];
+            if (!clientGraph[vKey]) clientGraph[vKey] = [];
+            if (!clientGraph[uKey].some(e => e.node === vKey)) {
+                clientGraph[uKey].push({ node: vKey, weight: d, coord: vCoord });
+            }
+            if (!clientGraph[vKey].some(e => e.node === uKey)) {
+                clientGraph[vKey].push({ node: uKey, weight: d, coord: uCoord });
+            }
+        }
+
+        (geojson.features || []).forEach(feat => {
+            const geom = feat.geometry || {};
+            if (geom.type === 'LineString') {
+                const coords = geom.coordinates || [];
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const u = [coords[i][1], coords[i][0]];
+                    const v = [coords[i + 1][1], coords[i + 1][0]];
+                    addEdge(toKey(u[0], u[1]), toKey(v[0], v[1]), u, v);
+                    clientSegments.push({ u, v });
+                }
+            }
+        });
+
+        // Bridge gaps within 8 meters
+        for (let i = 0; i < clientNodes.length; i++) {
+            const p1 = parseKey(clientNodes[i]);
+            for (let j = i + 1; j < clientNodes.length; j++) {
+                const p2 = parseKey(clientNodes[j]);
+                if (getDistance(p1[0], p1[1], p2[0], p2[1]) <= 8.0) {
+                    addEdge(clientNodes[i], clientNodes[j], p1, p2);
+                }
+            }
+        }
+    }
+
+    function findNearestGraphNode(lat, lng) {
+        let bestKey = null;
+        let minD = Infinity;
+
+        for (let i = 0; i < clientNodes.length; i++) {
+            const [nLat, nLng] = parseKey(clientNodes[i]);
+            const d = getDistance(lat, lng, nLat, nLng);
+            if (d < minD) {
+                minD = d;
+                bestKey = clientNodes[i];
+            }
+        }
+
+        for (let i = 0; i < clientSegments.length; i++) {
+            const seg = clientSegments[i];
+            const proj = projectPointOnSegment([lat, lng], seg.u, seg.v);
+            const d = getDistance(lat, lng, proj[0], proj[1]);
+            if (d < minD) {
+                minD = d;
+                bestKey = toKey(proj[0], proj[1]);
+                const uKey = toKey(seg.u[0], seg.u[1]);
+                const vKey = toKey(seg.v[0], seg.v[1]);
+                if (!clientGraph[bestKey]) clientGraph[bestKey] = [];
+                clientGraph[bestKey].push({ node: uKey, weight: getDistance(proj[0], proj[1], seg.u[0], seg.u[1]), coord: seg.u });
+                clientGraph[bestKey].push({ node: vKey, weight: getDistance(proj[0], proj[1], seg.v[0], seg.v[1]), coord: seg.v });
+            }
+        }
+        return bestKey;
+    }
+
+    function dijkstraSearch(startKey, endKey, penalized = {}) {
+        const queue = [{ cost: 0, node: startKey, path: [] }];
+        const bestCost = { [startKey]: 0 };
+        const visited = new Set();
+
+        while (queue.length > 0) {
+            queue.sort((a, b) => a.cost - b.cost);
+            const { cost, node, path } = queue.shift();
+
+            if (visited.has(node)) continue;
+            visited.add(node);
+            const currentPath = [...path, node];
+
+            if (node === endKey) {
+                return { path: currentPath, cost };
+            }
+
+            const edges = clientGraph[node] || [];
+            for (let i = 0; i < edges.length; i++) {
+                const edge = edges[i];
+                if (visited.has(edge.node)) continue;
+
+                const edgeKey1 = `${node}|${edge.node}`;
+                const edgeKey2 = `${edge.node}|${node}`;
+                const multiplier = penalized[edgeKey1] || penalized[edgeKey2] || 1.0;
+                const nextCost = cost + (edge.weight * multiplier);
+
+                if (nextCost < (bestCost[edge.node] || Infinity)) {
+                    bestCost[edge.node] = nextCost;
+                    queue.push({ cost: nextCost, node: edge.node, path: currentPath });
+                }
+            }
+        }
+        return null;
+    }
+
+    function computeClientSideRoutes(waypoints) {
+        const coords = waypoints.map(w => buildings[w]);
+        const routes = [];
+        const penalized = {};
+        const isMulti = waypoints.length > 2;
+
+        for (let iter = 0; iter < 5; iter++) {
+            let fullCoords = [];
+            let allNodePath = [];
+            let failed = false;
+
+            for (let leg = 0; leg < coords.length - 1; leg++) {
+                const p1 = coords[leg];
+                const p2 = coords[leg + 1];
+                const startNode = findNearestGraphNode(p1[0], p1[1]);
+                const endNode = findNearestGraphNode(p2[0], p2[1]);
+
+                if (!startNode || !endNode) {
+                    failed = true;
+                    break;
+                }
+
+                const result = dijkstraSearch(startNode, endNode, penalized);
+                if (!result || !result.path) {
+                    failed = true;
+                    break;
+                }
+
+                const legCoords = [p1, ...result.path.map(parseKey), p2];
+                if (fullCoords.length > 0) {
+                    fullCoords.push(...legCoords.slice(1));
+                    allNodePath.push(...result.path.slice(1));
+                } else {
+                    fullCoords.push(...legCoords);
+                    allNodePath.push(...result.path);
+                }
+            }
+
+            if (failed || fullCoords.length < 2) break;
+
+            let dist = 0;
+            for (let i = 0; i < fullCoords.length - 1; i++) {
+                dist += getDistance(fullCoords[i][0], fullCoords[i][1], fullCoords[i + 1][0], fullCoords[i + 1][1]);
+            }
+
+            const isDistinct = !routes.some(r => Math.abs(r.totalDistance - dist) < 10);
+            if (isDistinct) {
+                routes.push({ path: fullCoords, totalDistance: Math.round(dist) });
+                if (routes.length >= (isMulti ? 2 : 3)) break;
+            }
+
+            if (allNodePath.length > 3) {
+                const midStart = Math.max(1, Math.floor(allNodePath.length * 0.2));
+                const midEnd = Math.min(allNodePath.length - 1, Math.floor(allNodePath.length * 0.8));
+                for (let i = midStart; i < midEnd; i++) {
+                    const k = `${allNodePath[i]}|${allNodePath[i + 1]}`;
+                    penalized[k] = (penalized[k] || 1.0) * 2.2;
+                }
+            }
+        }
+
+        routes.sort((a, b) => a.totalDistance - b.totalDistance);
+
+        const names = [
+            "Shortest Route (Via Walkway / Shortcut)",
+            "Alternative 1 (Via Swimming Pool Road)",
+            "Alternative 2 (Via Campus Road / Garden)"
+        ];
+
+        return routes.map((r, idx) => ({
+            name: isMulti ? (idx === 0 ? "Shortest Multi-Stop Route" : `Multi-Stop Route ${idx + 1}`) : (names[idx] || `Alternative ${idx}`),
+            path: r.path,
+            totalDistance: r.totalDistance
+        }));
+    }
+
+    // ================= 5. LOAD CAMPUS DATA (HYBRID ENGINE) =================
     function processGeoJSONData(data) {
+        rawGeoJSON = data;
         buildings = {};
         placeNamesSorted = [];
 
@@ -95,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     return {
                         color: '#f8fafc',
                         weight: 3.5,
-                        opacity: 0.8,
+                        opacity: 0.85,
                         dashArray: '5, 5',
                         className: 'campus-walkway-base'
                     };
@@ -132,6 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         placeNamesSorted.sort();
 
+        // Build client-side graph for instant offline pathfinding
+        buildClientGraph(data);
+
         const selects = waypointsContainer.querySelectorAll('.location-select');
         if (selects[0]) populateSelectElement(selects[0], "Choose Starting Point");
         if (selects[1]) populateSelectElement(selects[1], "Choose Destination");
@@ -140,27 +375,25 @@ document.addEventListener('DOMContentLoaded', () => {
         hideLoader();
     }
 
+    // Try FastAPI first, fall back directly to static file for Vercel
     fetch(`${API_URL}/api/campus-data`)
         .then(res => {
             if (!res.ok) throw new Error("Backend offline");
             return res.json();
         })
-        .then(data => {
-            processGeoJSONData(data.geojson);
-        })
+        .then(data => processGeoJSONData(data.geojson))
         .catch(() => {
-            console.warn("Backend unavailable. Loading static campus GeoJSON directly.");
             fetch('assets/data/giet_campus.geojson')
                 .then(res => res.json())
                 .then(data => processGeoJSONData(data))
                 .catch(err => {
-                    console.error("Critical error loading map data:", err);
+                    console.error("Critical error loading GeoJSON:", err);
                     clearTimeout(safetyTimer);
                     hideLoader();
                 });
         });
 
-    // ================= 5. LIVE SEARCH =================
+    // ================= 6. LIVE SEARCH =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
@@ -209,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 6. NEXT DESTINATION MANAGER =================
+    // ================= 7. NEXT DESTINATION MANAGER =================
     function updateDestinationLabels() {
         const selects = waypointsContainer.querySelectorAll('.stop-row .location-select');
         selects.forEach((sel, idx) => {
@@ -231,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             div.innerHTML = `
                 <select class="location-select" style="flex: 1;"></select>
-                <button type="button" class="btn-remove-stop" title="Remove stop" style="background: none; border: none; font-size: 18px; cursor: pointer; color: #ef4444; font-weight: bold; padding: 4px 8px;">✕</button>
+                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
             `;
 
             waypointsContainer.appendChild(div);
@@ -244,14 +477,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const panelBody = document.querySelector('.panel-body');
-            if (panelBody) {
-                panelBody.scrollTop = panelBody.scrollHeight;
-            }
+            if (panelBody) panelBody.scrollTop = panelBody.scrollHeight;
             calculateLimits();
         });
     }
 
-    // ================= 7. ROUTE RENDERING & SWITCHING =================
+    // ================= 8. ROUTE RENDERING & SWITCHING =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -386,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 8. ROUTE COMPUTATION =================
+    // ================= 9. ROUTE COMPUTATION (HYBRID FASTAPI + LOCAL) =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -399,23 +630,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                // 1. Try FastAPI backend
                 const res = await fetch(`${API_URL}/api/routes`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ waypoints: selectedPoints })
                 });
 
+                if (!res.ok) throw new Error("Backend response error");
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || "Routing failed");
-
                 calculatedRoutes = data.routes;
-                renderRoutes(calculatedRoutes);
+            } catch {
+                // 2. Fall back to local client-side Dijkstra calculation immediately
+                calculatedRoutes = computeClientSideRoutes(selectedPoints);
+            }
 
-                if (window.innerWidth <= 640 && navPanel) {
-                    setTimeout(snapToCollapsed, 300);
-                }
-            } catch (err) {
-                alert("Routing Error: " + err.message);
+            if (!calculatedRoutes || calculatedRoutes.length === 0) {
+                alert("No route found between selected points.");
+                return;
+            }
+
+            renderRoutes(calculatedRoutes);
+
+            if (window.innerWidth <= 640 && navPanel) {
+                setTimeout(snapToCollapsed, 300);
             }
         });
     }
@@ -464,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 9. MOBILE BOTTOM SHEET GESTURES =================
+    // ================= 10. MOBILE BOTTOM SHEET GESTURES =================
     let isDragging = false;
     let startY = 0;
     let currentTranslateY = 0;
@@ -547,7 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ================= 10. GPS LIVE & SIMULATION =================
+    // ================= 11. GPS LIVE & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
