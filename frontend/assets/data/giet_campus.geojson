@@ -2487,6 +2487,27 @@
       "properties": {
         "name": "mees route"
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8356647421762,
+            19.04803988090161,
+            0
+          ],
+          [
+            83.83578675523522,
+            19.048108312663903,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "name": "guest house walkway"
+      }
     }
   ]
 }
