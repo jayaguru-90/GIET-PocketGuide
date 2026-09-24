@@ -1233,8 +1233,8 @@
         "type": "LineString",
         "coordinates": [
           [
-            83.832441,
-            19.0496439,
+            83.83243810093506,
+            19.04964648280376,
             0
           ],
           [
@@ -2507,6 +2507,27 @@
       },
       "properties": {
         "name": "guest house walkway"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.83546491530713,
+            19.047756234427876,
+            0
+          ],
+          [
+            83.83548636056645,
+            19.04771822686559,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "name": "nc-14 route"
       }
     }
   ]
