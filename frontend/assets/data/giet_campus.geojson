@@ -878,71 +878,6 @@
         "type": "LineString",
         "coordinates": [
           [
-            83.8311909,
-            19.0474079,
-            0
-          ],
-          [
-            83.831233,
-            19.047431,
-            0
-          ],
-          [
-            83.8312591,
-            19.0474414,
-            0
-          ],
-          [
-            83.8319401,
-            19.0478154,
-            0
-          ],
-          [
-            83.8323675,
-            19.0480433,
-            0
-          ],
-          [
-            83.8326122,
-            19.048178,
-            0
-          ],
-          [
-            83.8330831,
-            19.0484282,
-            0
-          ],
-          [
-            83.8332448,
-            19.0485211,
-            0
-          ],
-          [
-            83.8334392,
-            19.0486246,
-            0
-          ],
-          [
-            83.8338431,
-            19.048839,
-            0
-          ]
-        ]
-      },
-      "properties": {
-        "name": "GIET Main Road",
-        "styleUrl": "#line-000000-6619-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 6.619
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
             83.8338431,
             19.048839,
             0
@@ -2528,6 +2463,42 @@
       },
       "properties": {
         "name": "nc-14 route"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.83502499309827,
+            19.047876621261736,
+            0
+          ],
+          [
+            83.8349681469083,
+            19.047845673358733,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "name": "central mess route"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834969,
+          19.0478456,
+          0
+        ]
+      },
+      "properties": {
+        "name": "Central Mess 2",
+        "category": "Hostel / Mess"
       }
     }
   ]
