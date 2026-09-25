@@ -3,11 +3,13 @@
     padding: 0;
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html, body {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport units for mobile address bars */
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -204,6 +206,49 @@ html, body {
     background-color: #eff6ff;
 }
 
+/* ================= CATEGORY FILTER CHIPS ================= */
+.category-filters-container {
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.category-chips-scroll {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.category-chips-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.cat-chip {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.cat-chip:hover {
+    background: #e2e8f0;
+}
+
+.cat-chip.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
 /* ================= LIVE TURN-BY-TURN HUD ================= */
 .turn-hud {
     position: fixed;
@@ -289,16 +334,17 @@ html, body {
     bottom: 0;
     width: 100% !important;
     height: calc(100vh - 56px) !important;
+    height: calc(100dvh - 56px) !important;
     z-index: 1;
 }
 
-/* ================= FLOATING CONTROL PANEL (DESKTOP) ================= */
+/* ================= DESKTOP SIDE-DOCKED PANEL ================= */
 .nav-panel {
     position: absolute;
-    top: 72px; /* Placed cleanly below 56px top header */
+    top: 72px;
     left: 20px;
     z-index: 1000;
-    width: 340px;
+    width: 360px;
     background: rgba(255, 255, 255, 0.96);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -310,6 +356,7 @@ html, body {
     flex-direction: column;
     gap: 12px;
     max-height: calc(100vh - 96px);
+    max-height: calc(100dvh - 96px);
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
@@ -367,8 +414,8 @@ html, body {
 .search-input,
 .search-input-wrapper input {
     width: 100%;
-    padding: 8px 12px 8px 32px;
-    font-size: 13px;
+    padding: 9px 12px 9px 32px;
+    font-size: 13.5px;
     border: 1.5px solid #cbd5e1;
     border-radius: 8px;
     box-sizing: border-box;
@@ -399,8 +446,8 @@ html, body {
 }
 
 .search-item {
-    padding: 8px 12px;
-    font-size: 12.5px;
+    padding: 9px 12px;
+    font-size: 13px;
     cursor: pointer;
     border-bottom: 1px solid #f1f5f9;
 }
@@ -424,8 +471,8 @@ html, body {
 }
 
 .point-badge {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     color: #ffffff;
     font-size: 11px;
@@ -455,10 +502,10 @@ html, body {
 .location-select {
     width: 100%;
     flex: 1;
-    padding: 9px 12px;
+    padding: 10px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     background: #ffffff;
     color: #1e293b;
     outline: none;
@@ -478,7 +525,7 @@ html, body {
     border: 1px solid #fca5a5;
     color: #ef4444;
     border-radius: 6px;
-    padding: 6px 9px;
+    padding: 8px 10px;
     font-weight: 700;
     cursor: pointer;
     line-height: 1;
@@ -492,7 +539,7 @@ html, body {
     color: #334155;
     font-size: 12px;
     font-weight: 600;
-    padding: 7px 10px;
+    padding: 8px 10px;
     border-radius: 8px;
     width: 100%;
     cursor: pointer;
@@ -566,20 +613,35 @@ html, body {
     padding: 10px;
 }
 
+.steps-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.badge {
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
 .turn-steps-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
     max-height: 180px;
     overflow-y: auto;
-    margin-top: 4px;
 }
 
 .turn-step-item {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    padding: 7px 9px;
+    padding: 8px 10px;
     border-radius: 6px;
     background: #ffffff;
     border-left: 3px solid #38bdf8;
@@ -612,7 +674,7 @@ html, body {
 .btn-nav {
     flex: 1;
     text-decoration: none;
-    padding: 9px 12px;
+    padding: 10px 12px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
@@ -687,7 +749,7 @@ html, body {
 
 /* ================= SATELLITE MARKER LABELS ================= */
 .satellite-label {
-    background: rgba(255, 255, 255, 0.94) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     -webkit-backdrop-filter: blur(8px) !important;
     backdrop-filter: blur(8px) !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
@@ -703,10 +765,11 @@ html, body {
     align-items: center !important;
     gap: 5px !important;
     white-space: nowrap !important;
+    transition: opacity 0.2s ease;
 }
 
 .satellite-label::before {
-    border-top-color: rgba(255, 255, 255, 0.94) !important;
+    border-top-color: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* ================= UTILITY MARKER PINS ================= */
@@ -736,14 +799,6 @@ html, body {
     filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
 }
 
-.active-nav-route {
-    stroke: #38bdf8;
-    stroke-width: 6px;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.9));
-}
-
 .hidden {
     display: none !important;
 }
@@ -762,7 +817,24 @@ html, body {
     border-radius: 9999px;
 }
 
-/* ================= MOBILE BOTTOM-DOCKED SHEET ================= */
+/* ================= TABLET OPTIMIZATIONS (641px - 1024px) ================= */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .nav-panel {
+        width: 340px;
+        top: 66px;
+        left: 14px;
+        max-height: calc(100vh - 84px);
+        max-height: calc(100dvh - 84px);
+        padding: 14px 16px;
+    }
+
+    .turn-hud {
+        top: 66px;
+        max-width: 360px;
+    }
+}
+
+/* ================= MOBILE BOTTOM SHEET (max-width: 640px) ================= */
 @media (max-width: 640px) {
     .header,
     .nav-header {
@@ -783,7 +855,7 @@ html, body {
 
     .brand-status,
     .utility-chips-group {
-        display: none;
+        display: none; /* Collapsed on mobile to give full screen to map */
     }
 
     .navbar a,
@@ -796,6 +868,7 @@ html, body {
     #map {
         top: 50px;
         height: calc(100vh - 50px) !important;
+        height: calc(100dvh - 50px) !important;
     }
 
     .turn-hud {
@@ -804,27 +877,41 @@ html, body {
         padding: 8px 12px;
     }
 
+    .turn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.3rem;
+    }
+
+    .turn-instruction {
+        font-size: 12px;
+    }
+
     .nav-panel {
         top: auto !important;
         left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
         width: 100% !important;
-        padding: 8px 16px 16px 16px !important;
+        padding: 6px 14px 14px 14px !important;
         border-bottom-left-radius: 0 !important;
         border-bottom-right-radius: 0 !important;
         border-top-left-radius: 20px !important;
         border-top-right-radius: 20px !important;
-        max-height: 55vh !important;
+        max-height: 52vh !important;
+        max-height: 52dvh !important;
         height: auto !important;
         transform: translateY(0);
+        will-change: transform;
         box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35) !important;
+        transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
     }
 
     .panel-toggle-btn {
         display: block;
         cursor: grab;
         padding: 4px 0 6px 0;
+        touch-action: none;
     }
 
     .panel-body {
@@ -832,6 +919,25 @@ html, body {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
-        padding-bottom: 12px;
+        padding-bottom: env(safe-area-inset-bottom, 12px);
+    }
+
+    .stop-row select,
+    .input-group select,
+    .location-select {
+        font-size: 13px !important;
+        padding: 8px 10px !important;
+    }
+
+    .btn-remove-stop {
+        padding: 6px 8px !important;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-nav {
+        padding: 8px 10px;
+        font-size: 12.5px;
     }
 }

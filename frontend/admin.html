@@ -22,7 +22,7 @@
                 <img src="assets/images/LOGO.png" class="logo" alt="GIET Logo" />
                 <div>
                     <div class="brand-title">GIETU <span style="color: #60a5fa;">Map Studio</span></div>
-                    <div class="brand-sub"><span class="pulse-dot"></span> Spatial Registry & Topology Editor</div>
+                    <div class="brand-sub"><span class="pulse-dot"></span> Spatial Registry & Amenity Placement</div>
                 </div>
             </a>
             <div style="display: flex; gap: 10px;">
@@ -41,7 +41,7 @@
         <div class="auth-card">
             <img src="assets/images/LOGO.png" alt="GIET Logo" style="width: 54px; height: 54px; margin-bottom: 12px;" />
             <h2 style="font-size: 1.2rem; margin-bottom: 4px;">Studio Access</h2>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.5rem;">Authenticate to edit campus boundaries and walkways</p>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.5rem;">Authenticate to place amenities and manage corridors</p>
 
             <form id="login-form">
                 <div class="input-field" style="text-align: left;">
@@ -65,38 +65,40 @@
         <aside class="sidebar-editor">
             <div class="sidebar-content">
                 
-                <!-- Tab Switching -->
+                <!-- Panel Mode Tabs -->
                 <div class="panel-tabs">
                     <button class="tab-btn active" id="tab-locations-btn">
-                        <i class="fa-solid fa-location-dot"></i> Buildings & Sites
+                        <i class="fa-solid fa-location-dot"></i> Buildings & Amenities
                     </button>
                     <button class="tab-btn" id="tab-routes-btn">
                         <i class="fa-solid fa-draw-polygon"></i> Walkway Corridors
                     </button>
                 </div>
 
-                <!-- LOCATION MANAGER PANEL -->
+                <!-- LOCATION & AMENITY REGISTRATION PANEL -->
                 <div id="location-panel" class="glass-card">
                     <div class="card-title">
-                        <span id="form-heading">Add Campus Location</span>
-                        <span style="font-size: 0.7rem; color: #60a5fa;"><i class="fa-solid fa-crosshairs"></i> Drag Pin Support</span>
+                        <span id="form-heading">Add Location or Amenity</span>
+                        <span style="font-size: 0.7rem; color: #60a5fa;"><i class="fa-solid fa-crosshairs"></i> Click / Drag Pin</span>
                     </div>
-                    <p class="card-desc">Click map to place pin, or drag red marker directly over doorways.</p>
+                    <p class="card-desc">Click anywhere on the map to drop a pin. Drag the red pin directly to doorways, washrooms, or water coolers.</p>
 
                     <form id="location-form">
                         <input type="hidden" id="loc-id" />
                         <div class="input-field">
-                            <label>Location Name</label>
-                            <input type="text" id="loc-name" placeholder="e.g. Central Library, Food Court" required />
+                            <label>Name / Identifier</label>
+                            <input type="text" id="loc-name" placeholder="e.g. Canteen Water Cooler, Admin Block Restroom" required />
                         </div>
                         <div class="input-field">
-                            <label>Category</label>
+                            <label>Feature Category</label>
                             <select id="loc-category">
-                                <option value="Academic">Academic Building</option>
-                                <option value="Hostel / Mess">Hostel / Central Mess</option>
-                                <option value="Sports">Sports Ground / Court</option>
-                                <option value="Amenities">Amenities / Park / Temple</option>
-                                <option value="Gate / Road">Gates & Infrastructure</option>
+                                <option value="Academic Building">Academic Building</option>
+                                <option value="Hostel / Mess">Hostel / Mess</option>
+                                <option value="Sports Ground">Sports Ground / Court</option>
+                                <option value="Water">🚰 Drinking Water Cooler</option>
+                                <option value="Washroom">🚻 Restroom / Washroom</option>
+                                <option value="Medical">🏥 First Aid / Dispensary</option>
+                                <option value="Security">🛡️ Security Booth / Gate</option>
                             </select>
                         </div>
                         <div class="coords-row">
@@ -111,7 +113,7 @@
                         </div>
                         <div style="display: flex; gap: 8px;">
                             <button type="submit" class="btn-primary" id="submit-btn">
-                                <i class="fa-solid fa-floppy-disk"></i> Save Location
+                                <i class="fa-solid fa-floppy-disk"></i> Save Position
                             </button>
                             <button type="button" class="btn-secondary hidden" id="cancel-edit-btn">Cancel</button>
                         </div>
@@ -122,23 +124,15 @@
                 <div id="route-panel" class="glass-card hidden">
                     <div class="card-title">
                         <span id="route-form-heading">Walkway Route Builder</span>
-                        <span id="route-live-distance" style="font-size: 0.72rem; color: #10b981; font-weight: 700;">Length: 0m</span>
+                        <span style="font-size: 0.7rem; color: #34d399;"><i class="fa-solid fa-magnet"></i> Auto Snap ON</span>
                     </div>
-                    <p class="card-desc">Drag nodes, right-click to delete, or click <strong>(+)</strong> midpoints to split segments.</p>
+                    <p class="card-desc">Draw lines between buildings. Nodes automatically split and weld to connect pathways.</p>
 
                     <form id="route-form">
                         <input type="hidden" id="route-id" />
                         <div class="input-field">
                             <label>Walkway Name</label>
-                            <input type="text" id="route-name" placeholder="e.g. Mech to Library Footpath" required />
-                        </div>
-                        <div class="input-field">
-                            <label>Walkway Classification</label>
-                            <select id="route-type">
-                                <option value="footway">Pedestrian Footpath</option>
-                                <option value="road">Main Vehicle Road</option>
-                                <option value="stairs">Stairway / Steep Link</option>
-                            </select>
+                            <input type="text" id="route-name" placeholder="e.g. Canteen to Library Footpath" required />
                         </div>
                         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
                             <button type="button" class="btn-primary" id="start-drawing-btn">
@@ -160,22 +154,16 @@
                     </form>
                 </div>
 
-                <!-- SPATIAL DIRECTORY & BACKUP -->
+                <!-- REGISTERED FEATURES DIRECTORY -->
                 <div class="glass-card">
                     <div class="card-title">
                         <span id="registry-title">Registered Features</span>
-                        <div style="display: flex; gap: 4px;">
-                            <label class="btn-secondary" style="font-size: 0.68rem; padding: 4px 8px; cursor: pointer;" title="Import GeoJSON">
-                                <i class="fa-solid fa-file-import"></i> Import
-                                <input type="file" id="import-geojson-input" accept=".geojson,.json" style="display: none;" />
-                            </label>
-                            <button id="export-geojson-btn" class="btn-secondary" style="font-size: 0.68rem; padding: 4px 8px;" title="Copy to clipboard">
-                                <i class="fa-solid fa-copy"></i> Export
-                            </button>
-                        </div>
+                        <button id="export-geojson-btn" class="btn-secondary" style="font-size: 0.68rem; padding: 4px 8px;">
+                            <i class="fa-solid fa-copy"></i> Export JSON
+                        </button>
                     </div>
                     <div class="input-field" style="margin-bottom: 8px;">
-                        <input type="text" id="search-filter" placeholder="Search features..." />
+                        <input type="text" id="search-filter" placeholder="Filter buildings, water, washrooms..." />
                     </div>
                     <div class="registry-list" id="registry-list"></div>
                 </div>

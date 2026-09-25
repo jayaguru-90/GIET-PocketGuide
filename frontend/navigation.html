@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>GIET Campus Guide - Live Navigator</title>
 
     <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
@@ -15,7 +15,7 @@
 </head>
 <body class="nav-body">
 
-    <!-- FLOATING TOP BAR WITH UTILITY TOGGLES -->
+    <!-- FLOATING TOP BAR -->
     <header class="header nav-header">
         <a href="index.html" class="logo-section nav-brand">
             <img src="assets/images/LOGO.png" alt="GIET Logo" class="logo brand-logo" />
@@ -25,7 +25,7 @@
             </div>
         </a>
 
-        <!-- UTILITY OVERLAY FILTER CHIPS -->
+        <!-- AMENITY CHIPS & HOME NAVIGATION -->
         <div class="header-controls">
             <div class="utility-chips-group">
                 <button type="button" class="util-chip" data-type="water" title="Drinking Water">🚰 Water</button>
@@ -37,38 +37,50 @@
         </div>
     </header>
 
-    <!-- LIVE TURN-BY-TURN HUD (Appears when walking) -->
+    <!-- LIVE TURN-BY-TURN HUD (Overlays during active walk) -->
     <div id="turn-by-turn-hud" class="turn-hud hidden">
         <div class="turn-icon" id="turn-icon">⬆️</div>
         <div class="turn-details">
-            <div class="turn-instruction" id="turn-instruction">Follow the path ahead</div>
+            <div class="turn-instruction" id="turn-instruction">Follow designated walkway</div>
             <div class="turn-distance" id="turn-distance">in 25 meters</div>
         </div>
-        <button type="button" id="exit-nav-btn" class="btn-exit-hud" title="Exit Navigation">✕</button>
+        <button type="button" id="exit-hud-btn" class="btn-exit-hud" title="Close HUD">✕</button>
     </div>
 
-    <!-- MAIN LEAFLET MAP CONTAINER -->
+    <!-- MAIN LEAFLET MAP CANVAS -->
     <div id="map"></div>
 
-    <!-- ROUTING & NAVIGATION PANEL -->
+    <!-- NAVIGATION PANEL (Desktop side-docked, Mobile/Tablet bottom-sheet) -->
     <section class="nav-panel" id="nav-panel">
-        <div class="panel-handle-area">
-            <button class="panel-toggle-btn" id="toggle-panel-btn" aria-label="Toggle Panel">
+        <div class="panel-handle-area" id="panel-handle-area">
+            <button class="panel-toggle-btn" id="toggle-panel-btn" aria-label="Toggle Navigation Sheet">
                 <span class="handle-bar toggle-bar"></span>
             </button>
         </div>
 
         <div class="panel-body">
-            <!-- Search & Waypoints -->
+            <!-- Search Section -->
             <div class="search-section search-container">
                 <div class="search-input-wrapper">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="building-search" class="search-input" placeholder="Search buildings, amenities, gates..." autocomplete="off" />
+                    <input type="text" id="building-search" class="search-input" placeholder="Search blocks, labs, amenities..." autocomplete="off" />
                     <div id="search-results" class="search-dropdown search-results-dropdown hidden"></div>
                 </div>
             </div>
 
-            <!-- Start / Destination Selectors -->
+            <!-- Category Discovery Chips -->
+            <div class="category-filters-container">
+                <div class="category-chips-scroll">
+                    <button type="button" class="cat-chip active" data-cat="all">All</button>
+                    <button type="button" class="cat-chip" data-cat="academic">🏛️ Academic</button>
+                    <button type="button" class="cat-chip" data-cat="hostel">🏢 Hostels & Mess</button>
+                    <button type="button" class="cat-chip" data-cat="food">☕ Canteen & Food</button>
+                    <button type="button" class="cat-chip" data-cat="sports">⚽ Sports</button>
+                    <button type="button" class="cat-chip" data-cat="parking">🅿️ Parking & Gates</button>
+                </div>
+            </div>
+
+            <!-- Waypoint Inputs -->
             <div class="waypoints-container" id="waypoints-container">
                 <div class="input-group">
                     <div class="point-badge start-badge">A</div>
@@ -87,7 +99,7 @@
                 <i class="fa-solid fa-plus"></i> Add Next Destination
             </button>
 
-            <!-- Actions -->
+            <!-- Actions Buttons -->
             <div class="btn-grid action-buttons">
                 <button type="button" id="find-route-btn" class="btn btn-primary">
                     <i class="fa-solid fa-route"></i> Find Routes
@@ -106,15 +118,19 @@
                 </button>
             </div>
 
-            <!-- Turn List / Steps Container -->
+            <!-- Route Outputs & Suggested Options -->
             <div id="route-output" class="route-output hidden"></div>
             <div id="route-options-container" class="route-options-container hidden">
                 <h4 class="section-title">Suggested Corridors</h4>
                 <div id="route-cards-list" class="route-cards-list"></div>
             </div>
 
+            <!-- Turn-by-Turn Instruction Sequence -->
             <div id="turn-steps-container" class="turn-steps-container hidden">
-                <h4 class="section-title">Turn-by-Turn Directions</h4>
+                <div class="steps-header">
+                    <h4 class="section-title" style="margin: 0;">Turn-by-Turn Directions</h4>
+                    <span id="steps-total-count" class="badge">0 steps</span>
+                </div>
                 <div id="turn-steps-list" class="turn-steps-list"></div>
             </div>
         </div>
@@ -125,7 +141,7 @@
         <div class="loading-content loader-content">
             <div class="spinner"></div>
             <h3>Loading GIET Campus Spatial Mesh...</h3>
-            <p>Acquiring satellite paths and campus amenities</p>
+            <p>Initializing high-resolution paths and amenities</p>
         </div>
     </div>
 

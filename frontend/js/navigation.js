@@ -16,12 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const routeCardsList = document.getElementById('route-cards-list');
     const turnStepsContainer = document.getElementById('turn-steps-container');
     const turnStepsList = document.getElementById('turn-steps-list');
+    const stepsTotalCount = document.getElementById('steps-total-count');
     const turnHud = document.getElementById('turn-by-turn-hud');
     const turnIcon = document.getElementById('turn-icon');
     const turnInstruction = document.getElementById('turn-instruction');
     const turnDistance = document.getElementById('turn-distance');
-    const exitHudBtn = document.getElementById('exit-nav-btn');
+    const exitHudBtn = document.getElementById('exit-hud-btn');
 
+    const catChips = document.querySelectorAll('.cat-chip');
     const utilChips = document.querySelectorAll('.util-chip');
     const buildingSearch = document.getElementById('building-search');
     const searchResults = document.getElementById('search-results');
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let campusGeoJSON = null;
     let buildings = {};
     let markerLayers = {};
+    let placeMetadata = {};
     let placeNamesSorted = [];
     let calculatedRoutes = [];
     let activeRouteIndex = 0;
@@ -55,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let simulationInterval = null;
     let turnInstructions = [];
     let utilityMarkers = [];
+    let activeCategory = 'all';
+    let isTrackingOrSimulating = false;
 
     function hideLoader() {
         if (!loadingScreen) return;
@@ -63,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const safetyTimer = setTimeout(hideLoader, 3000);
 
-    // ================= 2. PURE SATELLITE BASE MAP (NO DEFAULT GOOGLE LABELS) =================
+    // ================= 2. PURE SATELLITE CANVAS =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22,
@@ -72,14 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // lyrs=s strips all default business text, shop markers, and street names
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 3. UTILITY ICONS & OVERLAYS =================
+    // ================= 3. UTILITIES & EMERGENCY OVERLAYS =================
     function renderUtilities(filterType) {
         utilityMarkers.forEach(m => map.removeLayer(m));
         utilityMarkers = [];
@@ -129,7 +133,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 4. GEOMETRY & GRAPH HELPERS =================
+    // ================= 4. CATEGORY CLASSIFICATION & STABLE FILTERING =================
+    function getCategoryClassification(name, rawCategory = '') {
+        const n = name.toLowerCase();
+        const c = rawCategory.toLowerCase();
+
+        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('dept') || n.includes('csa') || n.includes('ame')) {
+            return 'academic';
+        }
+        if (c.includes('hostel') || c.includes('mess') || n.includes('nc-') || n.includes('mess') || n.includes('hostel')) {
+            return 'hostel';
+        }
+        if (c.includes('food') || n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) {
+            return 'food';
+        }
+        if (c.includes('sports') || n.includes('court') || n.includes('pool') || n.includes('ground') || n.includes('gym')) {
+            return 'sports';
+        }
+        if (c.includes('parking') || c.includes('gate') || n.includes('parking') || n.includes('gate') || n.includes('bus')) {
+            return 'parking';
+        }
+        return 'academic';
+    }
+
+    function applyCategoryAndZoomFilter() {
+        const currentZoom = map.getZoom();
+        const isZoomedOut = currentZoom < 18;
+        const majorLandmarks = ['admin block', 'library', 'canteen', 'giet temple', 'bus-stop', 'central mess', 'giet main ground'];
+
+        Object.keys(markerLayers).forEach(name => {
+            const layer = markerLayers[name];
+            const meta = placeMetadata[name] || {};
+            const itemCat = meta.category || 'academic';
+
+            const categoryMatches = (activeCategory === 'all' || itemCat === activeCategory);
+            const zoomMatches = !isZoomedOut || majorLandmarks.some(landmark => name.toLowerCase().includes(landmark));
+
+            if (categoryMatches && zoomMatches) {
+                if (!map.hasLayer(layer)) map.addLayer(layer);
+            } else {
+                if (map.hasLayer(layer)) map.removeLayer(layer);
+            }
+        });
+    }
+
+    map.on('zoomend', applyCategoryAndZoomFilter);
+
+    catChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            catChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeCategory = chip.getAttribute('data-cat');
+            applyCategoryAndZoomFilter();
+        });
+    });
+
+    // ================= 5. GEOMETRY & GRAPH HELPERS =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -319,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
     }
 
-    // ================= 5. TURN-BY-TURN INSTRUCTIONS =================
+    // ================= 6. TURN-BY-TURN INSTRUCTIONS =================
     function generateTurnInstructions(coords) {
         if (!coords || coords.length < 2) return [];
         const instructions = [];
@@ -354,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 instructions.push({
                     action: "turn",
                     icon: icon,
-                    text: `${turnType} onto connecting path`,
+                    text: `${turnType} onto connecting walkway`,
                     distance: Math.round(accumulatedDistance),
                     coord: pCurr
                 });
@@ -385,15 +444,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="font-size: 1.2rem;">${step.icon}</span>
                 <div>
                     <div><strong>${step.text}</strong></div>
-                    <div style="color: #64748b; font-size: 11px;">${step.distance > 0 ? `After ${step.distance} meters` : 'Start'}</div>
+                    <div style="color: #64748b; font-size: 11px;">${step.distance > 0 ? `After ${step.distance} meters` : 'Origin'}</div>
                 </div>
             `;
             turnStepsList.appendChild(div);
         });
+
+        if (stepsTotalCount) {
+            stepsTotalCount.textContent = `${instructions.length} steps`;
+        }
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 6. LIVE GPS & DYNAMIC LINE ERASING =================
+    // ================= 7. LIVE GPS & LINE ERASING =================
     function updateUserLiveLocation(lat, lng, accuracy = 5) {
         currentUserLat = lat;
         currentUserLng = lng;
@@ -479,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 7. ROUTE RENDERING =================
+    // ================= 8. ROUTE SELECTION (STABILIZED BOUNDS) =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -530,7 +593,14 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        map.fitBounds(remainingRoutePolyline.getBounds(), { padding: [50, 50] });
+        // Clamp fitBounds: Prevent zooming in too close on short paths, and do not fight GPS/Simulation
+        if (!isTrackingOrSimulating && remainingRoutePolyline) {
+            map.fitBounds(remainingRoutePolyline.getBounds(), {
+                padding: [60, 60],
+                maxZoom: 19,
+                animate: true
+            });
+        }
     }
 
     function renderRoutes(routes) {
@@ -561,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectActiveRoute(0);
     }
 
-    // ================= 8. MULTI-STOP DROPDOWN POPULATOR =================
+    // ================= 9. MULTI-STOP POPULATORS & RESPONSIVE SHEET GESTURES =================
     function populateDropdown(selectElem, placeholder = "Choose Location") {
         selectElem.innerHTML = `<option value="">${placeholder}</option>`;
         placeNamesSorted.forEach(name => {
@@ -610,10 +680,82 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 9. LOAD CAMPUS GEOJSON =================
+    // Touch Dragging Handler for Mobile Bottom Sheet
+    let isDragging = false;
+    let startY = 0;
+    let currentTranslateY = 0;
+    let isCollapsed = false;
+    const dragArea = document.getElementById('panel-handle-area') || togglePanelBtn;
+
+    if (dragArea && navPanel) {
+        dragArea.addEventListener('touchstart', (e) => {
+            if (window.innerWidth > 640) return;
+            isDragging = true;
+            startY = e.touches[0].clientY;
+            navPanel.style.transition = 'none';
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.touches[0].clientY - startY;
+            const panelHeight = navPanel.offsetHeight;
+            const maxTranslate = panelHeight - 65;
+
+            let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
+            if (newTranslate < 0) newTranslate = 0;
+            if (newTranslate > maxTranslate) newTranslate = maxTranslate;
+
+            currentTranslateY = newTranslate;
+            navPanel.style.transform = `translateY(${newTranslate}px)`;
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            navPanel.style.transition = '';
+            const panelHeight = navPanel.offsetHeight;
+            const maxTranslate = panelHeight - 65;
+
+            if (currentTranslateY > maxTranslate * 0.35) {
+                isCollapsed = true;
+                navPanel.style.transform = `translateY(${maxTranslate}px)`;
+            } else {
+                isCollapsed = false;
+                navPanel.style.transform = `translateY(0px)`;
+            }
+        });
+    }
+
+    if (togglePanelBtn) {
+        togglePanelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (window.innerWidth > 640) return;
+            const panelHeight = navPanel.offsetHeight;
+            const maxTranslate = panelHeight - 65;
+
+            if (isCollapsed) {
+                isCollapsed = false;
+                navPanel.style.transform = 'translateY(0px)';
+            } else {
+                isCollapsed = true;
+                navPanel.style.transform = `translateY(${maxTranslate}px)`;
+            }
+        });
+    }
+
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 640) {
+            navPanel.style.transform = '';
+            isCollapsed = false;
+        }
+    });
+
+    // ================= 10. INITIALIZE CAMPUS DATA =================
     function processGeoJSONData(data) {
         campusGeoJSON = data;
         buildings = {};
+        markerLayers = {};
+        placeMetadata = {};
         placeNamesSorted = [];
 
         L.geoJSON(data, {
@@ -641,9 +783,13 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             onEachFeature: (feature, layer) => {
                 const name = feature.properties?.name?.trim();
+                const rawCat = feature.properties?.category || '';
                 if (feature.geometry.type === 'Point' && name) {
                     markerLayers[name] = layer;
                     buildings[name] = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
+                    placeMetadata[name] = {
+                        category: getCategoryClassification(name, rawCat)
+                    };
                     placeNamesSorted.push(name);
 
                     const icon = getPlaceIcon(name);
@@ -660,10 +806,8 @@ document.addEventListener('DOMContentLoaded', () => {
         placeNamesSorted.sort();
         buildClientGraph(data);
 
-        // Populate Destination dropdown
         populateDropdown(destSelect, "Choose Destination");
 
-        // Populate Start Dropdown (Includes Live Location)
         startSelect.innerHTML = `<option value="LIVE_LOCATION">📍 My Live Location (GPS)</option>`;
         placeNamesSorted.forEach(name => {
             const opt = document.createElement('option');
@@ -672,6 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startSelect.appendChild(opt);
         });
 
+        applyCategoryAndZoomFilter();
         clearTimeout(safetyTimer);
         hideLoader();
 
@@ -711,12 +856,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return '🏛️';
     }
 
-    // ================= 10. MULTI-WAYPOINT ROUTE CALCULATION =================
+    // ================= 11. MULTI-WAYPOINT ROUTE CALCULATION =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            // Collect all dropdowns dynamically (Start, End, and all Next Destinations)
             const allSelects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
             const selectedPoints = [];
             const coordsArray = [];
@@ -752,7 +896,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Client-side fallback supports chaining 3+ waypoints seamlessly
             const routes = computeClientSideRoutes(coordsArray);
             if (!routes || routes.length === 0) {
                 alert("No route connected between the selected locations.");
@@ -760,10 +903,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             renderRoutes(routes);
+
+            if (window.innerWidth <= 640 && navPanel) {
+                const panelHeight = navPanel.offsetHeight;
+                const maxTranslate = panelHeight - 65;
+                isCollapsed = true;
+                navPanel.style.transform = `translateY(${maxTranslate}px)`;
+            }
         });
     }
 
-    // ================= 11. GPS LIVE WATCH & SIMULATION =================
+    // ================= 12. GPS LIVE WATCH & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
@@ -774,12 +924,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
+                isTrackingOrSimulating = false;
                 startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>`;
                 startNavBtn.classList.remove('btn-danger');
                 turnHud.classList.add('hidden');
                 return;
             }
 
+            isTrackingOrSimulating = true;
             startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
             startNavBtn.classList.add('btn-danger');
 
@@ -788,7 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
                     updateUserLiveLocation(lat, lng, pos.coords.accuracy);
-                    map.panTo([lat, lng]);
+                    map.panTo([lat, lng], { animate: true, duration: 0.5 });
                 },
                 (err) => alert("GPS Error: " + err.message),
                 { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
@@ -806,10 +958,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (simulationInterval) {
                 clearInterval(simulationInterval);
                 simulationInterval = null;
+                isTrackingOrSimulating = false;
                 simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
                 return;
             }
 
+            isTrackingOrSimulating = true;
             simulateBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Walk</span>`;
 
             let animationPoints = [];
@@ -829,6 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (stepIndex >= animationPoints.length) {
                     clearInterval(simulationInterval);
                     simulationInterval = null;
+                    isTrackingOrSimulating = false;
                     simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
                     alert("You have arrived at your destination!");
                     return;
@@ -836,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const [lat, lng] = animationPoints[stepIndex];
                 updateUserLiveLocation(lat, lng, 3);
-                map.panTo([lat, lng]);
+                map.panTo([lat, lng], { animate: true, duration: 0.2 });
                 stepIndex++;
             }, 120);
         });
@@ -844,6 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (clearRouteBtn) {
         clearRouteBtn.addEventListener('click', () => {
+            isTrackingOrSimulating = false;
             if (remainingRoutePolyline) map.removeLayer(remainingRoutePolyline);
             if (breadcrumbPolyline) map.removeLayer(breadcrumbPolyline);
             alternativePolylines.forEach(p => map.removeLayer(p));
@@ -864,7 +1020,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 startNavBtn.classList.remove('btn-danger');
             }
 
-            // Remove all dynamically added stop rows
             const extraRows = waypointsContainer.querySelectorAll('.stop-row');
             extraRows.forEach(row => row.remove());
 
@@ -883,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exitHudBtn.addEventListener('click', () => turnHud.classList.add('hidden'));
     }
 
-    // ================= 12. LIVE SEARCH DROPDOWN =================
+    // ================= 13. LIVE SEARCH =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
@@ -916,7 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const coords = buildings[place];
                     if (coords) {
-                        map.flyTo(coords, 20, { duration: 1.2 });
+                        map.flyTo(coords, 19, { duration: 1.0 });
                         if (markerLayers[place]) markerLayers[place].openTooltip();
                     }
                 });
