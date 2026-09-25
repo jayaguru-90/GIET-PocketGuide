@@ -1,9 +1,11 @@
-// Navigation.js (FastAPI + Client-Side Dijkstra Fallback for Standalone Vercel Support)
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = "http://127.0.0.1:8000";
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_URL = isLocal ? "http://127.0.0.1:8000" : "https://giet-campus-api.onrender.com";
 
     // ================= 1. DOM REFERENCES & STATE =================
     const waypointsContainer = document.getElementById('waypoints-container');
+    const startSelect = document.getElementById('start-select');
+    const destSelect = document.getElementById('destination-select');
     const addStopBtn = document.getElementById('add-stop-btn');
     const findRouteBtn = document.getElementById('find-route-btn');
     const clearRouteBtn = document.getElementById('clear-route-btn');
@@ -12,6 +14,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const routeOutput = document.getElementById('route-output');
     const routeOptionsContainer = document.getElementById('route-options-container');
     const routeCardsList = document.getElementById('route-cards-list');
+    const turnStepsContainer = document.getElementById('turn-steps-container');
+    const turnStepsList = document.getElementById('turn-steps-list');
+    const turnHud = document.getElementById('turn-by-turn-hud');
+    const turnIcon = document.getElementById('turn-icon');
+    const turnInstruction = document.getElementById('turn-instruction');
+    const turnDistance = document.getElementById('turn-distance');
+    const exitHudBtn = document.getElementById('exit-nav-btn');
+
+    const utilChips = document.querySelectorAll('.util-chip');
     const buildingSearch = document.getElementById('building-search');
     const searchResults = document.getElementById('search-results');
     const loadingScreen = document.getElementById('loading-screen');
@@ -21,37 +32,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const GIET_CENTER = [19.0485, 83.8320];
     const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
+    let campusGeoJSON = null;
     let buildings = {};
     let markerLayers = {};
     let placeNamesSorted = [];
     let calculatedRoutes = [];
-    let renderedPolylines = [];
     let activeRouteIndex = 0;
-    let currentRouteCoords = [];
 
-    // Client-side graph store for standalone Dijkstra
+    let fullRouteCoords = [];
+    let remainingRoutePolyline = null;
+    let breadcrumbPolyline = null;
+    let alternativePolylines = [];
+
     let clientGraph = {};
     let clientNodes = [];
-    let clientSegments = [];
-    let rawGeoJSON = null;
 
+    let currentUserLat = null;
+    let currentUserLng = null;
     let userMarker = null;
     let userAccuracyCircle = null;
     let watchId = null;
     let simulationInterval = null;
+    let turnInstructions = [];
+    let utilityMarkers = [];
 
     function hideLoader() {
         if (!loadingScreen) return;
         loadingScreen.classList.add('hidden');
-        loadingScreen.style.display = 'none';
-        setTimeout(() => {
-            if (map) map.invalidateSize();
-        }, 200);
+        setTimeout(() => { if (map) map.invalidateSize(); }, 200);
     }
-
     const safetyTimer = setTimeout(hideLoader, 3000);
 
-    // ================= 2. LEAFLET MAP =================
+    // ================= 2. PURE SATELLITE BASE MAP (NO DEFAULT GOOGLE LABELS) =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22,
@@ -60,36 +72,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+    // lyrs=s strips all default business text, shop markers, and street names
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
-        attribution: '&copy; Google Maps'
+        attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 3. UTILITIES & GEOMETRY =================
-    function getPlaceIcon(name) {
-        const n = name.toLowerCase();
-        if (n.includes('gate')) return '🚪';
-        if (n.includes('temple')) return '🛕';
-        if (n.includes('library')) return '📚';
-        if (n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) return '☕';
-        if (n.includes('bus')) return '🚌';
-        if (n.includes('parking')) return '🅿️';
-        if (n.includes('school')) return '🏫';
-        if (n.includes('court') || n.includes('ground') || n.includes('pool')) return '⚽';
-        return '🏛️';
-    }
+    // ================= 3. UTILITY ICONS & OVERLAYS =================
+    function renderUtilities(filterType) {
+        utilityMarkers.forEach(m => map.removeLayer(m));
+        utilityMarkers = [];
 
-    function populateSelectElement(selectElem, placeholder = "Choose Location") {
-        selectElem.innerHTML = `<option value="">${placeholder}</option>`;
-        placeNamesSorted.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            selectElem.appendChild(opt);
+        if (filterType === 'none' || !campusGeoJSON) return;
+
+        (campusGeoJSON.features || []).forEach(feat => {
+            if (feat.geometry && feat.geometry.type === 'Point') {
+                const cat = (feat.properties.category || '').toLowerCase();
+                const name = feat.properties.name || '';
+                const [lng, lat] = feat.geometry.coordinates;
+
+                let matchType = null;
+                if (cat.includes('water') || name.toLowerCase().includes('water') || name.toLowerCase().includes('cooler')) matchType = 'water';
+                else if (cat.includes('washroom') || cat.includes('restroom') || name.toLowerCase().includes('washroom') || name.toLowerCase().includes('toilet')) matchType = 'washroom';
+                else if (cat.includes('medical') || name.toLowerCase().includes('first aid') || name.toLowerCase().includes('dispensary')) matchType = 'medical';
+                else if (cat.includes('security') || cat.includes('gate') || name.toLowerCase().includes('security')) matchType = 'security';
+
+                if (matchType && (filterType === 'all' || filterType === matchType)) {
+                    const iconMap = { water: '🚰', washroom: '🚻', medical: '🏥', security: '🛡️' };
+                    const customIcon = L.divIcon({
+                        className: 'custom-util-icon',
+                        html: `<div class="util-marker-pin util-pin-${matchType}">${iconMap[matchType]}</div>`,
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 14]
+                    });
+
+                    const m = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+                    m.bindPopup(`<strong>${name}</strong><br><small style="text-transform: capitalize;">${matchType}</small>`);
+                    utilityMarkers.push(m);
+                }
+            }
         });
     }
 
+    utilChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const type = chip.getAttribute('data-type');
+            if (chip.classList.contains('active')) {
+                chip.classList.remove('active');
+                renderUtilities('none');
+            } else {
+                utilChips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                renderUtilities(type);
+            }
+        });
+    });
+
+    // ================= 4. GEOMETRY & GRAPH HELPERS =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -108,22 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return key.split(',').map(Number);
     }
 
-    function projectPointOnSegment(p, a, b) {
-        const x = p[1], y = p[0];
-        const x1 = a[1], y1 = a[0];
-        const x2 = b[1], y2 = b[0];
-        const dx = x2 - x1, dy = y2 - y1;
-        const lenSq = dx * dx + dy * dy;
-        if (lenSq === 0) return a;
-        const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / lenSq));
-        return [y1 + t * dy, x1 + t * dx];
+    function getBearing(lat1, lon1, lat2, lon2) {
+        const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+        const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                  Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
-    // ================= 4. BUILD CLIENT GRAPH (OFFLINE ROUTING) =================
     function buildClientGraph(geojson) {
         clientGraph = {};
         clientNodes = [];
-        clientSegments = [];
         const nodeSet = new Set();
 
         function regNode(k) {
@@ -156,17 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const u = [coords[i][1], coords[i][0]];
                     const v = [coords[i + 1][1], coords[i + 1][0]];
                     addEdge(toKey(u[0], u[1]), toKey(v[0], v[1]), u, v);
-                    clientSegments.push({ u, v });
                 }
             }
         });
 
-        // Bridge gaps within 8 meters
         for (let i = 0; i < clientNodes.length; i++) {
             const p1 = parseKey(clientNodes[i]);
             for (let j = i + 1; j < clientNodes.length; j++) {
                 const p2 = parseKey(clientNodes[j]);
-                if (getDistance(p1[0], p1[1], p2[0], p2[1]) <= 8.0) {
+                if (getDistance(p1[0], p1[1], p2[0], p2[1]) <= 12.0) {
                     addEdge(clientNodes[i], clientNodes[j], p1, p2);
                 }
             }
@@ -176,28 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function findNearestGraphNode(lat, lng) {
         let bestKey = null;
         let minD = Infinity;
-
         for (let i = 0; i < clientNodes.length; i++) {
             const [nLat, nLng] = parseKey(clientNodes[i]);
             const d = getDistance(lat, lng, nLat, nLng);
             if (d < minD) {
                 minD = d;
                 bestKey = clientNodes[i];
-            }
-        }
-
-        for (let i = 0; i < clientSegments.length; i++) {
-            const seg = clientSegments[i];
-            const proj = projectPointOnSegment([lat, lng], seg.u, seg.v);
-            const d = getDistance(lat, lng, proj[0], proj[1]);
-            if (d < minD) {
-                minD = d;
-                bestKey = toKey(proj[0], proj[1]);
-                const uKey = toKey(seg.u[0], seg.u[1]);
-                const vKey = toKey(seg.v[0], seg.v[1]);
-                if (!clientGraph[bestKey]) clientGraph[bestKey] = [];
-                clientGraph[bestKey].push({ node: uKey, weight: getDistance(proj[0], proj[1], seg.u[0], seg.u[1]), coord: seg.u });
-                clientGraph[bestKey].push({ node: vKey, weight: getDistance(proj[0], proj[1], seg.v[0], seg.v[1]), coord: seg.v });
             }
         }
         return bestKey;
@@ -216,9 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             visited.add(node);
             const currentPath = [...path, node];
 
-            if (node === endKey) {
-                return { path: currentPath, cost };
-            }
+            if (node === endKey) return { path: currentPath, cost };
 
             const edges = clientGraph[node] || [];
             for (let i = 0; i < edges.length; i++) {
@@ -239,20 +253,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    function computeClientSideRoutes(waypoints) {
-        const coords = waypoints.map(w => buildings[w]);
+    function computeClientSideRoutes(coordsArray) {
         const routes = [];
         const penalized = {};
-        const isMulti = waypoints.length > 2;
+        const isMulti = coordsArray.length > 2;
 
-        for (let iter = 0; iter < 5; iter++) {
+        for (let iter = 0; iter < 3; iter++) {
             let fullCoords = [];
             let allNodePath = [];
             let failed = false;
 
-            for (let leg = 0; leg < coords.length - 1; leg++) {
-                const p1 = coords[leg];
-                const p2 = coords[leg + 1];
+            for (let leg = 0; leg < coordsArray.length - 1; leg++) {
+                const p1 = coordsArray[leg];
+                const p2 = coordsArray[leg + 1];
                 const startNode = findNearestGraphNode(p1[0], p1[1]);
                 const endNode = findNearestGraphNode(p2[0], p2[1]);
 
@@ -287,13 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const isDistinct = !routes.some(r => Math.abs(r.totalDistance - dist) < 10);
             if (isDistinct) {
                 routes.push({ path: fullCoords, totalDistance: Math.round(dist) });
-                if (routes.length >= (isMulti ? 2 : 3)) break;
+                if (routes.length >= 3) break;
             }
 
             if (allNodePath.length > 3) {
-                const midStart = Math.max(1, Math.floor(allNodePath.length * 0.2));
-                const midEnd = Math.min(allNodePath.length - 1, Math.floor(allNodePath.length * 0.8));
-                for (let i = midStart; i < midEnd; i++) {
+                for (let i = 1; i < allNodePath.length - 2; i++) {
                     const k = `${allNodePath[i]}|${allNodePath[i + 1]}`;
                     penalized[k] = (penalized[k] || 1.0) * 2.2;
                 }
@@ -301,23 +312,307 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         routes.sort((a, b) => a.totalDistance - b.totalDistance);
-
-        const names = [
-            "Shortest Route (Via Walkway / Shortcut)",
-            "Alternative 1 (Via Swimming Pool Road)",
-            "Alternative 2 (Via Campus Road / Garden)"
-        ];
-
         return routes.map((r, idx) => ({
-            name: isMulti ? (idx === 0 ? "Shortest Multi-Stop Route" : `Multi-Stop Route ${idx + 1}`) : (names[idx] || `Alternative ${idx}`),
+            name: isMulti ? (idx === 0 ? "Shortest Multi-Stop Route" : `Multi-Stop Route ${idx + 1}`) : (idx === 0 ? "Shortest Route (Via Walkway)" : `Alternative Route ${idx + 1}`),
             path: r.path,
             totalDistance: r.totalDistance
         }));
     }
 
-    // ================= 5. LOAD CAMPUS DATA (HYBRID ENGINE) =================
+    // ================= 5. TURN-BY-TURN INSTRUCTIONS =================
+    function generateTurnInstructions(coords) {
+        if (!coords || coords.length < 2) return [];
+        const instructions = [];
+        let accumulatedDistance = 0;
+
+        instructions.push({
+            action: "start",
+            icon: "📍",
+            text: "Start walking along the path",
+            distance: 0,
+            coord: coords[0]
+        });
+
+        for (let i = 1; i < coords.length - 1; i++) {
+            const pPrev = coords[i - 1];
+            const pCurr = coords[i];
+            const pNext = coords[i + 1];
+
+            const segDist = getDistance(pPrev[0], pPrev[1], pCurr[0], pCurr[1]);
+            accumulatedDistance += segDist;
+
+            const b1 = getBearing(pPrev[0], pPrev[1], pCurr[0], pCurr[1]);
+            const b2 = getBearing(pCurr[0], pCurr[1], pNext[0], pNext[1]);
+
+            let diff = b2 - b1;
+            while (diff < -180) diff += 360;
+            while (diff > 180) diff -= 360;
+
+            if (Math.abs(diff) >= 32) {
+                const turnType = diff > 0 ? "Turn Right" : "Turn Left";
+                const icon = diff > 0 ? "↗️" : "↖️";
+                instructions.push({
+                    action: "turn",
+                    icon: icon,
+                    text: `${turnType} onto connecting path`,
+                    distance: Math.round(accumulatedDistance),
+                    coord: pCurr
+                });
+                accumulatedDistance = 0;
+            }
+        }
+
+        const finalSeg = getDistance(coords[coords.length - 2][0], coords[coords.length - 2][1], coords[coords.length - 1][0], coords[coords.length - 1][1]);
+        accumulatedDistance += finalSeg;
+
+        instructions.push({
+            action: "arrive",
+            icon: "🏁",
+            text: "Arrive at destination doorway",
+            distance: Math.round(accumulatedDistance),
+            coord: coords[coords.length - 1]
+        });
+
+        return instructions;
+    }
+
+    function renderTurnDirections(instructions) {
+        turnStepsList.innerHTML = '';
+        instructions.forEach((step, idx) => {
+            const div = document.createElement('div');
+            div.className = `turn-step-item ${idx === 0 ? 'active' : ''}`;
+            div.innerHTML = `
+                <span style="font-size: 1.2rem;">${step.icon}</span>
+                <div>
+                    <div><strong>${step.text}</strong></div>
+                    <div style="color: #64748b; font-size: 11px;">${step.distance > 0 ? `After ${step.distance} meters` : 'Start'}</div>
+                </div>
+            `;
+            turnStepsList.appendChild(div);
+        });
+        turnStepsContainer.classList.remove('hidden');
+    }
+
+    // ================= 6. LIVE GPS & DYNAMIC LINE ERASING =================
+    function updateUserLiveLocation(lat, lng, accuracy = 5) {
+        currentUserLat = lat;
+        currentUserLng = lng;
+
+        if (!userMarker) {
+            const userIcon = L.divIcon({
+                className: 'user-pulse-marker',
+                html: `<div style="width: 18px; height: 18px; background: #38bdf8; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 0 14px #0284c7;"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            });
+            userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+            userAccuracyCircle = L.circle([lat, lng], { radius: accuracy, color: '#38bdf8', weight: 1, fillOpacity: 0.15 }).addTo(map);
+        } else {
+            userMarker.setLatLng([lat, lng]);
+            userAccuracyCircle.setLatLng([lat, lng]);
+            userAccuracyCircle.setRadius(accuracy);
+        }
+
+        if (fullRouteCoords.length > 1) {
+            updateDynamicBreadcrumb([lat, lng]);
+        }
+    }
+
+    function updateDynamicBreadcrumb(currentPos) {
+        let closestIdx = 0;
+        let minD = Infinity;
+
+        for (let i = 0; i < fullRouteCoords.length; i++) {
+            const d = getDistance(currentPos[0], currentPos[1], fullRouteCoords[i][0], fullRouteCoords[i][1]);
+            if (d < minD) {
+                minD = d;
+                closestIdx = i;
+            }
+        }
+
+        if (minD < 18) {
+            const remainingCoords = [currentPos, ...fullRouteCoords.slice(closestIdx + 1)];
+            const walkedCoords = fullRouteCoords.slice(0, closestIdx + 1);
+
+            if (remainingRoutePolyline) {
+                remainingRoutePolyline.setLatLngs(remainingCoords);
+            }
+
+            if (!breadcrumbPolyline) {
+                breadcrumbPolyline = L.polyline(walkedCoords, {
+                    color: '#94a3b8',
+                    weight: 4,
+                    opacity: 0.5,
+                    dashArray: '3, 6'
+                }).addTo(map);
+            } else {
+                breadcrumbPolyline.setLatLngs(walkedCoords);
+            }
+
+            updateHudInstruction(remainingCoords, currentPos);
+        }
+    }
+
+    function updateHudInstruction(remainingCoords, currentPos) {
+        if (!turnInstructions || turnInstructions.length === 0) return;
+
+        let nextTurn = null;
+        for (let i = 0; i < turnInstructions.length; i++) {
+            const d = getDistance(currentPos[0], currentPos[1], turnInstructions[i].coord[0], turnInstructions[i].coord[1]);
+            if (d > 8) {
+                nextTurn = turnInstructions[i];
+                nextTurn.liveDist = Math.round(d);
+                break;
+            }
+        }
+
+        if (nextTurn) {
+            turnHud.classList.remove('hidden');
+            turnIcon.textContent = nextTurn.icon;
+            turnInstruction.textContent = nextTurn.text;
+            turnDistance.textContent = `in ${nextTurn.liveDist} meters`;
+        } else {
+            turnHud.classList.remove('hidden');
+            turnIcon.textContent = "🏁";
+            turnInstruction.textContent = "Approaching destination";
+            turnDistance.textContent = "within 5 meters";
+        }
+    }
+
+    // ================= 7. ROUTE RENDERING =================
+    function selectActiveRoute(index) {
+        activeRouteIndex = index;
+        const selectedRoute = calculatedRoutes[index];
+        fullRouteCoords = selectedRoute.path;
+
+        if (remainingRoutePolyline) map.removeLayer(remainingRoutePolyline);
+        if (breadcrumbPolyline) map.removeLayer(breadcrumbPolyline);
+        alternativePolylines.forEach(p => map.removeLayer(p));
+        alternativePolylines = [];
+        breadcrumbPolyline = null;
+
+        calculatedRoutes.forEach((r, idx) => {
+            if (idx !== index) {
+                const alt = L.polyline(r.path, {
+                    color: ROUTE_PALETTE[idx] || '#64748b',
+                    weight: 5,
+                    opacity: 0.5,
+                    dashArray: '8, 8'
+                }).addTo(map);
+                alt.on('click', () => selectActiveRoute(idx));
+                alternativePolylines.push(alt);
+            }
+        });
+
+        remainingRoutePolyline = L.polyline(fullRouteCoords, {
+            color: ROUTE_PALETTE[index] || '#10b981',
+            weight: 7,
+            opacity: 1.0,
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(map);
+
+        turnInstructions = generateTurnInstructions(fullRouteCoords);
+        renderTurnDirections(turnInstructions);
+
+        const cards = routeCardsList.children;
+        for (let i = 0; i < cards.length; i++) {
+            cards[i].classList.toggle('active', i === index);
+        }
+
+        if (routeOutput) {
+            routeOutput.classList.remove('hidden');
+            routeOutput.innerHTML = `
+                <div style="font-size: 13px;">
+                    <strong style="color: ${ROUTE_PALETTE[index] || '#10b981'}">${selectedRoute.name}</strong><br>
+                    Distance: <strong>${selectedRoute.totalDistance} meters</strong> (~${Math.ceil(selectedRoute.totalDistance / 75)} mins)
+                </div>
+            `;
+        }
+
+        map.fitBounds(remainingRoutePolyline.getBounds(), { padding: [50, 50] });
+    }
+
+    function renderRoutes(routes) {
+        calculatedRoutes = routes;
+        routeCardsList.innerHTML = '';
+
+        routes.forEach((route, idx) => {
+            const isShortest = idx === 0;
+            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
+
+            const card = document.createElement('div');
+            card.className = `route-card ${isShortest ? 'active' : ''}`;
+            card.innerHTML = `
+                <div class="route-card-title" style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${routeColor};"></span>
+                        <strong>${route.name}</strong>
+                    </span>
+                    <span>~${Math.ceil(route.totalDistance / 75)} min</span>
+                </div>
+                <div class="route-card-sub" style="margin-left: 16px;">${route.totalDistance} meters • Road verified</div>
+            `;
+            card.addEventListener('click', () => selectActiveRoute(idx));
+            routeCardsList.appendChild(card);
+        });
+
+        routeOptionsContainer.classList.remove('hidden');
+        selectActiveRoute(0);
+    }
+
+    // ================= 8. MULTI-STOP DROPDOWN POPULATOR =================
+    function populateDropdown(selectElem, placeholder = "Choose Location") {
+        selectElem.innerHTML = `<option value="">${placeholder}</option>`;
+        placeNamesSorted.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            selectElem.appendChild(opt);
+        });
+    }
+
+    function updateDestinationLabels() {
+        const stopRows = waypointsContainer.querySelectorAll('.stop-row .location-select');
+        stopRows.forEach((sel, idx) => {
+            const destNum = idx + 2;
+            const currentVal = sel.value;
+            populateDropdown(sel, `Next Destination ${destNum}`);
+            sel.value = currentVal;
+        });
+    }
+
+    if (addStopBtn) {
+        addStopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const existingExtraStops = waypointsContainer.querySelectorAll('.stop-row').length;
+            const destNumber = existingExtraStops + 2;
+
+            const div = document.createElement('div');
+            div.className = 'input-group stop-row';
+
+            div.innerHTML = `
+                <div class="point-badge" style="background:#8b5cf6;">${String.fromCharCode(67 + existingExtraStops)}</div>
+                <select class="location-select" style="flex: 1;"></select>
+                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
+            `;
+
+            waypointsContainer.appendChild(div);
+            populateDropdown(div.querySelector('select'), `Next Destination ${destNumber}`);
+
+            div.querySelector('.btn-remove-stop').addEventListener('click', () => {
+                div.remove();
+                updateDestinationLabels();
+            });
+
+            const panelBody = document.querySelector('.panel-body');
+            if (panelBody) panelBody.scrollTop = panelBody.scrollHeight;
+        });
+    }
+
+    // ================= 9. LOAD CAMPUS GEOJSON =================
     function processGeoJSONData(data) {
-        rawGeoJSON = data;
+        campusGeoJSON = data;
         buildings = {};
         placeNamesSorted = [];
 
@@ -363,50 +658,245 @@ document.addEventListener('DOMContentLoaded', () => {
         }).addTo(map);
 
         placeNamesSorted.sort();
-
-        // Build client-side graph for instant offline pathfinding
         buildClientGraph(data);
 
-        const selects = waypointsContainer.querySelectorAll('.location-select');
-        if (selects[0]) populateSelectElement(selects[0], "Choose Starting Point");
-        if (selects[1]) populateSelectElement(selects[1], "Choose Destination");
+        // Populate Destination dropdown
+        populateDropdown(destSelect, "Choose Destination");
+
+        // Populate Start Dropdown (Includes Live Location)
+        startSelect.innerHTML = `<option value="LIVE_LOCATION">📍 My Live Location (GPS)</option>`;
+        placeNamesSorted.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            startSelect.appendChild(opt);
+        });
 
         clearTimeout(safetyTimer);
         hideLoader();
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
+                () => console.warn("GPS permission pending")
+            );
+        }
     }
 
-    // Try FastAPI first, fall back directly to static file for Vercel
     fetch(`${API_URL}/api/campus-data`)
-        .then(res => {
-            if (!res.ok) throw new Error("Backend offline");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => processGeoJSONData(data.geojson))
         .catch(() => {
             fetch('assets/data/giet_campus.geojson')
                 .then(res => res.json())
                 .then(data => processGeoJSONData(data))
                 .catch(err => {
-                    console.error("Critical error loading GeoJSON:", err);
+                    console.error("Critical error:", err);
                     clearTimeout(safetyTimer);
                     hideLoader();
                 });
         });
 
-    // ================= 6. LIVE SEARCH =================
+    function getPlaceIcon(name) {
+        const n = name.toLowerCase();
+        if (n.includes('gate')) return '🚪';
+        if (n.includes('temple')) return '🛕';
+        if (n.includes('library')) return '📚';
+        if (n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) return '☕';
+        if (n.includes('bus')) return '🚌';
+        if (n.includes('parking')) return '🅿️';
+        if (n.includes('water') || n.includes('cooler')) return '🚰';
+        if (n.includes('washroom') || n.includes('restroom')) return '🚻';
+        if (n.includes('medical') || n.includes('first aid')) return '🏥';
+        return '🏛️';
+    }
+
+    // ================= 10. MULTI-WAYPOINT ROUTE CALCULATION =================
+    if (findRouteBtn) {
+        findRouteBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            // Collect all dropdowns dynamically (Start, End, and all Next Destinations)
+            const allSelects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
+            const selectedPoints = [];
+            const coordsArray = [];
+
+            for (let i = 0; i < allSelects.length; i++) {
+                const val = allSelects[i].value.trim();
+                if (!val) continue;
+
+                if (val === "LIVE_LOCATION") {
+                    if (!currentUserLat || !currentUserLng) {
+                        alert("Acquiring GPS location... Please ensure location permissions are enabled.");
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                pos => {
+                                    updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude);
+                                    findRouteBtn.click();
+                                },
+                                err => alert("Unable to get GPS location: " + err.message)
+                            );
+                        }
+                        return;
+                    }
+                    selectedPoints.push("My Location");
+                    coordsArray.push([currentUserLat, currentUserLng]);
+                } else if (buildings[val]) {
+                    selectedPoints.push(val);
+                    coordsArray.push(buildings[val]);
+                }
+            }
+
+            if (coordsArray.length < 2) {
+                alert("Please select at least a Starting Point and Destination.");
+                return;
+            }
+
+            // Client-side fallback supports chaining 3+ waypoints seamlessly
+            const routes = computeClientSideRoutes(coordsArray);
+            if (!routes || routes.length === 0) {
+                alert("No route connected between the selected locations.");
+                return;
+            }
+
+            renderRoutes(routes);
+        });
+    }
+
+    // ================= 11. GPS LIVE WATCH & SIMULATION =================
+    if (startNavBtn) {
+        startNavBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert("Geolocation not supported by this browser.");
+                return;
+            }
+
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>`;
+                startNavBtn.classList.remove('btn-danger');
+                turnHud.classList.add('hidden');
+                return;
+            }
+
+            startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
+            startNavBtn.classList.add('btn-danger');
+
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    updateUserLiveLocation(lat, lng, pos.coords.accuracy);
+                    map.panTo([lat, lng]);
+                },
+                (err) => alert("GPS Error: " + err.message),
+                { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+            );
+        });
+    }
+
+    if (simulateBtn) {
+        simulateBtn.addEventListener('click', () => {
+            if (!fullRouteCoords || fullRouteCoords.length < 2) {
+                alert("Find a route first to simulate walking.");
+                return;
+            }
+
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
+                return;
+            }
+
+            simulateBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Walk</span>`;
+
+            let animationPoints = [];
+            for (let i = 0; i < fullRouteCoords.length - 1; i++) {
+                const p1 = fullRouteCoords[i];
+                const p2 = fullRouteCoords[i + 1];
+                const steps = 15;
+                for (let s = 0; s <= steps; s++) {
+                    const lat = p1[0] + (p2[0] - p1[0]) * (s / steps);
+                    const lng = p1[1] + (p2[1] - p1[1]) * (s / steps);
+                    animationPoints.push([lat, lng]);
+                }
+            }
+
+            let stepIndex = 0;
+            simulationInterval = setInterval(() => {
+                if (stepIndex >= animationPoints.length) {
+                    clearInterval(simulationInterval);
+                    simulationInterval = null;
+                    simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
+                    alert("You have arrived at your destination!");
+                    return;
+                }
+
+                const [lat, lng] = animationPoints[stepIndex];
+                updateUserLiveLocation(lat, lng, 3);
+                map.panTo([lat, lng]);
+                stepIndex++;
+            }, 120);
+        });
+    }
+
+    if (clearRouteBtn) {
+        clearRouteBtn.addEventListener('click', () => {
+            if (remainingRoutePolyline) map.removeLayer(remainingRoutePolyline);
+            if (breadcrumbPolyline) map.removeLayer(breadcrumbPolyline);
+            alternativePolylines.forEach(p => map.removeLayer(p));
+            alternativePolylines = [];
+            remainingRoutePolyline = null;
+            breadcrumbPolyline = null;
+            fullRouteCoords = [];
+
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
+            }
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>`;
+                startNavBtn.classList.remove('btn-danger');
+            }
+
+            // Remove all dynamically added stop rows
+            const extraRows = waypointsContainer.querySelectorAll('.stop-row');
+            extraRows.forEach(row => row.remove());
+
+            destSelect.value = '';
+            startSelect.value = 'LIVE_LOCATION';
+
+            turnHud.classList.add('hidden');
+            turnStepsContainer.classList.add('hidden');
+            routeOutput.classList.add('hidden');
+            routeOptionsContainer.classList.add('hidden');
+            map.setView(GIET_CENTER, 18);
+        });
+    }
+
+    if (exitHudBtn) {
+        exitHudBtn.addEventListener('click', () => turnHud.classList.add('hidden'));
+    }
+
+    // ================= 12. LIVE SEARCH DROPDOWN =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
             searchResults.innerHTML = '';
 
             if (!query) {
-                searchResults.style.display = 'none';
+                searchResults.classList.add('hidden');
                 return;
             }
 
             const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
             if (matchedPlaces.length === 0) {
-                searchResults.style.display = 'none';
+                searchResults.classList.add('hidden');
                 return;
             }
 
@@ -417,7 +907,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 item.addEventListener('click', () => {
                     buildingSearch.value = place;
-                    searchResults.style.display = 'none';
+                    searchResults.classList.add('hidden');
 
                     const selects = waypointsContainer.querySelectorAll('.location-select');
                     if (selects.length > 1) {
@@ -432,437 +922,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 searchResults.appendChild(item);
             });
-            searchResults.style.display = 'block';
+            searchResults.classList.remove('hidden');
         });
 
         document.addEventListener('click', (e) => {
             if (!buildingSearch.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
+                searchResults.classList.add('hidden');
             }
-        });
-    }
-
-    // ================= 7. NEXT DESTINATION MANAGER =================
-    function updateDestinationLabels() {
-        const selects = waypointsContainer.querySelectorAll('.stop-row .location-select');
-        selects.forEach((sel, idx) => {
-            const destNum = idx + 2;
-            const currentVal = sel.value;
-            populateSelectElement(sel, `Next Destination ${destNum}`);
-            sel.value = currentVal;
-        });
-    }
-
-    if (addStopBtn) {
-        addStopBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const existingExtraStops = waypointsContainer.querySelectorAll('.stop-row').length;
-            const destNumber = existingExtraStops + 2;
-
-            const div = document.createElement('div');
-            div.className = 'input-group stop-row';
-
-            div.innerHTML = `
-                <select class="location-select" style="flex: 1;"></select>
-                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
-            `;
-
-            waypointsContainer.appendChild(div);
-            populateSelectElement(div.querySelector('select'), `Next Destination ${destNumber}`);
-
-            div.querySelector('.btn-remove-stop').addEventListener('click', () => {
-                div.remove();
-                updateDestinationLabels();
-                calculateLimits();
-            });
-
-            const panelBody = document.querySelector('.panel-body');
-            if (panelBody) panelBody.scrollTop = panelBody.scrollHeight;
-            calculateLimits();
-        });
-    }
-
-    // ================= 8. ROUTE RENDERING & SWITCHING =================
-    function selectActiveRoute(index) {
-        activeRouteIndex = index;
-        const selectedRoute = calculatedRoutes[index];
-        currentRouteCoords = selectedRoute.path;
-
-        renderedPolylines.forEach((polyGroup, idx) => {
-            const isSelected = idx === index;
-            const visibleLine = polyGroup.visibleLine;
-
-            if (isSelected) {
-                visibleLine.setStyle({
-                    color: polyGroup.color,
-                    weight: 8,
-                    opacity: 1.0,
-                    dashArray: null
-                });
-                visibleLine.bringToFront();
-            } else {
-                visibleLine.setStyle({
-                    color: polyGroup.color,
-                    weight: 5,
-                    opacity: 0.75,
-                    dashArray: '8, 8'
-                });
-            }
-        });
-
-        const cards = routeCardsList.children;
-        for (let i = 0; i < cards.length; i++) {
-            cards[i].classList.toggle('active', i === index);
-        }
-
-        if (routeOutput) {
-            routeOutput.style.display = 'block';
-            routeOutput.innerHTML = `
-                <div style="font-size: 13px;">
-                    <strong style="color: ${ROUTE_PALETTE[index] || '#2563eb'}">${selectedRoute.name}</strong><br>
-                    Walking Distance: <strong>${selectedRoute.totalDistance} meters</strong><br>
-                    Estimated Time: ~${Math.ceil(selectedRoute.totalDistance / 75)} mins
-                </div>
-            `;
-        }
-
-        updateUserPosition(currentRouteCoords[0][0], currentRouteCoords[0][1], 8);
-    }
-
-    function renderRoutes(routes) {
-        renderedPolylines.forEach(group => {
-            if (group && group.visibleLine) map.removeLayer(group.visibleLine);
-            if (group && group.hitArea) map.removeLayer(group.hitArea);
-        });
-        renderedPolylines = [];
-        routeCardsList.innerHTML = '';
-
-        for (let idx = routes.length - 1; idx >= 0; idx--) {
-            const route = routes[idx];
-            const isShortest = idx === 0;
-            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
-
-            const visibleLine = L.polyline(route.path, {
-                color: routeColor,
-                weight: isShortest ? 8 : 5,
-                opacity: isShortest ? 1.0 : 0.75,
-                dashArray: isShortest ? null : '8, 8',
-                lineCap: 'round',
-                lineJoin: 'round'
-            }).addTo(map);
-
-            const hitArea = L.polyline(route.path, {
-                color: 'transparent',
-                weight: 24,
-                opacity: 0
-            }).addTo(map);
-
-            hitArea.on('click', () => selectActiveRoute(idx));
-            visibleLine.on('click', () => selectActiveRoute(idx));
-
-            renderedPolylines[idx] = { visibleLine, hitArea, color: routeColor };
-        }
-
-        routes.forEach((route, idx) => {
-            const isShortest = idx === 0;
-            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
-
-            const card = document.createElement('div');
-            card.className = `route-card ${isShortest ? 'active' : ''}`;
-            card.innerHTML = `
-                <div class="route-card-title" style="display: flex; align-items: center; justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 6px;">
-                        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${routeColor};"></span>
-                        <strong>${route.name}</strong>
-                    </span>
-                    <span>~${Math.ceil(route.totalDistance / 75)} min</span>
-                </div>
-                <div class="route-card-sub" style="margin-left: 16px;">${route.totalDistance} meters • Road verified</div>
-            `;
-            card.addEventListener('click', () => selectActiveRoute(idx));
-            routeCardsList.appendChild(card);
-        });
-
-        routeOptionsContainer.style.display = 'block';
-        selectActiveRoute(0);
-
-        if (renderedPolylines[0]) {
-            map.fitBounds(renderedPolylines[0].visibleLine.getBounds(), { padding: [60, 60] });
-        }
-        calculateLimits();
-    }
-
-    function updateUserPosition(lat, lng, accuracy = 5) {
-        if (!userMarker) {
-            userMarker = L.circleMarker([lat, lng], {
-                radius: 8,
-                fillColor: '#facc15',
-                color: '#ffffff',
-                weight: 3,
-                opacity: 1,
-                fillOpacity: 1
-            }).addTo(map);
-
-            userAccuracyCircle = L.circle([lat, lng], {
-                radius: accuracy,
-                color: '#facc15',
-                fillColor: '#fde047',
-                fillOpacity: 0.2,
-                weight: 1
-            }).addTo(map);
-        } else {
-            userMarker.setLatLng([lat, lng]);
-            userAccuracyCircle.setLatLng([lat, lng]);
-            userAccuracyCircle.setRadius(accuracy);
-        }
-    }
-
-    // ================= 9. ROUTE COMPUTATION (HYBRID FASTAPI + LOCAL) =================
-    if (findRouteBtn) {
-        findRouteBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const selects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
-            const selectedPoints = selects.map(s => s.value).filter(val => val !== '');
-
-            if (selectedPoints.length < 2) {
-                alert("Please select at least a Starting Point and Destination.");
-                return;
-            }
-
-            try {
-                // 1. Try FastAPI backend
-                const res = await fetch(`${API_URL}/api/routes`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ waypoints: selectedPoints })
-                });
-
-                if (!res.ok) throw new Error("Backend response error");
-                const data = await res.json();
-                calculatedRoutes = data.routes;
-            } catch {
-                // 2. Fall back to local client-side Dijkstra calculation immediately
-                calculatedRoutes = computeClientSideRoutes(selectedPoints);
-            }
-
-            if (!calculatedRoutes || calculatedRoutes.length === 0) {
-                alert("No route found between selected points.");
-                return;
-            }
-
-            renderRoutes(calculatedRoutes);
-
-            if (window.innerWidth <= 640 && navPanel) {
-                setTimeout(snapToCollapsed, 300);
-            }
-        });
-    }
-
-    if (clearRouteBtn) {
-        clearRouteBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            renderedPolylines.forEach(group => {
-                if (group && group.visibleLine) map.removeLayer(group.visibleLine);
-                if (group && group.hitArea) map.removeLayer(group.hitArea);
-            });
-            renderedPolylines = [];
-            calculatedRoutes = [];
-            currentRouteCoords = [];
-
-            if (simulationInterval) {
-                clearInterval(simulationInterval);
-                simulationInterval = null;
-                if (simulateBtn) simulateBtn.textContent = "▶️ Simulate Walk";
-            }
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-                if (startNavBtn) startNavBtn.textContent = "🚶 GPS Live";
-            }
-            if (userMarker) {
-                map.removeLayer(userMarker);
-                map.removeLayer(userAccuracyCircle);
-                userMarker = null;
-                userAccuracyCircle = null;
-            }
-
-            if (buildingSearch) buildingSearch.value = '';
-            if (searchResults) searchResults.style.display = 'none';
-
-            const selects = waypointsContainer.querySelectorAll('.location-select');
-            selects.forEach(s => s.value = '');
-
-            const extraRows = waypointsContainer.querySelectorAll('.stop-row');
-            extraRows.forEach(row => row.remove());
-
-            if (routeOutput) routeOutput.style.display = 'none';
-            if (routeOptionsContainer) routeOptionsContainer.style.display = 'none';
-            map.setView(GIET_CENTER, 18);
-            calculateLimits();
-        });
-    }
-
-    // ================= 10. MOBILE BOTTOM SHEET GESTURES =================
-    let isDragging = false;
-    let startY = 0;
-    let currentTranslateY = 0;
-    let maxTranslate = 0;
-    let isCollapsed = false;
-    const VISIBLE_PEEK_HEIGHT = 70;
-
-    function calculateLimits() {
-        if (!navPanel) return;
-        const panelHeight = navPanel.offsetHeight;
-        maxTranslate = Math.max(0, panelHeight - VISIBLE_PEEK_HEIGHT);
-    }
-
-    function snapToCollapsed() {
-        calculateLimits();
-        isCollapsed = true;
-        currentTranslateY = maxTranslate;
-        navPanel.style.transform = `translateY(${maxTranslate}px)`;
-    }
-
-    function snapToExpanded() {
-        isCollapsed = false;
-        currentTranslateY = 0;
-        navPanel.style.transform = 'translateY(0px)';
-    }
-
-    const dragHandle = document.querySelector('.panel-toggle-btn') || togglePanelBtn;
-
-    if (dragHandle && navPanel) {
-        dragHandle.addEventListener('touchstart', (e) => {
-            if (window.innerWidth > 640) return;
-            isDragging = true;
-            startY = e.touches[0].clientY;
-            calculateLimits();
-            navPanel.style.transition = 'none';
-        }, { passive: true });
-
-        window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.touches[0].clientY - startY;
-            let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
-
-            if (newTranslate < 0) newTranslate = 0;
-            if (newTranslate > maxTranslate) newTranslate = maxTranslate;
-
-            currentTranslateY = newTranslate;
-            navPanel.style.transform = `translateY(${newTranslate}px)`;
-        }, { passive: true });
-
-        window.addEventListener('touchend', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            navPanel.style.transition = '';
-            calculateLimits();
-
-            const snapThreshold = maxTranslate * 0.35;
-            if (!isCollapsed) {
-                if (currentTranslateY > snapThreshold) snapToCollapsed();
-                else snapToExpanded();
-            } else {
-                if (currentTranslateY < maxTranslate - snapThreshold) snapToExpanded();
-                else snapToCollapsed();
-            }
-        });
-    }
-
-    if (togglePanelBtn) {
-        togglePanelBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (isCollapsed) snapToExpanded();
-            else snapToCollapsed();
-        });
-    }
-
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 640) {
-            navPanel.style.transform = '';
-        } else if (isCollapsed) {
-            snapToCollapsed();
-        }
-    });
-
-    // ================= 11. GPS LIVE & SIMULATION =================
-    if (startNavBtn) {
-        startNavBtn.addEventListener('click', () => {
-            if (!navigator.geolocation) {
-                alert("Geolocation is not supported by your mobile browser.");
-                return;
-            }
-
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-                startNavBtn.textContent = "🚶 GPS Live";
-                return;
-            }
-
-            startNavBtn.textContent = "⏹️ Stop GPS";
-
-            watchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    const accuracy = pos.coords.accuracy;
-
-                    updateUserPosition(lat, lng, accuracy);
-                    map.panTo([lat, lng]);
-                },
-                (err) => {
-                    console.error(err);
-                    alert("Unable to fetch GPS: " + err.message);
-                },
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
-            );
-        });
-    }
-
-    if (simulateBtn) {
-        simulateBtn.addEventListener('click', () => {
-            if (currentRouteCoords.length < 2) {
-                alert("Select endpoints and click 'Find Routes' first.");
-                return;
-            }
-
-            if (simulationInterval) {
-                clearInterval(simulationInterval);
-                simulationInterval = null;
-                simulateBtn.textContent = "▶️ Simulate Walk";
-                return;
-            }
-
-            simulateBtn.textContent = "⏸️ Pause Walk";
-
-            let animationPoints = [];
-            for (let i = 0; i < currentRouteCoords.length - 1; i++) {
-                const p1 = currentRouteCoords[i];
-                const p2 = currentRouteCoords[i + 1];
-                const steps = 15;
-                for (let s = 0; s <= steps; s++) {
-                    const lat = p1[0] + (p2[0] - p1[0]) * (s / steps);
-                    const lng = p1[1] + (p2[1] - p1[1]) * (s / steps);
-                    animationPoints.push([lat, lng]);
-                }
-            }
-
-            let stepIndex = 0;
-            simulationInterval = setInterval(() => {
-                if (stepIndex >= animationPoints.length) {
-                    clearInterval(simulationInterval);
-                    simulationInterval = null;
-                    simulateBtn.textContent = "▶️ Simulate Walk";
-                    alert("You have reached your destination!");
-                    return;
-                }
-
-                const [lat, lng] = animationPoints[stepIndex];
-                updateUserPosition(lat, lng, 3);
-                map.panTo([lat, lng]);
-                stepIndex++;
-            }, 150);
         });
     }
 });
