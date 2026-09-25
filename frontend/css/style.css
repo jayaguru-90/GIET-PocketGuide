@@ -413,7 +413,7 @@ body {
             rgba(15, 23, 42, 0.82) 65%, 
             rgba(248, 250, 252, 1) 100%
         ),
-        url('/frontend/assets/images/Giet\ campus-view.jpg') no-repeat center center;
+        url('/frontend/assets/images/Giet-campus-view.jpg') no-repeat center center;
     background-size: cover;
     background-attachment: scroll;
     padding: 6.5rem 1.5rem 5rem;
