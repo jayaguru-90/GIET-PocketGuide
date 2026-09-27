@@ -271,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingScreen.classList.add('hidden');
         setTimeout(() => { if (map) map.invalidateSize(); }, 200);
     }
-    const safetyTimer = setTimeout(hideLoader, 3000);
+    const safetyTimer = setTimeout(hideLoader, 2000);
 
     // ================= 5. SATELLITE CANVAS =================
     const map = L.map('map', {
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let iter = 0; iter < 3; iter++) {
             let fullCoords = [];
-            let allNodePath = [];
+            allNodePath = [];
             let failed = false;
 
             for (let leg = 0; leg < coordsArray.length - 1; leg++) {
@@ -1031,7 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 14. NATIVE MOBILE DRAWER SNAP GESTURES =================
+    // ================= 14. MOBILE DRAWER SNAP GESTURES =================
     let isDraggingHandle = false;
     let startTouchY = 0;
     let currentPanelState = 0; // 0 = Expanded (Show All Steps), 1 = Collapsed (Show Map)
@@ -1044,16 +1044,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const panelHeight = navPanel.offsetHeight;
         if (stateIndex === 0) {
-            // Expanded: 0px offset, showing all search, waypoints, and scrollable steps
             navPanel.style.transform = 'translateY(0px)';
         } else {
-            // Collapsed: Leaves the top ~64px handle visible so the map is unobstructed
             const peekOffset = Math.max(0, panelHeight - 64);
             navPanel.style.transform = `translateY(${peekOffset}px)`;
         }
     }
 
-    // Bind touch gestures strictly to the pull handle to avoid scroll interference
     if (dragArea && navPanel) {
         dragArea.addEventListener('touchstart', (e) => {
             if (window.innerWidth > 640) return;
@@ -1084,9 +1081,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const distanceMoved = endTouchY - startTouchY;
 
             if (distanceMoved > 40) {
-                applySheetSnap(1); // Swiped down -> collapse
+                applySheetSnap(1);
             } else if (distanceMoved < -40) {
-                applySheetSnap(0); // Swiped up -> expand
+                applySheetSnap(0);
             } else {
                 applySheetSnap(currentPanelState);
             }
@@ -1187,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 16. INITIALIZE DATA & SATELLITE TAGS =================
+    // ================= 16. DATA INITIALIZER & INSTANT LOCAL-FIRST LOADER =================
     function processGeoJSONData(data) {
         campusGeoJSON = data;
         buildings = {};
@@ -1265,15 +1262,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    fetch(`${API_URL}/api/campus-data`)
-        .then(res => res.json())
-        .then(data => processGeoJSONData(data.geojson))
-        .catch(() => {
-            fetch('assets/data/giet_campus.geojson')
+    // INSTANT LOCAL-FIRST LOADER (Bypasses Render 30s Cold Start)
+    fetch('assets/data/giet_campus.geojson')
+        .then(res => {
+            if (!res.ok) throw new Error("Local GeoJSON not found");
+            return res.json();
+        })
+        .then(data => {
+            processGeoJSONData(data);
+            hideLoader();
+            console.log("⚡ Campus spatial data loaded instantly (<0.5s) from static bundle.");
+
+            // Background non-blocking sync with backend
+            fetch(`${API_URL}/api/campus-data`, { signal: AbortSignal.timeout(5000) })
                 .then(res => res.json())
-                .then(data => processGeoJSONData(data))
-                .catch(err => {
-                    console.error("Critical error:", err);
+                .then(serverData => {
+                    if (serverData && serverData.geojson) {
+                        console.log("🔄 Background sync completed with live backend.");
+                    }
+                })
+                .catch(() => console.log("Backend asleep; running on static campus data."));
+        })
+        .catch(err => {
+            console.warn("Local bundle failed, falling back to API:", err);
+            fetch(`${API_URL}/api/campus-data`)
+                .then(res => res.json())
+                .then(data => processGeoJSONData(data.geojson))
+                .catch(apiErr => {
+                    console.error("Critical: Unable to load campus data", apiErr);
                     clearTimeout(safetyTimer);
                     hideLoader();
                 });
@@ -1331,7 +1347,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderRoutes(routes);
 
-            // Expand drawer to reveal corridors and smooth-scroll to steps
             if (window.innerWidth <= 640) {
                 applySheetSnap(0);
                 setTimeout(() => {
@@ -1371,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startNavBtn.classList.add('btn-danger');
 
             if (window.innerWidth <= 640) {
-                applySheetSnap(1); // Collapse to peek view so live map is clear
+                applySheetSnap(1);
             }
 
             speakVoicePrompt("Starting GPS live navigation.");
