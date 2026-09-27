@@ -4,13 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ================= 1. DOM REFERENCES & STATE =================
     const waypointsContainer = document.getElementById('waypoints-container');
-    const startSelect = document.getElementById('start-select');
-    const destSelect = document.getElementById('destination-select');
+    const startDisplay = document.getElementById('start-display');
+    const destinationDisplay = document.getElementById('destination-display');
     const addStopBtn = document.getElementById('add-stop-btn');
     const findRouteBtn = document.getElementById('find-route-btn');
     const clearRouteBtn = document.getElementById('clear-route-btn');
     const startNavBtn = document.getElementById('start-nav-btn');
     const simulateBtn = document.getElementById('simulate-btn');
+    const speedToggleBtn = document.getElementById('speed-toggle-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const routeOutput = document.getElementById('route-output');
     const routeOptionsContainer = document.getElementById('route-options-container');
     const routeCardsList = document.getElementById('route-cards-list');
@@ -22,10 +24,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const turnInstruction = document.getElementById('turn-instruction');
     const turnDistance = document.getElementById('turn-distance');
     const exitHudBtn = document.getElementById('exit-hud-btn');
+    const voiceToggleBtn = document.getElementById('voice-toggle-btn');
+    const recenterFabBtn = document.getElementById('recenter-fab-btn');
+
+    // Picker Modal Elements
+    const locationPickerModal = document.getElementById('location-picker-modal');
+    const pickerBackdrop = document.getElementById('picker-backdrop');
+    const closePickerBtn = document.getElementById('close-picker-btn');
+    const pickerTitle = document.getElementById('picker-title');
+    const pickerFilterInput = document.getElementById('picker-filter-input');
+    const pickerItemsList = document.getElementById('picker-items-list');
+
+    // Tour Elements
+    const startTourBtn = document.getElementById('start-tour-btn');
+    const tourCardModal = document.getElementById('tour-card-modal');
+    const tourStopNum = document.getElementById('tour-stop-num');
+    const tourStopTitle = document.getElementById('tour-stop-title');
+    const tourStopDesc = document.getElementById('tour-stop-desc');
+    const tourOfficialLink = document.getElementById('tour-official-link');
+    const tourPrevBtn = document.getElementById('tour-prev-btn');
+    const tourNextBtn = document.getElementById('tour-next-btn');
+    const tourSpeakBtn = document.getElementById('tour-speak-btn');
+    const closeTourModalBtn = document.getElementById('close-tour-modal-btn');
 
     const catChips = document.querySelectorAll('.cat-chip');
     const utilChips = document.querySelectorAll('.util-chip');
     const buildingSearch = document.getElementById('building-search');
+    const searchClearBtn = document.getElementById('search-clear-btn');
     const searchResults = document.getElementById('search-results');
     const loadingScreen = document.getElementById('loading-screen');
     const navPanel = document.getElementById('nav-panel');
@@ -42,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let calculatedRoutes = [];
     let activeRouteIndex = 0;
 
+    let selectedWaypoints = {
+        start: { id: "LIVE_LOCATION", name: "My Live Location (GPS)" },
+        destination: null,
+        extraStops: []
+    };
+    let activePickerTarget = null;
+
     let fullRouteCoords = [];
     let remainingRoutePolyline = null;
     let breadcrumbPolyline = null;
@@ -55,11 +87,184 @@ document.addEventListener('DOMContentLoaded', () => {
     let userMarker = null;
     let userAccuracyCircle = null;
     let watchId = null;
+
     let simulationInterval = null;
+    let simSpeedMultiplier = 1;
+    const SPEED_OPTIONS = [1, 2, 4];
+    let speedOptionIdx = 0;
+
     let turnInstructions = [];
     let utilityMarkers = [];
     let activeCategory = 'all';
     let isTrackingOrSimulating = false;
+
+    // ================= 2. THEME ENGINE =================
+    function initTheme() {
+        const savedTheme = localStorage.getItem('giet_theme') || 'light';
+        applyTheme(savedTheme);
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = `<i class="fa-solid fa-sun" style="color:#f59e0b;"></i>`;
+                themeToggleBtn.title = "Switch to Light Theme";
+            }
+        } else {
+            document.body.classList.remove('dark-theme');
+            if (themeToggleBtn) {
+                themeToggleBtn.innerHTML = `<i class="fa-solid fa-moon"></i>`;
+                themeToggleBtn.title = "Switch to Dark Theme";
+            }
+        }
+        localStorage.setItem('giet_theme', theme);
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark-theme');
+            applyTheme(isDark ? 'light' : 'dark');
+        });
+    }
+
+    initTheme();
+
+    // ================= 3. VOICE GUIDANCE =================
+    let isVoiceEnabled = true;
+    let spokenMilestones = new Set();
+
+    function speakVoicePrompt(text) {
+        if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.05;
+        utterance.lang = 'en-US';
+
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
+        if (preferredVoice) utterance.voice = preferredVoice;
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    if (voiceToggleBtn) {
+        voiceToggleBtn.addEventListener('click', () => {
+            isVoiceEnabled = !isVoiceEnabled;
+            voiceToggleBtn.classList.toggle('active', isVoiceEnabled);
+            voiceToggleBtn.innerHTML = isVoiceEnabled 
+                ? `<i class="fa-solid fa-volume-high"></i>` 
+                : `<i class="fa-solid fa-volume-xmark"></i>`;
+            
+            if (isVoiceEnabled) {
+                speakVoicePrompt("Voice assistance enabled.");
+            } else {
+                window.speechSynthesis.cancel();
+            }
+        });
+    }
+
+    // ================= 4. FULL OFFICIAL GIETU TOUR DATA =================
+    const campusTourStops = [
+        {
+            name: "security",
+            title: "GIETU Main Gate & Security",
+            desc: "The primary entry to GIET University Gunupur campus, monitored 24/7 with digital gate security and transport terminal links.",
+            url: "https://www.giet.edu/campus-tour/"
+        },
+        {
+            name: "Admin Block",
+            title: "Administrative Headquarters",
+            desc: "The central administrative building housing the Vice Chancellor's Secretariat, Registrar, Admissions, and Academic Affairs.",
+            url: "https://www.giet.edu"
+        },
+        {
+            name: "Library",
+            title: "Biju Patnaik Central Digital Library",
+            desc: "A central 24x7 air-conditioned library spanning 1,649 sq.m with over 81,000 volumes, international print/e-journals, and seating for 500 scholars.",
+            url: "https://www.giet.edu/infrastructure/central-library/"
+        },
+        {
+            name: "CSE Building",
+            title: "School of Computer Science & Engineering",
+            desc: "State-of-the-art software development labs, high-performance GPU AI workstations, and modern cloud infrastructure.",
+            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/computer-science-and-engineering/"
+        },
+        {
+            name: "CSA block",
+            title: "Computer Science & Applications Block",
+            desc: "Dedicated computing hubs for advanced coding, algorithms, cybersecurity research, and application development.",
+            url: "https://www.giet.edu/academics/departments/computer-science-applications/"
+        },
+        {
+            name: "BSH Building",
+            title: "Basic Sciences & Humanities Block",
+            desc: "Foundation classrooms, advanced Physics, Chemistry, and language laboratories fostering early engineering rigor.",
+            url: "https://www.giet.edu/schools/school-of-basic-sciences/"
+        },
+        {
+            name: "Agriculture Block",
+            title: "School of Agriculture & Research Fields",
+            desc: "Agronomy, soil science, crop research, and horticulture testing units on campus farmland.",
+            url: "https://www.giet.edu/schools/school-of-agriculture/"
+        },
+        {
+            name: "Bio tech Building",
+            title: "School of Biotechnology & E-YUVA Centre",
+            desc: "Advanced biotechnology research laboratories supported by BIRAC and Department of Biotechnology (DBT), Govt. of India.",
+            url: "https://www.giet.edu/academics/e-yuva-center/"
+        },
+        {
+            name: "Mechanical building",
+            title: "School of Mechanical Engineering & Central Workshops",
+            desc: "Heavy machinery workshops, CNC manufacturing centers, thermal, fluid mechanics, and CAD/CAM computing facilities.",
+            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/mechanical-engineering/"
+        },
+        {
+            name: "Hardware section",
+            title: "Hardware, ECE & Robotics Laboratories",
+            desc: "Embedded systems, VLSI design, IoT micro-controller hardware sections, and industrial automation labs.",
+            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/electronics-communication-engineering/"
+        },
+        {
+            name: "Mega Auditorium",
+            title: "GIETU Mega University Auditorium",
+            desc: "A massive acoustically engineered auditorium hosting national symposiums, annual convocation, and student cultural fests.",
+            url: "https://www.giet.edu/infrastructure/"
+        },
+        {
+            name: "Canteen",
+            title: "Student Food Court & Canteen",
+            desc: "A multi-cuisine campus cafeteria serving fresh snacks, regional specialties, fruit beverages, and meals.",
+            url: "https://www.giet.edu/infrastructure/"
+        },
+        {
+            name: "Cool Parlour",
+            title: "Cool Parlour Refreshment Zone",
+            desc: "A popular campus relaxation hub known for iced beverages, snacks, and student discussions between classes.",
+            url: "https://www.giet.edu/campus-tour/"
+        },
+        {
+            name: "Swimming pool",
+            title: "National Standard 6-Lane Swimming Pool",
+            desc: "A national standard aquatic facility with dedicated swimming coaching and scheduled hours for boys and girls.",
+            url: "https://www.giet.edu/sports-facilities/"
+        },
+        {
+            name: "Giet main ground",
+            title: "University Sports Arena & Athletic Track",
+            desc: "A multipurpose stadium ground hosting state-level cricket, football tournaments, basketball courts, and track sports.",
+            url: "https://www.giet.edu/sports-facilities/"
+        },
+        {
+            name: "Central Mess",
+            title: "Central Dining Complex & Residential Hostels",
+            desc: "Hygienic multi-story student dining complex with 1,200+ seating capacity, serving nutritious meals across the NC hostel clusters.",
+            url: "https://www.giet.edu/schools/school-of-nursing/infrastructure/hostels/"
+        }
+    ];
 
     function hideLoader() {
         if (!loadingScreen) return;
@@ -68,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const safetyTimer = setTimeout(hideLoader, 3000);
 
-    // ================= 2. PURE SATELLITE CANVAS =================
+    // ================= 5. SATELLITE CANVAS =================
     const map = L.map('map', {
         zoomControl: false,
         maxZoom: 22,
@@ -83,7 +288,51 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 3. UTILITIES & EMERGENCY OVERLAYS =================
+    // ================= 6. CAMPUS EMOJI TAXONOMY =================
+    function getPlaceIcon(name, rawCategory = '') {
+        const n = (name || '').toLowerCase().trim();
+        const c = (rawCategory || '').toLowerCase().trim();
+
+        if (n.includes('wc') || n.includes('washroom') || n.includes('restroom') || n.includes('toilet') || c.includes('washroom')) {
+            if (n.includes('gens') || n.includes('men') || n.includes('boys')) return '🚹';
+            if (n.includes('ladies') || n.includes('women') || n.includes('girls')) return '🚺';
+            return '🚻';
+        }
+        if (n.includes('dispensary') || n.includes('medical') || n.includes('first aid') || c.includes('medical')) return '🏥';
+        if (n.includes('security') || n.includes('guard') || c.includes('security')) return '🛡️';
+        if (n.includes('temple')) return '🛕';
+        if (n.includes('park') || n.includes('garden')) return '🌳';
+        if (n.includes('open gym')) return '🧘';
+        if (n.includes('cool parlour') || n.includes('parloor')) return '🍧';
+        if (n.includes('tea') || n.includes('coffee') || n.includes('cafe')) return '☕';
+        if (n.includes('canteen')) return '🍱';
+        if (n.includes('mess')) return '🍲';
+        if (n.includes('swimming') || n.includes('pool')) return '🏊‍♂️';
+        if (n.includes('badminton')) return '🏸';
+        if (n.includes('basket ball') || n.includes('basketball')) return '🏀';
+        if (n.includes('ground') || n.includes('stadium') || n.includes('cricket')) return '⚽';
+        if (n.includes('bus')) return '🚌';
+        if (n.includes('parking')) return '🅿️';
+        if (n.includes('gate') || n.includes('entrance')) return '🚪';
+        if (n.includes('library')) return '📚';
+        if (n.includes('auditorium')) return '🎭';
+        if (n.includes('cse') || n.includes('computer') || n.includes('csa')) return '💻';
+        if (n.includes('bio tech') || n.includes('biotech')) return '🧪';
+        if (n.includes('agriculture') || n.includes('agri')) return '🌾';
+        if (n.includes('hardware') || n.includes('ece') || n.includes('electrical')) return '⚡';
+        if (n.includes('mechanical') || n.includes('mech')) return '⚙️';
+        if (n.includes('civil')) return '📐';
+        if (n.includes('manegment') || n.includes('management') || n.includes('mba')) return '📊';
+        if (n.includes('bsh') || n.includes('basic science')) return '🔬';
+        if (n.includes('admin') || n.includes('office')) return '🏛️';
+        if (n.includes('guest house')) return '🏨';
+        if (n.startsWith('nc-') || n.includes('hostel')) return '🏢';
+        if (n.includes('building') || n.includes('block')) return '🏫';
+
+        return '📍';
+    }
+
+    // ================= 7. UTILITIES OVERLAY =================
     function renderUtilities(filterType) {
         utilityMarkers.forEach(m => map.removeLayer(m));
         utilityMarkers = [];
@@ -98,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let matchType = null;
                 if (cat.includes('water') || name.toLowerCase().includes('water') || name.toLowerCase().includes('cooler')) matchType = 'water';
-                else if (cat.includes('washroom') || cat.includes('restroom') || name.toLowerCase().includes('washroom') || name.toLowerCase().includes('toilet')) matchType = 'washroom';
+                else if (cat.includes('washroom') || cat.includes('restroom') || name.toLowerCase().includes('washroom') || name.toLowerCase().includes('toilet') || name.toLowerCase().includes('wc')) matchType = 'washroom';
                 else if (cat.includes('medical') || name.toLowerCase().includes('first aid') || name.toLowerCase().includes('dispensary')) matchType = 'medical';
                 else if (cat.includes('security') || cat.includes('gate') || name.toLowerCase().includes('security')) matchType = 'security';
 
@@ -133,15 +382,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 4. CATEGORY CLASSIFICATION & STABLE FILTERING =================
+    // ================= 8. CATEGORY FILTERING =================
     function getCategoryClassification(name, rawCategory = '') {
         const n = name.toLowerCase();
         const c = rawCategory.toLowerCase();
 
-        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('dept') || n.includes('csa') || n.includes('ame')) {
+        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('dept') || n.includes('csa') || n.includes('ame') || n.includes('bsh') || n.includes('hardware')) {
             return 'academic';
         }
-        if (c.includes('hostel') || c.includes('mess') || n.includes('nc-') || n.includes('mess') || n.includes('hostel')) {
+        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess') || n.includes('hostel') || n.includes('guest house')) {
             return 'hostel';
         }
         if (c.includes('food') || n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) {
@@ -188,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 5. GEOMETRY & GRAPH HELPERS =================
+    // ================= 9. GEOMETRY & GRAPH HELPERS =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -378,13 +627,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
     }
 
-    // ================= 6. TURN-BY-TURN INSTRUCTIONS =================
+    // ================= 10. TURN-BY-TURN INSTRUCTIONS =================
     function generateTurnInstructions(coords) {
         if (!coords || coords.length < 2) return [];
         const instructions = [];
         let accumulatedDistance = 0;
 
         instructions.push({
+            id: "step_start",
             action: "start",
             icon: "📍",
             text: "Start walking along the path",
@@ -411,6 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const turnType = diff > 0 ? "Turn Right" : "Turn Left";
                 const icon = diff > 0 ? "↗️" : "↖️";
                 instructions.push({
+                    id: `turn_${i}_${Math.round(pCurr[0] * 1000)}`,
                     action: "turn",
                     icon: icon,
                     text: `${turnType} onto connecting walkway`,
@@ -425,6 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
         accumulatedDistance += finalSeg;
 
         instructions.push({
+            id: "step_arrive",
             action: "arrive",
             icon: "🏁",
             text: "Arrive at destination doorway",
@@ -441,10 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = `turn-step-item ${idx === 0 ? 'active' : ''}`;
             div.innerHTML = `
-                <span style="font-size: 1.2rem;">${step.icon}</span>
+                <span style="font-size: 1.25rem;">${step.icon}</span>
                 <div>
                     <div><strong>${step.text}</strong></div>
-                    <div style="color: #64748b; font-size: 11px;">${step.distance > 0 ? `After ${step.distance} meters` : 'Origin'}</div>
+                    <div style="color: #64748b; font-size: 11.5px;">${step.distance > 0 ? `After ${step.distance} meters` : 'Origin'}</div>
                 </div>
             `;
             turnStepsList.appendChild(div);
@@ -456,10 +708,12 @@ document.addEventListener('DOMContentLoaded', () => {
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 7. LIVE GPS & LINE ERASING =================
+    // ================= 11. LIVE GPS & LINE ERASING =================
     function updateUserLiveLocation(lat, lng, accuracy = 5) {
         currentUserLat = lat;
         currentUserLng = lng;
+
+        if (recenterFabBtn) recenterFabBtn.classList.remove('hidden');
 
         if (!userMarker) {
             const userIcon = L.divIcon({
@@ -479,6 +733,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fullRouteCoords.length > 1) {
             updateDynamicBreadcrumb([lat, lng]);
         }
+    }
+
+    if (recenterFabBtn) {
+        recenterFabBtn.addEventListener('click', () => {
+            if (currentUserLat && currentUserLng) {
+                map.flyTo([currentUserLat, currentUserLng], 19, { duration: 0.8 });
+            }
+        });
     }
 
     function updateDynamicBreadcrumb(currentPos) {
@@ -521,9 +783,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let nextTurn = null;
         for (let i = 0; i < turnInstructions.length; i++) {
-            const d = getDistance(currentPos[0], currentPos[1], turnInstructions[i].coord[0], turnInstructions[i].coord[1]);
-            if (d > 8) {
-                nextTurn = turnInstructions[i];
+            const step = turnInstructions[i];
+            const d = getDistance(currentPos[0], currentPos[1], step.coord[0], step.coord[1]);
+            if (d > 6) {
+                nextTurn = step;
                 nextTurn.liveDist = Math.round(d);
                 break;
             }
@@ -534,19 +797,37 @@ document.addEventListener('DOMContentLoaded', () => {
             turnIcon.textContent = nextTurn.icon;
             turnInstruction.textContent = nextTurn.text;
             turnDistance.textContent = `in ${nextTurn.liveDist} meters`;
+
+            const approachKey = `approach_${nextTurn.id}`;
+            if (nextTurn.liveDist <= 25 && nextTurn.liveDist > 8 && !spokenMilestones.has(approachKey)) {
+                spokenMilestones.add(approachKey);
+                speakVoicePrompt(`In ${nextTurn.liveDist} meters, ${nextTurn.text}`);
+            }
+
+            const executeKey = `execute_${nextTurn.id}`;
+            if (nextTurn.liveDist <= 8 && !spokenMilestones.has(executeKey)) {
+                spokenMilestones.add(executeKey);
+                speakVoicePrompt(nextTurn.text);
+            }
         } else {
             turnHud.classList.remove('hidden');
             turnIcon.textContent = "🏁";
             turnInstruction.textContent = "Approaching destination";
             turnDistance.textContent = "within 5 meters";
+
+            if (!spokenMilestones.has("arrived")) {
+                spokenMilestones.add("arrived");
+                speakVoicePrompt("You have arrived at your destination.");
+            }
         }
     }
 
-    // ================= 8. ROUTE SELECTION (STABILIZED BOUNDS) =================
+    // ================= 12. ROUTE SELECTION & VISUALIZATION =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
         fullRouteCoords = selectedRoute.path;
+        spokenMilestones.clear();
 
         if (remainingRoutePolyline) map.removeLayer(remainingRoutePolyline);
         if (breadcrumbPolyline) map.removeLayer(breadcrumbPolyline);
@@ -578,6 +859,9 @@ document.addEventListener('DOMContentLoaded', () => {
         turnInstructions = generateTurnInstructions(fullRouteCoords);
         renderTurnDirections(turnInstructions);
 
+        const estTime = Math.ceil(selectedRoute.totalDistance / 75);
+        speakVoicePrompt(`Route found. Distance is ${selectedRoute.totalDistance} meters, about ${estTime} minutes walk.`);
+
         const cards = routeCardsList.children;
         for (let i = 0; i < cards.length; i++) {
             cards[i].classList.toggle('active', i === index);
@@ -588,15 +872,14 @@ document.addEventListener('DOMContentLoaded', () => {
             routeOutput.innerHTML = `
                 <div style="font-size: 13px;">
                     <strong style="color: ${ROUTE_PALETTE[index] || '#10b981'}">${selectedRoute.name}</strong><br>
-                    Distance: <strong>${selectedRoute.totalDistance} meters</strong> (~${Math.ceil(selectedRoute.totalDistance / 75)} mins)
+                    Distance: <strong>${selectedRoute.totalDistance} meters</strong> (~${estTime} mins walk)
                 </div>
             `;
         }
 
-        // Clamp fitBounds: Prevent zooming in too close on short paths, and do not fight GPS/Simulation
         if (!isTrackingOrSimulating && remainingRoutePolyline) {
             map.fitBounds(remainingRoutePolyline.getBounds(), {
-                padding: [60, 60],
+                padding: [40, 40],
                 maxZoom: 19,
                 animate: true
             });
@@ -631,48 +914,116 @@ document.addEventListener('DOMContentLoaded', () => {
         selectActiveRoute(0);
     }
 
-    // ================= 9. MULTI-STOP POPULATORS & RESPONSIVE SHEET GESTURES =================
-    function populateDropdown(selectElem, placeholder = "Choose Location") {
-        selectElem.innerHTML = `<option value="">${placeholder}</option>`;
-        placeNamesSorted.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            selectElem.appendChild(opt);
-        });
+    // ================= 13. IN-APP LOCATION PICKER MODAL =================
+    function openLocationPicker(targetKey, titleText) {
+        activePickerTarget = targetKey;
+        pickerTitle.textContent = titleText || "Select Campus Location";
+        pickerFilterInput.value = "";
+        renderPickerList("");
+        locationPickerModal.classList.remove('hidden');
+        setTimeout(() => pickerFilterInput.focus(), 100);
     }
 
-    function updateDestinationLabels() {
-        const stopRows = waypointsContainer.querySelectorAll('.stop-row .location-select');
-        stopRows.forEach((sel, idx) => {
-            const destNum = idx + 2;
-            const currentVal = sel.value;
-            populateDropdown(sel, `Next Destination ${destNum}`);
-            sel.value = currentVal;
-        });
+    function closeLocationPicker() {
+        locationPickerModal.classList.add('hidden');
+        activePickerTarget = null;
     }
+
+    function renderPickerList(filterTerm) {
+        pickerItemsList.innerHTML = "";
+        const term = filterTerm.toLowerCase().trim();
+
+        if (activePickerTarget === 'start') {
+            const liveItem = document.createElement('div');
+            liveItem.className = 'picker-item';
+            liveItem.innerHTML = `<span class="picker-item-icon">📍</span> <span>My Live Location (GPS)</span>`;
+            liveItem.addEventListener('click', () => {
+                selectedWaypoints.start = { id: "LIVE_LOCATION", name: "My Live Location (GPS)" };
+                startDisplay.querySelector('.waypoint-text').textContent = "📍 My Live Location (GPS)";
+                closeLocationPicker();
+            });
+            pickerItemsList.appendChild(liveItem);
+        }
+
+        const matchingPlaces = placeNamesSorted.filter(name => !term || name.toLowerCase().includes(term));
+
+        matchingPlaces.forEach(name => {
+            const icon = getPlaceIcon(name);
+            const item = document.createElement('div');
+            item.className = 'picker-item';
+            item.innerHTML = `<span class="picker-item-icon">${icon}</span> <span>${name}</span>`;
+
+            item.addEventListener('click', () => {
+                if (activePickerTarget === 'start') {
+                    selectedWaypoints.start = { id: name, name: name };
+                    startDisplay.querySelector('.waypoint-text').textContent = `${icon} ${name}`;
+                } else if (activePickerTarget === 'destination') {
+                    selectedWaypoints.destination = { id: name, name: name };
+                    const destText = destinationDisplay.querySelector('.waypoint-text');
+                    destText.textContent = `${icon} ${name}`;
+                    destText.classList.remove('placeholder');
+                } else if (typeof activePickerTarget === 'number') {
+                    selectedWaypoints.extraStops[activePickerTarget] = { id: name, name: name };
+                    const stopCard = waypointsContainer.querySelectorAll('.stop-row')[activePickerTarget];
+                    if (stopCard) {
+                        const txt = stopCard.querySelector('.waypoint-text');
+                        txt.textContent = `${icon} ${name}`;
+                        txt.classList.remove('placeholder');
+                    }
+                }
+                closeLocationPicker();
+            });
+
+            pickerItemsList.appendChild(item);
+        });
+
+        if (matchingPlaces.length === 0) {
+            pickerItemsList.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:13px;">No matching places found</div>`;
+        }
+    }
+
+    if (startDisplay) {
+        startDisplay.parentElement.addEventListener('click', () => openLocationPicker('start', 'Choose Starting Point'));
+    }
+
+    if (destinationDisplay) {
+        destinationDisplay.parentElement.addEventListener('click', () => openLocationPicker('destination', 'Choose Destination'));
+    }
+
+    if (pickerFilterInput) {
+        pickerFilterInput.addEventListener('input', (e) => renderPickerList(e.target.value));
+    }
+
+    if (closePickerBtn) closePickerBtn.addEventListener('click', closeLocationPicker);
+    if (pickerBackdrop) pickerBackdrop.addEventListener('click', closeLocationPicker);
 
     if (addStopBtn) {
         addStopBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const existingExtraStops = waypointsContainer.querySelectorAll('.stop-row').length;
-            const destNumber = existingExtraStops + 2;
+            const stopIndex = selectedWaypoints.extraStops.length;
+            selectedWaypoints.extraStops.push(null);
 
             const div = document.createElement('div');
-            div.className = 'input-group stop-row';
-
+            div.className = 'input-group waypoint-card stop-row';
             div.innerHTML = `
-                <div class="point-badge" style="background:#8b5cf6;">${String.fromCharCode(67 + existingExtraStops)}</div>
-                <select class="location-select" style="flex: 1;"></select>
-                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
+                <div class="point-badge" style="background:#8b5cf6;">${String.fromCharCode(67 + stopIndex)}</div>
+                <div class="waypoint-display">
+                    <span class="waypoint-text placeholder">Next Stop ${stopIndex + 1}</span>
+                    <i class="fa-solid fa-chevron-down waypoint-arrow"></i>
+                </div>
+                <button type="button" class="btn-remove-stop" title="Remove stop" aria-label="Remove stop">✕</button>
             `;
 
             waypointsContainer.appendChild(div);
-            populateDropdown(div.querySelector('select'), `Next Destination ${destNumber}`);
 
-            div.querySelector('.btn-remove-stop').addEventListener('click', () => {
+            div.querySelector('.waypoint-display').addEventListener('click', () => {
+                openLocationPicker(stopIndex, `Choose Stop ${stopIndex + 1}`);
+            });
+
+            div.querySelector('.btn-remove-stop').addEventListener('click', (ev) => {
+                ev.stopPropagation();
                 div.remove();
-                updateDestinationLabels();
+                selectedWaypoints.extraStops.splice(stopIndex, 1);
             });
 
             const panelBody = document.querySelector('.panel-body');
@@ -680,48 +1031,64 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Touch Dragging Handler for Mobile Bottom Sheet
-    let isDragging = false;
-    let startY = 0;
-    let currentTranslateY = 0;
-    let isCollapsed = false;
+    // ================= 14. NATIVE MOBILE DRAWER SNAP GESTURES =================
+    let isDraggingHandle = false;
+    let startTouchY = 0;
+    let currentPanelState = 0; // 0 = Expanded (Show All Steps), 1 = Collapsed (Show Map)
     const dragArea = document.getElementById('panel-handle-area') || togglePanelBtn;
 
+    function applySheetSnap(stateIndex) {
+        if (window.innerWidth > 640 || !navPanel) return;
+        currentPanelState = stateIndex;
+        navPanel.style.transition = 'transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1)';
+
+        const panelHeight = navPanel.offsetHeight;
+        if (stateIndex === 0) {
+            // Expanded: 0px offset, showing all search, waypoints, and scrollable steps
+            navPanel.style.transform = 'translateY(0px)';
+        } else {
+            // Collapsed: Leaves the top ~64px handle visible so the map is unobstructed
+            const peekOffset = Math.max(0, panelHeight - 64);
+            navPanel.style.transform = `translateY(${peekOffset}px)`;
+        }
+    }
+
+    // Bind touch gestures strictly to the pull handle to avoid scroll interference
     if (dragArea && navPanel) {
         dragArea.addEventListener('touchstart', (e) => {
             if (window.innerWidth > 640) return;
-            isDragging = true;
-            startY = e.touches[0].clientY;
+            isDraggingHandle = true;
+            startTouchY = e.touches[0].clientY;
             navPanel.style.transition = 'none';
         }, { passive: true });
 
-        window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaY = e.touches[0].clientY - startY;
+        dragArea.addEventListener('touchmove', (e) => {
+            if (!isDraggingHandle) return;
+            const deltaY = e.touches[0].clientY - startTouchY;
             const panelHeight = navPanel.offsetHeight;
-            const maxTranslate = panelHeight - 65;
+            const maxOffset = Math.max(0, panelHeight - 64);
 
-            let newTranslate = (isCollapsed ? maxTranslate : 0) + deltaY;
-            if (newTranslate < 0) newTranslate = 0;
-            if (newTranslate > maxTranslate) newTranslate = maxTranslate;
+            let baseOffset = currentPanelState === 1 ? maxOffset : 0;
+            let targetOffset = baseOffset + deltaY;
 
-            currentTranslateY = newTranslate;
-            navPanel.style.transform = `translateY(${newTranslate}px)`;
+            if (targetOffset < 0) targetOffset = 0;
+            if (targetOffset > maxOffset) targetOffset = maxOffset;
+
+            navPanel.style.transform = `translateY(${targetOffset}px)`;
         }, { passive: true });
 
-        window.addEventListener('touchend', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            navPanel.style.transition = '';
-            const panelHeight = navPanel.offsetHeight;
-            const maxTranslate = panelHeight - 65;
+        dragArea.addEventListener('touchend', (e) => {
+            if (!isDraggingHandle) return;
+            isDraggingHandle = false;
+            const endTouchY = e.changedTouches[0].clientY;
+            const distanceMoved = endTouchY - startTouchY;
 
-            if (currentTranslateY > maxTranslate * 0.35) {
-                isCollapsed = true;
-                navPanel.style.transform = `translateY(${maxTranslate}px)`;
+            if (distanceMoved > 40) {
+                applySheetSnap(1); // Swiped down -> collapse
+            } else if (distanceMoved < -40) {
+                applySheetSnap(0); // Swiped up -> expand
             } else {
-                isCollapsed = false;
-                navPanel.style.transform = `translateY(0px)`;
+                applySheetSnap(currentPanelState);
             }
         });
     }
@@ -730,27 +1097,97 @@ document.addEventListener('DOMContentLoaded', () => {
         togglePanelBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (window.innerWidth > 640) return;
-            const panelHeight = navPanel.offsetHeight;
-            const maxTranslate = panelHeight - 65;
-
-            if (isCollapsed) {
-                isCollapsed = false;
-                navPanel.style.transform = 'translateY(0px)';
-            } else {
-                isCollapsed = true;
-                navPanel.style.transform = `translateY(${maxTranslate}px)`;
-            }
+            applySheetSnap(currentPanelState === 0 ? 1 : 0);
         });
     }
 
     window.addEventListener('resize', () => {
-        if (window.innerWidth > 640) {
+        if (window.innerWidth > 640 && navPanel) {
             navPanel.style.transform = '';
-            isCollapsed = false;
+            navPanel.style.transition = '';
+            currentPanelState = 0;
         }
     });
 
-    // ================= 10. INITIALIZE CAMPUS DATA =================
+    // ================= 15. CAMPUS TOUR MODE =================
+    function startCampusTour() {
+        isTourActive = true;
+        currentTourIndex = 0;
+
+        const tourCoords = campusTourStops.map(s => buildings[s.name]).filter(Boolean);
+        if (tourCoords.length < 2) {
+            alert("Tour landmarks are synchronizing with the campus mesh. Please retry in a few seconds.");
+            return;
+        }
+
+        const routes = computeClientSideRoutes(tourCoords);
+        if (routes && routes.length > 0) {
+            renderRoutes(routes);
+        }
+
+        showTourStopCard(currentTourIndex);
+    }
+
+    function showTourStopCard(idx) {
+        if (idx < 0 || idx >= campusTourStops.length) return;
+        currentTourIndex = idx;
+        const stop = campusTourStops[idx];
+
+        tourStopNum.textContent = `${idx + 1}/${campusTourStops.length}`;
+        tourStopTitle.textContent = stop.title;
+        tourStopDesc.textContent = stop.desc;
+        if (tourOfficialLink) {
+            tourOfficialLink.href = stop.url || "https://www.giet.edu";
+        }
+        tourCardModal.classList.remove('hidden');
+
+        const coords = buildings[stop.name];
+        if (coords) {
+            map.flyTo(coords, 19, { duration: 1.0 });
+            if (markerLayers[stop.name]) markerLayers[stop.name].openTooltip();
+        }
+
+        speakVoicePrompt(`Tour Stop ${idx + 1}: ${stop.title}. ${stop.desc}`);
+    }
+
+    if (startTourBtn) startTourBtn.addEventListener('click', startCampusTour);
+
+    if (tourNextBtn) {
+        tourNextBtn.addEventListener('click', () => {
+            if (currentTourIndex < campusTourStops.length - 1) {
+                showTourStopCard(currentTourIndex + 1);
+            } else {
+                alert("You have completed the GIET University Campus Tour! Welcome to GIETU.");
+                tourCardModal.classList.add('hidden');
+                isTourActive = false;
+            }
+        });
+    }
+
+    if (tourPrevBtn) {
+        tourPrevBtn.addEventListener('click', () => {
+            if (currentTourIndex > 0) {
+                showTourStopCard(currentTourIndex - 1);
+            }
+        });
+    }
+
+    if (tourSpeakBtn) {
+        tourSpeakBtn.addEventListener('click', () => {
+            const stop = campusTourStops[currentTourIndex];
+            if (stop) speakVoicePrompt(`${stop.title}. ${stop.desc}`);
+        });
+    }
+
+    if (closeTourModalBtn) {
+        closeTourModalBtn.addEventListener('click', () => {
+            tourCardModal.classList.add('hidden');
+            isTourActive = false;
+            window.speechSynthesis.cancel();
+        });
+    }
+
+    // ================= 16. INITIALIZE DATA & SATELLITE TAGS =================
     function processGeoJSONData(data) {
         campusGeoJSON = data;
         buildings = {};
@@ -772,10 +1209,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 return { color: '#3b82f6', weight: 2 };
             },
             pointToLayer: (feature, latlng) => {
+                const name = feature.properties?.name?.trim() || '';
+                const rawCat = feature.properties?.category || '';
+                const icon = getPlaceIcon(name, rawCat);
+
+                let dotColor = '#2563eb';
+                if (icon === '🚻' || icon === '🚹' || icon === '🚺') dotColor = '#8b5cf6';
+                else if (icon === '🏥') dotColor = '#ef4444';
+                else if (icon === '🛡️') dotColor = '#f59e0b';
+                else if (icon === '🏊‍♂️' || icon === '🏸' || icon === '🏀' || icon === '⚽') dotColor = '#10b981';
+
                 return L.circleMarker(latlng, {
                     radius: 5,
                     fillColor: '#ffffff',
-                    color: '#2563eb',
+                    color: dotColor,
                     weight: 3,
                     opacity: 1,
                     fillOpacity: 1
@@ -792,7 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                     placeNamesSorted.push(name);
 
-                    const icon = getPlaceIcon(name);
+                    const icon = getPlaceIcon(name, rawCat);
                     layer.bindTooltip(`<span>${icon}</span> <span>${name}</span>`, {
                         permanent: true,
                         direction: 'top',
@@ -805,16 +1252,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         placeNamesSorted.sort();
         buildClientGraph(data);
-
-        populateDropdown(destSelect, "Choose Destination");
-
-        startSelect.innerHTML = `<option value="LIVE_LOCATION">📍 My Live Location (GPS)</option>`;
-        placeNamesSorted.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            startSelect.appendChild(opt);
-        });
 
         applyCategoryAndZoomFilter();
         clearTimeout(safetyTimer);
@@ -842,57 +1279,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
 
-    function getPlaceIcon(name) {
-        const n = name.toLowerCase();
-        if (n.includes('gate')) return '🚪';
-        if (n.includes('temple')) return '🛕';
-        if (n.includes('library')) return '📚';
-        if (n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) return '☕';
-        if (n.includes('bus')) return '🚌';
-        if (n.includes('parking')) return '🅿️';
-        if (n.includes('water') || n.includes('cooler')) return '🚰';
-        if (n.includes('washroom') || n.includes('restroom')) return '🚻';
-        if (n.includes('medical') || n.includes('first aid')) return '🏥';
-        return '🏛️';
-    }
-
-    // ================= 11. MULTI-WAYPOINT ROUTE CALCULATION =================
+    // ================= 17. ROUTE CALCULATION =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            const allSelects = Array.from(waypointsContainer.querySelectorAll('.location-select'));
-            const selectedPoints = [];
+            if (!selectedWaypoints.destination) {
+                alert("Please select a Destination point.");
+                return;
+            }
+
             const coordsArray = [];
 
-            for (let i = 0; i < allSelects.length; i++) {
-                const val = allSelects[i].value.trim();
-                if (!val) continue;
-
-                if (val === "LIVE_LOCATION") {
-                    if (!currentUserLat || !currentUserLng) {
-                        alert("Acquiring GPS location... Please ensure location permissions are enabled.");
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                                pos => {
-                                    updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude);
-                                    findRouteBtn.click();
-                                },
-                                err => alert("Unable to get GPS location: " + err.message)
-                            );
-                        }
-                        return;
+            if (selectedWaypoints.start.id === "LIVE_LOCATION") {
+                if (!currentUserLat || !currentUserLng) {
+                    alert("Acquiring GPS location... Please ensure location permissions are enabled.");
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            pos => {
+                                updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude);
+                                findRouteBtn.click();
+                            },
+                            err => alert("Unable to get GPS location: " + err.message)
+                        );
                     }
-                    selectedPoints.push("My Location");
-                    coordsArray.push([currentUserLat, currentUserLng]);
-                } else if (buildings[val]) {
-                    selectedPoints.push(val);
-                    coordsArray.push(buildings[val]);
+                    return;
                 }
+                coordsArray.push([currentUserLat, currentUserLng]);
+            } else if (buildings[selectedWaypoints.start.id]) {
+                coordsArray.push(buildings[selectedWaypoints.start.id]);
+            }
+
+            selectedWaypoints.extraStops.forEach(st => {
+                if (st && buildings[st.id]) coordsArray.push(buildings[st.id]);
+            });
+
+            if (buildings[selectedWaypoints.destination.id]) {
+                coordsArray.push(buildings[selectedWaypoints.destination.id]);
             }
 
             if (coordsArray.length < 2) {
-                alert("Please select at least a Starting Point and Destination.");
+                alert("Please verify your starting and destination points.");
                 return;
             }
 
@@ -904,16 +1331,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderRoutes(routes);
 
-            if (window.innerWidth <= 640 && navPanel) {
-                const panelHeight = navPanel.offsetHeight;
-                const maxTranslate = panelHeight - 65;
-                isCollapsed = true;
-                navPanel.style.transform = `translateY(${maxTranslate}px)`;
+            // Expand drawer to reveal corridors and smooth-scroll to steps
+            if (window.innerWidth <= 640) {
+                applySheetSnap(0);
+                setTimeout(() => {
+                    const panel = document.querySelector('.panel-body');
+                    if (panel && turnStepsContainer) {
+                        panel.scrollTo({
+                            top: turnStepsContainer.offsetTop - 20,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 280);
             }
         });
     }
 
-    // ================= 12. GPS LIVE WATCH & SIMULATION =================
+    // ================= 18. GPS WATCH =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
@@ -925,15 +1359,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
                 isTrackingOrSimulating = false;
-                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>`;
+                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Live GPS</span>`;
                 startNavBtn.classList.remove('btn-danger');
                 turnHud.classList.add('hidden');
+                speakVoicePrompt("Navigation stopped.");
                 return;
             }
 
             isTrackingOrSimulating = true;
             startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
             startNavBtn.classList.add('btn-danger');
+
+            if (window.innerWidth <= 640) {
+                applySheetSnap(1); // Collapse to peek view so live map is clear
+            }
+
+            speakVoicePrompt("Starting GPS live navigation.");
 
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
@@ -948,6 +1389,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ================= 19. WALK SIMULATION =================
+    function generateUniformAnimationPoints(coords, meterSpacing = 1.0) {
+        const points = [];
+        if (!coords || coords.length < 2) return points;
+
+        for (let i = 0; i < coords.length - 1; i++) {
+            const p1 = coords[i];
+            const p2 = coords[i + 1];
+            const segDist = getDistance(p1[0], p1[1], p2[0], p2[1]);
+            const steps = Math.max(1, Math.round(segDist / meterSpacing));
+
+            for (let s = 0; s < steps; s++) {
+                const fraction = s / steps;
+                const lat = p1[0] + (p2[0] - p1[0]) * fraction;
+                const lng = p1[1] + (p2[1] - p1[1]) * fraction;
+                points.push([lat, lng]);
+            }
+        }
+
+        points.push(coords[coords.length - 1]);
+        return points;
+    }
+
+    function runSimulationLoop(animationPoints, startIndex = 0) {
+        if (simulationInterval) clearInterval(simulationInterval);
+
+        const frameIntervalMs = Math.round(100 / simSpeedMultiplier);
+        let stepIndex = startIndex;
+
+        simulationInterval = setInterval(() => {
+            if (stepIndex >= animationPoints.length) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+                isTrackingOrSimulating = false;
+                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate</span>`;
+                alert("You have arrived at your destination!");
+                return;
+            }
+
+            const [lat, lng] = animationPoints[stepIndex];
+            updateUserLiveLocation(lat, lng, 3);
+            map.panTo([lat, lng], { animate: true, duration: frameIntervalMs / 1000 });
+            stepIndex++;
+            simulateBtn.setAttribute('data-current-idx', stepIndex);
+        }, frameIntervalMs);
+    }
+
     if (simulateBtn) {
         simulateBtn.addEventListener('click', () => {
             if (!fullRouteCoords || fullRouteCoords.length < 2) {
@@ -959,47 +1447,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(simulationInterval);
                 simulationInterval = null;
                 isTrackingOrSimulating = false;
-                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
+                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate</span>`;
+                speakVoicePrompt("Simulation paused.");
                 return;
             }
 
             isTrackingOrSimulating = true;
-            simulateBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Walk</span>`;
+            simulateBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause</span>`;
 
-            let animationPoints = [];
-            for (let i = 0; i < fullRouteCoords.length - 1; i++) {
-                const p1 = fullRouteCoords[i];
-                const p2 = fullRouteCoords[i + 1];
-                const steps = 15;
-                for (let s = 0; s <= steps; s++) {
-                    const lat = p1[0] + (p2[0] - p1[0]) * (s / steps);
-                    const lng = p1[1] + (p2[1] - p1[1]) * (s / steps);
-                    animationPoints.push([lat, lng]);
-                }
+            if (window.innerWidth <= 640) {
+                applySheetSnap(1);
             }
 
-            let stepIndex = 0;
-            simulationInterval = setInterval(() => {
-                if (stepIndex >= animationPoints.length) {
-                    clearInterval(simulationInterval);
-                    simulationInterval = null;
-                    isTrackingOrSimulating = false;
-                    simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
-                    alert("You have arrived at your destination!");
-                    return;
-                }
+            speakVoicePrompt("Simulating walk.");
 
-                const [lat, lng] = animationPoints[stepIndex];
-                updateUserLiveLocation(lat, lng, 3);
-                map.panTo([lat, lng], { animate: true, duration: 0.2 });
-                stepIndex++;
-            }, 120);
+            const animationPoints = generateUniformAnimationPoints(fullRouteCoords, 1.0);
+            window._simPointsCache = animationPoints;
+
+            const savedIdx = parseInt(simulateBtn.getAttribute('data-current-idx') || '0', 10);
+            const startAt = savedIdx >= animationPoints.length ? 0 : savedIdx;
+            runSimulationLoop(animationPoints, startAt);
+        });
+    }
+
+    if (speedToggleBtn) {
+        speedToggleBtn.addEventListener('click', () => {
+            speedOptionIdx = (speedOptionIdx + 1) % SPEED_OPTIONS.length;
+            simSpeedMultiplier = SPEED_OPTIONS[speedOptionIdx];
+            speedToggleBtn.textContent = `${simSpeedMultiplier}x`;
+
+            if (simulationInterval && window._simPointsCache) {
+                const currentIdx = parseInt(simulateBtn.getAttribute('data-current-idx') || '0', 10);
+                runSimulationLoop(window._simPointsCache, currentIdx);
+            }
         });
     }
 
     if (clearRouteBtn) {
         clearRouteBtn.addEventListener('click', () => {
             isTrackingOrSimulating = false;
+            window.speechSynthesis.cancel();
+            spokenMilestones.clear();
+
             if (remainingRoutePolyline) map.removeLayer(remainingRoutePolyline);
             if (breadcrumbPolyline) map.removeLayer(breadcrumbPolyline);
             alternativePolylines.forEach(p => map.removeLayer(p));
@@ -1011,38 +1500,54 @@ document.addEventListener('DOMContentLoaded', () => {
             if (simulationInterval) {
                 clearInterval(simulationInterval);
                 simulationInterval = null;
-                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate Walk</span>`;
+                simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate</span>`;
+                simulateBtn.removeAttribute('data-current-idx');
             }
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
-                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>`;
+                startNavBtn.innerHTML = `<i class="fa-solid fa-location-arrow"></i> <span>Live GPS</span>`;
                 startNavBtn.classList.remove('btn-danger');
             }
 
             const extraRows = waypointsContainer.querySelectorAll('.stop-row');
             extraRows.forEach(row => row.remove());
+            selectedWaypoints.extraStops = [];
 
-            destSelect.value = '';
-            startSelect.value = 'LIVE_LOCATION';
+            selectedWaypoints.destination = null;
+            const destText = destinationDisplay.querySelector('.waypoint-text');
+            destText.textContent = "Choose Destination";
+            destText.classList.add('placeholder');
 
             turnHud.classList.add('hidden');
+            tourCardModal.classList.add('hidden');
             turnStepsContainer.classList.add('hidden');
             routeOutput.classList.add('hidden');
             routeOptionsContainer.classList.add('hidden');
             map.setView(GIET_CENTER, 18);
+
+            if (window.innerWidth <= 640) {
+                applySheetSnap(0);
+            }
         });
     }
 
     if (exitHudBtn) {
-        exitHudBtn.addEventListener('click', () => turnHud.classList.add('hidden'));
+        exitHudBtn.addEventListener('click', () => {
+            turnHud.classList.add('hidden');
+            window.speechSynthesis.cancel();
+        });
     }
 
-    // ================= 13. LIVE SEARCH =================
+    // ================= 20. SEARCH =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
             searchResults.innerHTML = '';
+
+            if (searchClearBtn) {
+                searchClearBtn.classList.toggle('hidden', query.length === 0);
+            }
 
             if (!query) {
                 searchResults.classList.add('hidden');
@@ -1051,34 +1556,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
             if (matchedPlaces.length === 0) {
-                searchResults.classList.add('hidden');
+                searchResults.innerHTML = `<div style="padding: 12px; text-align: center; color: #94a3b8; font-size: 13px;">No places found</div>`;
+                searchResults.classList.remove('hidden');
                 return;
             }
 
             matchedPlaces.slice(0, 8).forEach(place => {
+                const icon = getPlaceIcon(place);
                 const item = document.createElement('div');
                 item.className = 'search-item';
-                item.innerHTML = `${getPlaceIcon(place)} <strong>${place}</strong>`;
+                item.innerHTML = `<span style="font-size:18px;">${icon}</span> <strong>${place}</strong>`;
 
-                item.addEventListener('click', () => {
+                const handleSelection = (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+
                     buildingSearch.value = place;
                     searchResults.classList.add('hidden');
 
-                    const selects = waypointsContainer.querySelectorAll('.location-select');
-                    if (selects.length > 1) {
-                        selects[selects.length - 1].value = place;
-                    }
+                    selectedWaypoints.destination = { id: place, name: place };
+                    const destText = destinationDisplay.querySelector('.waypoint-text');
+                    destText.textContent = `${icon} ${place}`;
+                    destText.classList.remove('placeholder');
 
                     const coords = buildings[place];
                     if (coords) {
                         map.flyTo(coords, 19, { duration: 1.0 });
                         if (markerLayers[place]) markerLayers[place].openTooltip();
                     }
-                });
+
+                    if (window.innerWidth <= 640) {
+                        applySheetSnap(0);
+                    }
+                };
+
+                item.addEventListener('touchend', handleSelection);
+                item.addEventListener('click', handleSelection);
+
                 searchResults.appendChild(item);
             });
+
             searchResults.classList.remove('hidden');
         });
+
+        if (searchClearBtn) {
+            searchClearBtn.addEventListener('click', () => {
+                buildingSearch.value = '';
+                searchResults.classList.add('hidden');
+                searchClearBtn.classList.add('hidden');
+            });
+        }
 
         document.addEventListener('click', (e) => {
             if (!buildingSearch.contains(e.target) && !searchResults.contains(e.target)) {

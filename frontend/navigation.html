@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="css/navigation.css" />
@@ -20,13 +20,23 @@
         <a href="index.html" class="logo-section nav-brand">
             <img src="assets/images/LOGO.png" alt="GIET Logo" class="logo brand-logo" />
             <div class="brand-text">
-                <span class="brand-main">GIET Campus Guide</span>
-                <span class="brand-status"><span class="status-dot"></span> Live Navigator</span>
+                <span class="brand-main">GIET Guide</span>
+                <span class="brand-status"><span class="status-dot"></span> Live GPS</span>
             </div>
         </a>
 
-        <!-- AMENITY CHIPS & HOME NAVIGATION -->
+        <!-- AMENITY CHIPS, CAMPUS TOUR, THEME & HOME -->
         <div class="header-controls">
+            <!-- Theme Toggle Button (Light/Dark) -->
+            <button type="button" id="theme-toggle-btn" class="btn-theme-toggle" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+
+            <!-- Campus Tour Launch Button -->
+            <button type="button" id="start-tour-btn" class="btn-tour-launch" title="Freshers' Tour">
+                🎓 Tour
+            </button>
+
             <div class="utility-chips-group">
                 <button type="button" class="util-chip" data-type="water" title="Drinking Water">🚰 Water</button>
                 <button type="button" class="util-chip" data-type="washroom" title="Restrooms">🚻 Restrooms</button>
@@ -37,38 +47,70 @@
         </div>
     </header>
 
-    <!-- LIVE TURN-BY-TURN HUD (Overlays during active walk) -->
+    <!-- LIVE TURN-BY-TURN FLOATING HUD -->
     <div id="turn-by-turn-hud" class="turn-hud hidden">
         <div class="turn-icon" id="turn-icon">⬆️</div>
         <div class="turn-details">
             <div class="turn-instruction" id="turn-instruction">Follow designated walkway</div>
             <div class="turn-distance" id="turn-distance">in 25 meters</div>
         </div>
-        <button type="button" id="exit-hud-btn" class="btn-exit-hud" title="Close HUD">✕</button>
+        <button type="button" id="voice-toggle-btn" class="btn-voice-hud active" title="Toggle Voice Guidance" aria-label="Toggle Voice Guidance">
+            <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <button type="button" id="exit-hud-btn" class="btn-exit-hud" title="Close HUD" aria-label="Close HUD">✕</button>
     </div>
 
-    <!-- MAIN LEAFLET MAP CANVAS -->
+    <!-- EXPANDED TOUR INFORMATION POPUP MODAL -->
+    <div id="tour-card-modal" class="tour-modal hidden">
+        <div class="tour-card-inner">
+            <div class="tour-header-meta">
+                <span class="tour-badge">🎓 OFFICIAL GIETU TOUR</span>
+                <span id="tour-stop-num" class="tour-counter">1/16</span>
+            </div>
+            <h3 id="tour-stop-title">Admin Block</h3>
+            <p id="tour-stop-desc">Main administrative headquarters housing the Vice Chancellor's office, Admissions, Academic Affairs, and Registrar offices.</p>
+            
+            <a id="tour-official-link" href="https://www.giet.edu" target="_blank" rel="noopener noreferrer" class="tour-web-link">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Official GIETU Page
+            </a>
+
+            <div class="tour-actions">
+                <button type="button" id="tour-prev-btn" class="btn btn-secondary btn-touch">Back</button>
+                <button type="button" id="tour-speak-btn" class="btn btn-secondary btn-touch"><i class="fa-solid fa-volume-high"></i> Replay</button>
+                <button type="button" id="tour-next-btn" class="btn btn-primary btn-touch">Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <button type="button" id="close-tour-modal-btn" class="btn-close-tour" title="End Tour" aria-label="End Tour">✕</button>
+        </div>
+    </div>
+
+    <!-- MAIN MAP CANVAS -->
     <div id="map"></div>
 
-    <!-- NAVIGATION PANEL (Desktop side-docked, Mobile/Tablet bottom-sheet) -->
+    <!-- RE-CENTER LOCATION FLOATING ACTION BUTTON (FAB) -->
+    <button type="button" id="recenter-fab-btn" class="fab-recenter hidden" title="Center My Position" aria-label="Center My Position">
+        <i class="fa-solid fa-crosshairs"></i>
+    </button>
+
+    <!-- MOBILE-OPTIMIZED DRAWER / BOTTOM SHEET -->
     <section class="nav-panel" id="nav-panel">
         <div class="panel-handle-area" id="panel-handle-area">
-            <button class="panel-toggle-btn" id="toggle-panel-btn" aria-label="Toggle Navigation Sheet">
-                <span class="handle-bar toggle-bar"></span>
+            <button class="panel-toggle-btn" id="toggle-panel-btn" aria-label="Expand or collapse navigation drawer">
+                <span class="handle-bar"></span>
             </button>
         </div>
 
         <div class="panel-body">
-            <!-- Search Section -->
+            <!-- Search Bar with Floating Autocomplete Overlay -->
             <div class="search-section search-container">
                 <div class="search-input-wrapper">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="building-search" class="search-input" placeholder="Search blocks, labs, amenities..." autocomplete="off" />
-                    <div id="search-results" class="search-dropdown search-results-dropdown hidden"></div>
+                    <input type="text" id="building-search" class="search-input" placeholder="Search blocks, canteens, labs..." autocomplete="off" />
+                    <button type="button" id="search-clear-btn" class="search-clear-btn hidden" aria-label="Clear search">✕</button>
                 </div>
+                <div id="search-results" class="search-dropdown search-results-dropdown hidden"></div>
             </div>
 
-            <!-- Category Discovery Chips -->
+            <!-- Category Discovery Chips (Horizontal Scrollable) -->
             <div class="category-filters-container">
                 <div class="category-chips-scroll">
                     <button type="button" class="cat-chip active" data-cat="all">All</button>
@@ -80,55 +122,67 @@
                 </div>
             </div>
 
-            <!-- Waypoint Inputs -->
+            <!-- Custom Waypoint Pickers -->
             <div class="waypoints-container" id="waypoints-container">
-                <div class="input-group">
+                <div class="input-group waypoint-card" data-target="start">
                     <div class="point-badge start-badge">A</div>
-                    <select class="location-select" id="start-select">
-                        <option value="LIVE_LOCATION">📍 My Live Location (GPS)</option>
-                    </select>
+                    <div class="waypoint-display" id="start-display">
+                        <span class="waypoint-text">📍 My Live Location (GPS)</span>
+                        <i class="fa-solid fa-chevron-down waypoint-arrow"></i>
+                    </div>
                 </div>
 
-                <div class="input-group">
+                <div class="input-group waypoint-card" data-target="destination">
                     <div class="point-badge end-badge">B</div>
-                    <select class="location-select" id="destination-select"></select>
+                    <div class="waypoint-display" id="destination-display">
+                        <span class="waypoint-text placeholder">Choose Destination</span>
+                        <i class="fa-solid fa-chevron-down waypoint-arrow"></i>
+                    </div>
                 </div>
             </div>
 
             <button type="button" id="add-stop-btn" class="btn-link btn-add-stop">
-                <i class="fa-solid fa-plus"></i> Add Next Destination
+                <i class="fa-solid fa-plus-circle"></i> Add Next Stop
             </button>
 
-            <!-- Actions Buttons -->
+            <!-- Primary Action Grid -->
             <div class="btn-grid action-buttons">
                 <button type="button" id="find-route-btn" class="btn btn-primary">
-                    <i class="fa-solid fa-route"></i> Find Routes
+                    <i class="fa-solid fa-route"></i> <span>Find Routes</span>
                 </button>
                 <button type="button" id="clear-route-btn" class="btn btn-secondary">
-                    Clear
+                    <span>Clear</span>
                 </button>
             </div>
 
+            <!-- Simulation Controls with Fast-Forward Toggle -->
             <div class="btn-grid live-grid action-buttons">
                 <button type="button" id="start-nav-btn" class="btn btn-gps">
-                    <i class="fa-solid fa-location-arrow"></i> <span>Start Live GPS</span>
+                    <i class="fa-solid fa-location-arrow"></i> <span>Live GPS</span>
                 </button>
-                <button type="button" id="simulate-btn" class="btn btn-sim">
-                    <i class="fa-solid fa-play"></i> <span>Simulate Walk</span>
-                </button>
+                <div class="sim-controls-group">
+                    <button type="button" id="simulate-btn" class="btn btn-sim">
+                        <i class="fa-solid fa-play"></i> <span>Simulate</span>
+                    </button>
+                    <button type="button" id="speed-toggle-btn" class="btn-speed-toggle" title="Cycle Walk Speed (1x, 2x, 4x)">
+                        1x
+                    </button>
+                </div>
             </div>
 
-            <!-- Route Outputs & Suggested Options -->
+            <!-- Active Route Summary Output -->
             <div id="route-output" class="route-output hidden"></div>
+
+            <!-- Route Cards -->
             <div id="route-options-container" class="route-options-container hidden">
-                <h4 class="section-title">Suggested Corridors</h4>
+                <h4 class="section-title">Corridor Options</h4>
                 <div id="route-cards-list" class="route-cards-list"></div>
             </div>
 
-            <!-- Turn-by-Turn Instruction Sequence -->
+            <!-- Turn List Container -->
             <div id="turn-steps-container" class="turn-steps-container hidden">
                 <div class="steps-header">
-                    <h4 class="section-title" style="margin: 0;">Turn-by-Turn Directions</h4>
+                    <h4 class="section-title" style="margin: 0;">Step Instructions</h4>
                     <span id="steps-total-count" class="badge">0 steps</span>
                 </div>
                 <div id="turn-steps-list" class="turn-steps-list"></div>
@@ -136,12 +190,28 @@
         </div>
     </section>
 
+    <!-- IN-APP SEARCHABLE LOCATION PICKER MODAL -->
+    <div id="location-picker-modal" class="picker-modal hidden">
+        <div class="picker-backdrop" id="picker-backdrop"></div>
+        <div class="picker-sheet">
+            <div class="picker-header">
+                <h4 id="picker-title">Select Location</h4>
+                <button type="button" id="close-picker-btn" class="picker-close-btn" aria-label="Close picker">✕</button>
+            </div>
+            <div class="picker-search-box">
+                <i class="fa-solid fa-magnifying-glass picker-search-icon"></i>
+                <input type="text" id="picker-filter-input" placeholder="Type to filter locations..." autocomplete="off" />
+            </div>
+            <div id="picker-items-list" class="picker-items-list"></div>
+        </div>
+    </div>
+
     <!-- LOADING SCREEN -->
     <div id="loading-screen" class="loading-overlay loading-screen">
         <div class="loading-content loader-content">
             <div class="spinner"></div>
-            <h3>Loading GIET Campus Spatial Mesh...</h3>
-            <p>Initializing high-resolution paths and amenities</p>
+            <h3>Loading GIET Campus Guide...</h3>
+            <p>Syncing walkable campus pathways</p>
         </div>
     </div>
 

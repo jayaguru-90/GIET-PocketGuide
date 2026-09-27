@@ -604,29 +604,16 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Basket ball court",
+        "category": "Sports Ground"
+      },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          83.8337963,
-          19.0491213,
-          0
+          83.833796,
+          19.049121
         ]
-      },
-      "properties": {
-        "name": "Basket ball court",
-        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
-        "icon-opacity": 1,
-        "icon-color": "#0288d1",
-        "icon-scale": 1,
-        "icon-offset": [
-          32,
-          64
-        ],
-        "icon-offset-units": [
-          "pixels",
-          "insetPixels"
-        ],
-        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
       }
     },
     {
@@ -2338,6 +2325,104 @@
         "coordinates": [
           83.831472,
           19.048959
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "CSE WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.83159,
+          19.048599
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Admin WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.832366,
+          19.048335
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Gens washroom",
+        "category": "Washroom"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.832392,
+          19.04834
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "MB WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.833282,
+          19.049369
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "RDB WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.832594,
+          19.049562
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Dispensary",
+        "category": "Medical"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.833198,
+          19.04831
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "security",
+        "category": "Security"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.831606,
+          19.04753
         ]
       }
     }
