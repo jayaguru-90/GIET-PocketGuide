@@ -7,6 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from database import SessionLocal, Floor, Room, init_db
+
 app = FastAPI(title="GIET Campus Guide API")
 
 app.add_middleware(
@@ -16,6 +18,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 GEOJSON_PATH = os.path.join(os.path.dirname(__file__), "..", "frontend", "assets", "data", "giet_campus.geojson")
 if not os.path.exists(GEOJSON_PATH):
@@ -30,7 +36,7 @@ def save_geojson(data):
         json.dump(data, f, indent=2)
 
 def haversine_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
-    R = 6371000  # meters
+    R = 6371000
     lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
     lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
     dlat = lat2 - lat1
@@ -65,7 +71,6 @@ def build_routing_graph(features: List[dict]):
         if not any(e["node"] == u_key for e in graph[v_key]):
             graph[v_key].append({"node": u_key, "weight": dist, "coord": u_coord})
 
-    # 1. Strictly record explicit vertices drawn along walkways
     for feat in features:
         geom = feat.get("geometry", {})
         if geom.get("type") == "LineString":
@@ -75,7 +80,6 @@ def build_routing_graph(features: List[dict]):
                 v = (coords[i+1][1], coords[i+1][0])
                 add_edge(to_key(u[0], u[1]), to_key(v[0], v[1]), u, v)
 
-    # 2. Bridge small gaps (up to 12 meters) between adjacent pathway endpoints
     for i in range(len(nodes_list)):
         p1 = parse_key(nodes_list[i])
         for j in range(i + 1, len(nodes_list)):
@@ -86,6 +90,7 @@ def build_routing_graph(features: List[dict]):
 
     return graph, nodes_list
 
+# --- Models ---
 class PointPayload(BaseModel):
     id: Optional[int] = None
     name: str
@@ -102,6 +107,19 @@ class RoutePayload(BaseModel):
 class WaypointRequest(BaseModel):
     waypoints: List[str]
 
+class RoomPayload(BaseModel):
+    id: Optional[int] = None
+    floor_id: int
+    number: str
+    name: str
+    type: str
+    description: Optional[str] = ""
+    x: int
+    y: int
+    w: int
+    h: int
+
+# --- Outdoor Map Endpoints ---
 @app.get("/api/campus-data")
 def get_campus_data():
     geojson = load_geojson()
@@ -209,7 +227,6 @@ def calculate_routes(req: WaypointRequest):
 
     graph, nodes_list = build_routing_graph(geojson.get("features", []))
 
-    # Connect building pins to the closest actual walkway node
     def find_nearest_walkway_node(lat: float, lon: float) -> Optional[str]:
         best_node = None
         min_d = float("inf")
@@ -281,7 +298,6 @@ def calculate_routes(req: WaypointRequest):
 
             total_dist += leg_dist
 
-            # Path follows mapped walkway nodes between origins and destinations
             segment_full = [list(p1)]
             for pt in leg_coords:
                 if list(pt) != segment_full[-1]:
@@ -324,3 +340,80 @@ def calculate_routes(req: WaypointRequest):
         r["name"] = labels[idx] if idx < len(labels) else f"Route Option {idx + 1}"
 
     return {"routes": routes}
+
+# --- Floor & Room Layout Endpoints ---
+@app.get("/api/buildings/{building_name}/floors")
+def get_floors_by_building(building_name: str):
+    db = SessionLocal()
+    try:
+        floors = db.query(Floor).filter(Floor.building_name == building_name).all()
+        result = []
+        for f in floors:
+            result.append({
+                "id": f.id,
+                "building_name": f.building_name,
+                "floor_number": f.floor_number,
+                "name": f.name,
+                "department": f.department,
+                "rooms": [
+                    {
+                        "id": r.id,
+                        "number": r.number,
+                        "name": r.name,
+                        "type": r.type,
+                        "description": r.description,
+                        "plan": {"x": r.x, "y": r.y, "w": r.w, "h": r.h}
+                    }
+                    for r in f.rooms
+                ]
+            })
+        return result
+    finally:
+        db.close()
+
+@app.post("/api/admin/save-room")
+def save_room(payload: RoomPayload):
+    db = SessionLocal()
+    try:
+        if payload.id:
+            room = db.query(Room).filter(Room.id == payload.id).first()
+            if not room:
+                raise HTTPException(status_code=404, detail="Room not found")
+            room.number = payload.number
+            room.name = payload.name
+            room.type = payload.type
+            room.description = payload.description
+            room.x = payload.x
+            room.y = payload.y
+            room.w = payload.w
+            room.h = payload.h
+        else:
+            room = Room(
+                floor_id=payload.floor_id,
+                number=payload.number,
+                name=payload.name,
+                type=payload.type,
+                description=payload.description,
+                x=payload.x,
+                y=payload.y,
+                w=payload.w,
+                h=payload.h
+            )
+            db.add(room)
+        db.commit()
+        return {"status": "success", "message": "Room saved"}
+    finally:
+        db.close()
+
+@app.delete("/api/admin/room/{room_id}")
+def delete_room(room_id: int):
+    db = SessionLocal()
+    try:
+        room = db.query(Room).filter(Room.id == room_id).first()
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        db.delete(room)
+        db.commit()
+        return {"status": "success", "message": "Room deleted"}
+    finally:
+        db.close()
