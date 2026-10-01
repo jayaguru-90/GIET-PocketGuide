@@ -71,8 +71,50 @@ body.dark-mode .preview-bar {
     background: #0f172a;
 }
 
+body.dark-mode .btn-secondary {
+    background: rgba(30, 41, 59, 0.9);
+    color: #f1f5f9;
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+body.dark-mode .features {
+    background: #0f172a;
+}
+
+body.dark-mode .preview-link {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+body.dark-mode .preview-link:hover {
+    background: var(--primary-blue);
+    color: #ffffff;
+    border-color: var(--primary-blue);
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: rgba(51, 65, 85, 0.95);
+}
+
 body.dark-mode .section-heading h2 {
     color: #f1f5f9;
+}
+
+body.dark-mode .card-icon {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+body.dark-mode .hero {
+    background: 
+        linear-gradient(
+            180deg, 
+            rgba(11, 31, 68, 0.88) 0%, 
+            rgba(15, 23, 42, 0.82) 65%, 
+            rgba(15, 23, 42, 1) 100%
+        ),
+        url('/frontend/assets/images/Giet-campus-view.jpg') no-repeat center center;
+    background-size: cover;
 }
 
 /* FIXED DARK MODE TOGGLE (bottom-right, stays in place while scrolling) */
