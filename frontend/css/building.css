@@ -1,0 +1,840 @@
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    background: #f4f8ff;
+
+    color: #102044;
+
+    overflow-x: hidden;
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.building-header {
+
+    width: calc(100% - 80px);
+    max-width: 1500px;
+
+    margin: 25px auto;
+
+    padding: 16px 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: rgba(255, 255, 255, 0.94);
+
+    border: 1px solid #dce6f5;
+
+    border-radius: 28px;
+
+    box-shadow:
+        0 10px 35px rgba(40, 76, 130, 0.12);
+
+    position: relative;
+
+    z-index: 10;
+}
+
+
+/* BRAND */
+
+.brand {
+
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    min-width: 0;
+}
+
+.brand-icon {
+
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+
+    background: #f4f8ff;
+
+    border: 2px solid #2384ff;
+
+    border-radius: 18px;
+}
+
+.brand h2 {
+
+    font-size: 24px;
+
+    color: #101b35;
+
+    white-space: nowrap;
+}
+
+.brand h2 span {
+
+    color: #176de5;
+}
+
+.brand p {
+
+    margin-top: 3px;
+
+    font-size: 13px;
+
+    letter-spacing: 1px;
+
+    color: #6b7d96;
+}
+
+
+/* HOME BUTTON */
+
+.home-btn {
+
+    text-decoration: none;
+
+    color: #1764d8;
+
+    background: #edf4ff;
+
+    padding: 13px 22px;
+
+    border-radius: 14px;
+
+    font-weight: 700;
+
+    transition: 0.25s ease;
+
+    white-space: nowrap;
+}
+
+.home-btn:hover {
+
+    background: #246bea;
+
+    color: white;
+
+    transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.building-hero {
+
+    width: 100%;
+
+    max-width: 1100px;
+
+    margin: 80px auto 40px;
+
+    padding: 0 25px;
+
+    text-align: center;
+}
+
+
+/* BADGE */
+
+.badge {
+
+    display: inline-block;
+
+    padding: 12px 25px;
+
+    border-radius: 30px;
+
+    background: #e5efff;
+
+    color: #2563d8;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+    margin-bottom: 35px;
+}
+
+
+/* TITLE */
+
+.building-hero h1 {
+
+    font-size: clamp(48px, 7vw, 86px);
+
+    line-height: 1.05;
+
+    font-weight: 800;
+
+    color: #102044;
+}
+
+.building-hero h1 span {
+
+    display: block;
+
+    color: #12a8d8;
+}
+
+
+/* DESCRIPTION */
+
+.building-hero p {
+
+    max-width: 850px;
+
+    margin: 35px auto 0;
+
+    font-size: 20px;
+
+    line-height: 1.7;
+
+    color: #607593;
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+.search-section {
+
+    width: calc(100% - 40px);
+
+    max-width: 1200px;
+
+    margin: 50px auto;
+}
+
+.search-box {
+
+    width: 100%;
+
+    min-height: 75px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 0 28px;
+
+    background: white;
+
+    border: 1px solid #dce6f5;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 12px 35px rgba(31, 73, 125, 0.08);
+}
+
+.search-box span {
+
+    font-size: 25px;
+}
+
+.search-box input {
+
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    font-size: 18px;
+
+    color: #17294d;
+
+    background: transparent;
+}
+
+.search-box input::placeholder {
+
+    color: #91a4c0;
+}
+
+
+/* =====================================================
+   BUILDINGS SECTION
+===================================================== */
+
+.buildings-section {
+
+    width: calc(100% - 40px);
+
+    max-width: 1250px;
+
+    margin: 70px auto 100px;
+}
+
+.section-title {
+
+    margin-bottom: 35px;
+}
+
+.section-title h2 {
+
+    font-size: 38px;
+
+    color: #102044;
+}
+
+.section-title p {
+
+    margin-top: 10px;
+
+    font-size: 17px;
+
+    color: #6c7e98;
+}
+
+
+/* =====================================================
+   BUILDING GRID
+===================================================== */
+
+.building-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 25px;
+}
+
+
+/* =====================================================
+   BUILDING CARD
+===================================================== */
+
+.building-card {
+
+    min-width: 0;
+
+    padding: 28px;
+
+    display: flex;
+
+    gap: 22px;
+
+    background: white;
+
+    border: 1px solid #dce6f5;
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 10px 30px rgba(39, 74, 126, 0.08);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.building-card:hover {
+
+    transform: translateY(-6px);
+
+    box-shadow:
+        0 18px 45px rgba(37, 99, 235, 0.16);
+}
+
+
+/* BUILDING ICON */
+
+.building-icon {
+
+    flex-shrink: 0;
+
+    width: 70px;
+    height: 70px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 32px;
+
+    background: #edf5ff;
+
+    border-radius: 18px;
+}
+
+
+/* BUILDING INFO */
+
+.building-info {
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+.building-type {
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    color: #168bd1;
+
+    letter-spacing: 1px;
+}
+
+.building-info h3 {
+
+    margin-top: 7px;
+
+    font-size: 25px;
+
+    color: #15284c;
+}
+
+.building-info p {
+
+    margin-top: 8px;
+
+    color: #6d7e97;
+
+    line-height: 1.5;
+}
+
+
+/* DETAILS */
+
+.building-details {
+
+    margin-top: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    flex-wrap: wrap;
+}
+
+.building-details span {
+
+    color: #526985;
+
+    font-size: 14px;
+
+    font-weight: 600;
+}
+
+
+/* LAYOUT BUTTON */
+
+.layout-btn {
+
+    border: none;
+
+    background: #2563eb;
+
+    color: white;
+
+    padding: 10px 16px;
+
+    border-radius: 10px;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.layout-btn:hover {
+
+    background: #1554c5;
+
+    transform: translateX(3px);
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+.layout-modal {
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(9, 25, 52, 0.65);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    z-index: 1000;
+}
+
+.layout-modal.active {
+
+    display: flex;
+}
+
+.modal-content {
+
+    width: min(950px, 100%);
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: white;
+
+    border-radius: 25px;
+
+    padding: 35px;
+
+    position: relative;
+
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.25);
+}
+
+.modal-content h2 {
+
+    font-size: 32px;
+
+    color: #102044;
+}
+
+.modal-content > p {
+
+    margin-top: 8px;
+
+    color: #6c7e98;
+}
+
+
+/* CLOSE */
+
+.close-btn {
+
+    position: absolute;
+
+    right: 20px;
+    top: 18px;
+
+    width: 40px;
+    height: 40px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #edf3fb;
+
+    font-size: 25px;
+
+    cursor: pointer;
+}
+
+
+/* =====================================================
+   FLOOR BUTTONS
+===================================================== */
+
+.floor-buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin: 25px 0;
+}
+
+.floor-buttons button {
+
+    border: 1px solid #d4e1f2;
+
+    background: #f4f8ff;
+
+    color: #1b4f99;
+
+    padding: 11px 18px;
+
+    border-radius: 10px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.floor-buttons button:hover {
+
+    background: #2563eb;
+
+    color: white;
+}
+
+
+/* =====================================================
+   SIMPLE BUILDING FLOOR LAYOUT
+===================================================== */
+
+.layout-placeholder {
+
+    width: 100%;
+
+    min-height: 400px;
+
+    padding: 30px;
+
+    background: #f3f6fa;
+
+    border-radius: 18px;
+
+    overflow: auto;
+}
+
+.layout-building {
+
+    min-width: 650px;
+
+    min-height: 330px;
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr 1fr;
+
+    grid-template-rows: 1fr 70px 1fr;
+
+    gap: 10px;
+
+    padding: 20px;
+
+    background: #e8edf4;
+
+    border: 5px solid #526985;
+
+    border-radius: 10px;
+}
+
+.room {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #dcecff;
+
+    border: 2px solid #4381d7;
+
+    border-radius: 8px;
+
+    font-weight: 700;
+
+    color: #244c82;
+}
+
+.room1 {
+    grid-column: 1;
+}
+
+.room2 {
+    grid-column: 3;
+}
+
+.corridor {
+
+    grid-column: 1 / 4;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #fff;
+
+    border: 2px dashed #7c8da6;
+
+    font-weight: 800;
+
+    color: #687a93;
+}
+
+.room3 {
+
+    grid-column: 1;
+}
+
+.room4 {
+
+    grid-column: 3;
+}
+
+.stairs {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background: #ffe7b3;
+
+    border: 2px solid #d39b36;
+
+    border-radius: 8px;
+
+    font-weight: 700;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .building-header {
+
+        width: calc(100% - 30px);
+
+        padding: 14px 18px;
+
+        border-radius: 20px;
+    }
+
+    .brand h2 {
+
+        font-size: 19px;
+    }
+
+    .brand p {
+
+        font-size: 10px;
+    }
+
+    .brand-icon {
+
+        width: 48px;
+        height: 48px;
+
+        font-size: 25px;
+    }
+
+    .building-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .building-hero {
+
+        margin-top: 55px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .building-header {
+
+        flex-direction: column;
+
+        gap: 15px;
+
+        align-items: stretch;
+
+        text-align: center;
+    }
+
+    .brand {
+
+        justify-content: center;
+    }
+
+    .home-btn {
+
+        text-align: center;
+    }
+
+    .building-hero h1 {
+
+        font-size: 48px;
+    }
+
+    .building-hero p {
+
+        font-size: 16px;
+    }
+
+    .building-card {
+
+        flex-direction: column;
+    }
+
+    .building-icon {
+
+        width: 60px;
+        height: 60px;
+    }
+
+    .section-title h2 {
+
+        font-size: 30px;
+    }
+
+    .modal-content {
+
+        padding: 25px 18px;
+    }
+}

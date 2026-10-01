@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GIETU Campus Buildings</title>
+
+    <link rel="stylesheet" href="/frontend/css/building.css">
+</head>
+
+<body>
+
+    <!-- ================= TOP BAR ================= -->
+    <header class="building-header">
+
+        <div class="brand">
+            <div class="brand-icon">🏫</div>
+
+            <div>
+                <h2>GIETU <span>Campus Guide</span></h2>
+                <p>● NAVIGATION PORTAL</p>
+            </div>
+        </div>
+
+        <a href="index.html" class="home-btn">
+            ← Go to Home
+        </a>
+
+    </header>
+
+
+    <!-- ================= HERO SECTION ================= -->
+
+    <section class="building-hero">
+
+        <div class="badge">
+            📍 GIET Campus Directory
+        </div>
+
+        <h1>
+            Explore Campus
+            <span>Buildings</span>
+        </h1>
+
+        <p>
+            Explore departments, classrooms, laboratories, offices,
+            facilities and floor layouts across GIET University.
+        </p>
+
+    </section>
+
+
+    <!-- ================= SEARCH ================= -->
+
+    <section class="search-section">
+
+        <div class="search-box">
+
+            <span>🔎</span>
+
+            <input
+                type="text"
+                id="buildingSearch"
+                placeholder="Search buildings, departments or facilities..."
+            >
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= BUILDINGS ================= -->
+
+    <main class="buildings-section">
+
+        <div class="section-title">
+
+            <h2>Campus Buildings</h2>
+
+            <p>
+                Select a building to explore its floor-wise layout.
+            </p>
+
+        </div>
+
+
+        <div class="building-grid" id="buildingGrid">
+
+
+            <!-- CSA BUILDING -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    🏢
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        ACADEMIC BLOCK
+                    </span>
+
+                    <h3>CSA Building</h3>
+
+                    <p>
+                        Computer Science and Applications
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 4 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('CSA Building')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CSE BUILDING -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    💻
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        ENGINEERING BLOCK
+                    </span>
+
+                    <h3>CSE Building</h3>
+
+                    <p>
+                        Computer Science & Engineering
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 3 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('CSE Building')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ECE BUILDING -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    📡
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        ENGINEERING BLOCK
+                    </span>
+
+                    <h3>ECE Block</h3>
+
+                    <p>
+                        Electronics & Communication
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 3 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('ECE Block')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- MANAGEMENT -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    🏛️
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        ACADEMIC BLOCK
+                    </span>
+
+                    <h3>Management Block</h3>
+
+                    <p>
+                        Department of Management
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 3 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('Management Block')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LIBRARY -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    📚
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        FACILITY
+                    </span>
+
+                    <h3>Central Library</h3>
+
+                    <p>
+                        Central University Library
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 3 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('Central Library')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ADMIN -->
+
+            <div class="building-card">
+
+                <div class="building-icon">
+                    🏛️
+                </div>
+
+                <div class="building-info">
+
+                    <span class="building-type">
+                        ADMINISTRATION
+                    </span>
+
+                    <h3>Administration Block</h3>
+
+                    <p>
+                        University Administrative Offices
+                    </p>
+
+                    <div class="building-details">
+
+                        <span>🏢 2 Floors</span>
+
+                        <button
+                            class="layout-btn"
+                            onclick="openLayout('Administration Block')"
+                        >
+                            View Layout →
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </main>
+
+
+    <!-- ================= LAYOUT MODAL ================= -->
+
+    <div class="layout-modal" id="layoutModal">
+
+        <div class="modal-content">
+
+            <button
+                class="close-btn"
+                onclick="closeLayout()"
+            >
+                ×
+            </button>
+
+            <h2 id="modalTitle">
+                Building Layout
+            </h2>
+
+            <p id="modalDescription">
+                Select a floor to explore the building.
+            </p>
+
+
+            <div class="floor-buttons">
+
+                <button onclick="selectFloor(1)">
+                    Ground Floor
+                </button>
+
+                <button onclick="selectFloor(2)">
+                    First Floor
+                </button>
+
+                <button onclick="selectFloor(3)">
+                    Second Floor
+                </button>
+
+                <button onclick="selectFloor(4)">
+                    Third Floor
+                </button>
+
+            </div>
+
+
+            <div class="layout-placeholder">
+
+                <div class="layout-building">
+
+                    <div class="room room1">
+                        Room 101
+                    </div>
+
+                    <div class="room room2">
+                        Lab
+                    </div>
+
+                    <div class="corridor">
+                        CORRIDOR
+                    </div>
+
+                    <div class="room room3">
+                        Classroom
+                    </div>
+
+                    <div class="room room4">
+                        Office
+                    </div>
+
+                    <div class="stairs">
+                        STAIRS
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="/frontend/js/building.js"></script>
+
+</body>
+</html>
