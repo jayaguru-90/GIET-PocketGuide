@@ -117,6 +117,10 @@ body.dark-mode .hero {
     background-size: cover;
 }
 
+body.dark-mode .blob {
+    opacity: 0.18;
+}
+
 /* FIXED DARK MODE TOGGLE (bottom-right, stays in place while scrolling) */
 .theme-toggle {
     position: fixed;
@@ -781,6 +785,51 @@ body {
     font-size: 0.95rem;
     color: var(--text-muted);
     line-height: 1.55;
+}
+
+/* ===== DECORATIVE BACKGROUND BLOBS ===== */
+.features,
+.about-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.35;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.blob-1 {
+    width: 380px;
+    height: 380px;
+    background: var(--accent-blue);
+    top: -120px;
+    left: -100px;
+}
+
+.blob-2 {
+    width: 320px;
+    height: 320px;
+    background: var(--accent-purple);
+    bottom: -100px;
+    right: -80px;
+}
+
+.blob-3 {
+    width: 420px;
+    height: 420px;
+    background: var(--accent-cyan);
+    top: -100px;
+    right: -60px;
+}
+
+.section-container {
+    position: relative;
+    z-index: 1;
 }
 
 /* CONTRIBUTORS */
