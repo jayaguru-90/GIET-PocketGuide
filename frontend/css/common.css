@@ -1,0 +1,315 @@
+/* ==========================================================================
+   GIET CAMPUS GUIDE - UNIFIED APPLICATION BASE (common.css)
+   Shared foundation for navigation.html, building.html, and admin.html
+   ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --primary-blue: #1d4ed8;
+    --primary-hover: #1e40af;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-red: #ef4444;
+    --soft-blue-bg: #eff6ff;
+    
+    --bg-page: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-glass: rgba(255, 255, 255, 0.94);
+    --border-color: #e2e8f0;
+    --border-card: #cbd5e1;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 10px 25px -5px rgba(29, 78, 216, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+body.dark-mode {
+    --bg-page: #0f172a;
+    --bg-surface: #1e293b;
+    --bg-surface-glass: rgba(15, 23, 42, 0.95);
+    --border-color: #334155;
+    --border-card: #475569;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --soft-blue-bg: #1e3a5f;
+}
+
+html, body {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ================= SHARED TOP APP HEADER ================= */
+.app-header {
+    height: 56px;
+    background: var(--bg-surface-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1000;
+    flex-shrink: 0;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.brand-unit {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    user-select: none;
+}
+
+.brand-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    overflow: hidden;
+}
+
+.brand-icon-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.brand-title-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title-main {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.brand-title-sub {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pulse-dot-sm {
+    width: 6px;
+    height: 6px;
+    background: var(--accent-green);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent-green);
+    display: inline-block;
+}
+
+.header-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Common Header Action Buttons */
+.btn-nav-link {
+    color: var(--primary-blue);
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--soft-blue-bg);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-nav-link:hover {
+    background: var(--primary-blue);
+    color: #ffffff;
+    border-color: var(--primary-blue);
+}
+
+body.dark-mode .btn-nav-link {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+body.dark-mode .btn-nav-link:hover {
+    background: var(--primary-blue);
+    color: #ffffff;
+}
+
+.btn-theme-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--primary-blue);
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .btn-theme-circle {
+    background: #1e293b;
+    border-color: #334155;
+    color: #fbbf24;
+}
+
+/* ================= SHARED INPUTS & CONTROLS ================= */
+.common-select,
+.common-search-input {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 14px 8px 36px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.common-select:focus,
+.common-search-input:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Common Button Classes */
+.btn-solid-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border: none;
+    padding: 9px 15px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    transition: all 0.15s ease;
+}
+
+.btn-solid-primary:hover {
+    background: #1e40af;
+}
+
+.btn-solid-primary:active {
+    transform: scale(0.97);
+}
+
+.btn-solid-secondary {
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1.5px solid var(--border-color);
+    padding: 9px 15px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Fullscreen Loader */
+.loading-screen,
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0b1120;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: all;
+}
+
+.loading-screen.hidden,
+.loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 42px;
+    height: 42px;
+    border: 3.5px solid #1e293b;
+    border-top: 3.5px solid #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Unified Scrollbars */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-card);
+    border-radius: 999px;
+}

@@ -58,21 +58,16 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "GIET Temple",
+        "category": "Sports Ground"
+      },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          83.8307759,
-          19.0486052,
-          0
+          83.830776,
+          19.048605
         ]
-      },
-      "properties": {
-        "name": "GIET Temple",
-        "styleUrl": "#icon-1706-FFEA00-labelson-nodesc",
-        "icon-opacity": 1,
-        "icon-color": "#ffea00",
-        "icon-scale": 1,
-        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
       }
     },
     {
@@ -550,56 +545,30 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Swimming pool",
+        "category": "Sports Ground"
+      },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          83.8333334,
-          19.0497383,
-          0
+          83.833333,
+          19.049738
         ]
-      },
-      "properties": {
-        "name": "Swimming pool",
-        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
-        "icon-opacity": 1,
-        "icon-color": "#0288d1",
-        "icon-scale": 1,
-        "icon-offset": [
-          32,
-          64
-        ],
-        "icon-offset-units": [
-          "pixels",
-          "insetPixels"
-        ],
-        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
       }
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Badminton court",
+        "category": "Sports Ground"
+      },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          83.8335484,
-          19.0494991,
-          0
+          83.833548,
+          19.049499
         ]
-      },
-      "properties": {
-        "name": "Badminton court",
-        "styleUrl": "#icon-1899-0288D1-labelson-nodesc",
-        "icon-opacity": 1,
-        "icon-color": "#0288d1",
-        "icon-scale": 1,
-        "icon-offset": [
-          32,
-          64
-        ],
-        "icon-offset-units": [
-          "pixels",
-          "insetPixels"
-        ],
-        "icon": "https://www.gstatic.com/mapspro/images/stock/503-wht-blank_maps.png"
       }
     },
     {

@@ -1,7 +1,17 @@
+// Immediate theme application to prevent light/dark flash before DOM render
+(function() {
+    const savedTheme = localStorage.getItem('giet-theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
-    // 1. INJECT SYSTEM KEYFRAMES & SPOTLIGHT STYLES
+    // ================= 1. INJECT SPOTLIGHT STYLES & REVEAL KEYFRAMES =================
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
         /* Fluid Entrance Revealer */
@@ -39,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(styleSheet);
 
-    // 2. HAMBURGER MENU TOGGLE
+    // ================= 2. HAMBURGER MENU TOGGLE =================
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const navbar = document.getElementById('navbar');
 
@@ -68,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. SCROLL REVEAL OBSERVER
+    // ================= 3. SCROLL REVEAL OBSERVER =================
     const elementsToReveal = document.querySelectorAll(
         '.badge-wrapper, .hero h1, .hero-subtitle, .hero-buttons, .quick-chips-wrapper, .hero-preview-card, .section-heading, .card, .team-card'
     );
@@ -89,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elementsToReveal.forEach(el => revealObserver.observe(el));
 
-    // 4. 60FPS 3D TILT ON INTERACTIVE CARDS (DESKTOP ONLY)
+    // ================= 4. 60FPS 3D TILT (DESKTOP ONLY) =================
     if (!isTouchDevice) {
         const tiltCards = document.querySelectorAll('.card, .team-card, .hero-preview-card');
 
@@ -163,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 5. FLOATING PILL NAVBAR SCROLL DYNAMICS
+    // ================= 5. FLOATING PILL NAVBAR SCROLL DYNAMICS =================
     const header = document.querySelector('.header');
     if (header) {
         let ticking = false;
@@ -181,19 +191,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, { passive: true });
     }
-});
 
-// ===== DARK MODE TOGGLE =====
-const themeToggle = document.getElementById('theme-toggle');
-const bodyEl = document.body;
+    // ================= 6. SYNCHRONIZED DARK MODE TOGGLE =================
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('giet-theme', isDark ? 'dark' : 'light');
+        });
+    }
 
-// Apply saved preference on page load
-if (localStorage.getItem('giet-theme') === 'dark') {
-    bodyEl.classList.add('dark-mode');
-}
-
-themeToggle.addEventListener('click', () => {
-    bodyEl.classList.toggle('dark-mode');
-    const isDark = bodyEl.classList.contains('dark-mode');
-    localStorage.setItem('giet-theme', isDark ? 'dark' : 'light');
+    // Listen for theme changes across open tabs/windows
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'giet-theme') {
+            document.body.classList.toggle('dark-mode', e.newValue === 'dark');
+        }
+    });
 });

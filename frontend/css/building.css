@@ -1,423 +1,318 @@
-:root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --secondary: #7c3aed;
-    --cyan: #06b6d4;
+/* ==========================================================================
+   GIET CAMPUS GUIDE - INDOOR STRUCTURE & BLUEPRINT CANVAS (building.css)
+   Scoped specifically for building.html floor navigation
+   Requires: common.css
+   ========================================================================== */
 
-    --background: #07152f;
-    --background-2: #0c2347;
-
-    --white: #ffffff;
-    --text: #172033;
-    --muted: #64748b;
-
-    --border: #dbe4ef;
-    --light-bg: #f7faff;
-
-    --board-navy: #1a1542;
-    --room-purple: #2c245c;
-    --room-hover: #3d337d;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    min-height: 100vh;
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
-    color: white;
-    background: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.35), transparent 32%),
-                radial-gradient(circle at 85% 20%, rgba(124, 58, 237, 0.28), transparent 30%),
-                linear-gradient(135deg, #07152f, #0c2347, #07152f);
-    overflow-x: hidden;
-}
-
-.home-button {
-    position: fixed;
-    top: 28px;
-    left: 30px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 12px 20px;
-    border-radius: 30px;
-    text-decoration: none;
-    color: #172033;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
-    backdrop-filter: blur(15px);
-    font-size: 15px;
-    font-weight: 750;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.home-button:hover {
-    color: var(--primary);
-    transform: translateY(-3px);
-    box-shadow: 0 15px 35px rgba(37, 99, 235, 0.30);
-}
-
-.main-container {
-    width: min(1250px, calc(100% - 50px));
-    margin: auto;
-    padding: 110px 0 70px;
-}
-
-.page-heading {
-    text-align: center;
-    max-width: 850px;
-    margin: 20px auto 45px;
-}
-
-.page-heading h1 {
-    font-size: clamp(42px, 6vw, 68px);
-    line-height: 1.05;
-    font-weight: 850;
-}
-
-.search-section {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 55px;
-}
-
-.search-box {
-    width: min(700px, 100%);
-    height: 64px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 0 20px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
-}
-
-.search-box input {
+.layout-stage {
     flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    color: #172033;
-    font-size: 16px;
-}
-
-.clear-button {
-    width: 35px;
-    height: 35px;
-    border: none;
-    border-radius: 50%;
-    background: #eef2ff;
-    color: #64748b;
-    cursor: pointer;
-}
-
-.section-header {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 22px;
+    flex-direction: column;
+    padding: 14px 18px;
+    gap: 12px;
+    overflow-y: auto;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
 }
 
-.building-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-}
-
-.building-card {
-    padding: 24px;
-    border-radius: 24px;
-    background: rgba(255, 255, 255, 0.96);
-    color: var(--text);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.building-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.27);
-}
-
-.card-top {
+/* Controls Header */
+.selector-bar {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.building-icon {
-    width: 58px;
-    height: 58px;
-    border-radius: 17px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 27px;
-    background: linear-gradient(135deg, #dbeafe, #ede9fe);
-}
-
-.arrow-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    background: #eff6ff;
-}
-
-.building-details {
-    margin-top: 55px;
-    padding: 30px;
-    border-radius: 30px;
-    background: rgba(247, 250, 255, 0.98);
-    color: var(--text);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
-    animation: slideUp 0.4s ease;
-}
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.details-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    padding-bottom: 25px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.details-title {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-
-.large-building-icon {
-    width: 72px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 20px;
-    font-size: 34px;
-    background: linear-gradient(135deg, #dbeafe, #ede9fe);
-}
-
-.close-button {
-    padding: 11px 18px;
-    border: none;
-    border-radius: 25px;
-    background: #eff6ff;
-    color: var(--primary);
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.floor-section {
-    padding: 30px 0;
-}
-
-.floor-tabs {
-    display: flex;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    width: 100%;
 }
 
-.floor-tab {
-    padding: 12px 20px;
-    border: 1px solid #dbeafe;
-    border-radius: 13px;
-    background: white;
-    color: #64748b;
+.control-item {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+}
+
+.control-item i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+/* Floor Level Switcher */
+.floor-switch-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+.floor-switch-strip::-webkit-scrollbar { display: none; }
+
+.floor-pill-btn {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    font-size: 12.5px;
     font-weight: 700;
     cursor: pointer;
-    transition: 0.25s;
+    white-space: nowrap;
+    transition: all 0.2s ease;
 }
 
-.floor-tab.active {
-    color: white;
-    border-color: transparent;
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
+.floor-pill-btn:hover {
+    color: var(--primary-blue);
+    border-color: var(--accent-blue);
 }
 
-.layout-container {
-    border: 1px solid #dbe4ef;
-    border-radius: 20px;
-    overflow: hidden;
-    background: #f8fafc;
+.floor-pill-btn.active {
+    background: var(--primary-blue);
+    color: #ffffff;
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
-.layout-header {
-    padding: 15px 20px;
+/* Blueprint Main Frame */
+.blueprint-card-frame {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 480px;
+    box-shadow: var(--shadow-card);
+}
+
+.frame-top-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    color: #334155;
-    font-size: 13px;
-    font-weight: 800;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-.floor-layout {
+.floor-title-display {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+}
+
+.legend-group {
+    display: flex;
+    gap: 12px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    flex-wrap: wrap;
+}
+
+.legend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.dot-class { background: #10b981; }
+.dot-lab { background: #3b82f6; }
+.dot-office { background: #f59e0b; }
+.dot-utility { background: #8b5cf6; }
+
+/* The Actual Interactive Blueprint Canvas Box */
+.blueprint-canvas-scroll {
     position: relative;
     width: 100%;
-    min-height: 520px;
-    padding: 25px;
-    overflow-x: auto;
-    background-color: #f1f5f9;
+    flex: 1;
+    min-height: 400px;
+    background: var(--bg-page);
+    border-radius: var(--radius-md);
+    border: 1.5px dashed var(--border-card);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
 }
 
-/* --- Realistic Physical Board Style --- */
-.floor-plan {
+.blueprint-grid-board {
     position: relative;
-    width: 880px;
-    height: 440px;
-    margin: 0 auto;
-    background: #ffffff;
-    border: 6px solid var(--board-navy);
+    width: 900px;
+    height: 480px;
+    background: var(--bg-surface);
     border-radius: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    border: 2px solid var(--border-card);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
-.csa-board-theme {
-    border-color: #1a1542 !important;
-}
-
-.csa-board-theme .room {
-    background: var(--room-purple) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+/* Individual Room Elements Formatted via (x, y, w, h) */
+.blueprint-room-box {
+    position: absolute;
     border-radius: 8px;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
-}
-
-.csa-board-theme .room:hover {
-    background: var(--room-hover) !important;
-    transform: translateY(-2px);
-}
-
-.csa-board-theme .room.selected {
-    outline: 3px solid #38bdf8;
-}
-
-.csa-board-theme .room-number {
-    color: #ffffff !important;
-    font-size: 11px;
-    font-weight: 800;
-    white-space: pre-line;
-}
-
-.csa-board-theme .room-name {
-    display: none; /* Keeps the face clean exactly as the sign board */
-}
-
-.csa-board-theme .room-type {
-    display: none;
-}
-
-.plan-label {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    padding: 4px 14px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #1a1542;
-    text-transform: uppercase;
-}
-
-.room {
-    position: absolute;
+    padding: 6px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 6px;
-    border-radius: 8px;
     cursor: pointer;
-    transition: 0.15s ease;
-    box-sizing: border-box;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    user-select: none;
 }
 
-.floor-corridor {
-    position: absolute;
+.blueprint-room-box:hover {
+    transform: scale(1.02);
+    z-index: 10;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.blueprint-room-box.classroom,
+.blueprint-room-box.class {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: #10b981;
+    color: #065f46;
+}
+
+.blueprint-room-box.laboratory,
+.blueprint-room-box.lab {
+    background: rgba(37, 99, 235, 0.14);
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.blueprint-room-box.office {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.blueprint-room-box.washroom,
+.blueprint-room-box.utility {
+    background: rgba(139, 92, 246, 0.14);
+    border-color: #8b5cf6;
+    color: #5b21b6;
+}
+
+.blueprint-room-box.auditorium {
+    background: rgba(239, 68, 68, 0.14);
+    border-color: #ef4444;
+    color: #991b1b;
+}
+
+/* Walk Corridors, Stairs & Lifts */
+.blueprint-room-box.corridor {
+    background: rgba(148, 163, 184, 0.12);
+    border: 1.5px dashed #64748b;
+    color: #94a3b8;
+    z-index: 1;
+}
+
+.blueprint-room-box.stairs {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1.5px solid #f59e0b;
+    color: #d97706;
+}
+
+.blueprint-room-box.lift {
+    background: rgba(234, 88, 12, 0.2);
+    border: 1.5px solid #ea580c;
+    color: #c2410c;
+}
+
+body.dark-mode .blueprint-room-box.classroom { color: #a7f3d0; }
+body.dark-mode .blueprint-room-box.laboratory { color: #93c5fd; }
+body.dark-mode .blueprint-room-box.office { color: #fde68a; }
+body.dark-mode .blueprint-room-box.washroom { color: #ddd6fe; }
+body.dark-mode .blueprint-room-box.auditorium { color: #fca5a5; }
+body.dark-mode .blueprint-room-box.stairs { color: #fde68a; }
+body.dark-mode .blueprint-room-box.lift   { color: #fed7aa; }
+body.dark-mode .blueprint-room-box.corridor { color: #cbd5e1; }
+
+/* Target Room Search Highlight Glow */
+.blueprint-room-box.active-pulse {
+    border: 2.5px solid #10b981 !important;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.6) !important;
+    animation: targetPulse 1.2s infinite alternate;
+}
+
+@keyframes targetPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.04); }
+}
+
+/* Room Information Inspector Card */
+.room-inspector-modal {
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    box-shadow: var(--shadow-card);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    animation: slideUpInfo 0.22s ease-out;
+}
+
+@keyframes slideUpInfo {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.room-type-pill {
+    font-size: 10px;
     font-weight: 800;
-    z-index: 2;
+    color: var(--primary-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.csa-board-theme .floor-corridor.horizontal {
-    background: #251e50;
-    color: #ffffff;
+.inspector-header h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-top: 2px;
+}
+
+.btn-close-inspector {
+    background: var(--soft-blue-bg);
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--text-muted);
     font-size: 13px;
-    letter-spacing: 1.5px;
-    border-radius: 4px;
-}
-
-.csa-board-theme .floor-corridor.vertical {
-    background: #251e50;
-    color: #ffffff;
-    font-size: 10px;
-    border-radius: 4px;
-}
-
-.staircase {
-    position: absolute;
-    z-index: 5;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f8fafc;
-    border: 2px dashed #94a3b8;
-    color: #475569;
-    font-weight: 700;
-    font-size: 10px;
-    border-radius: 4px;
 }
 
-.room-information {
-    margin-top: 20px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    border: 1px solid #bfdbfe;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #eff6ff, #eef2ff);
+.inspector-body p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
 }
 
-.hidden {
-    display: none !important;
-}
-
-@media (max-width: 1000px) {
-    .building-list { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 700px) {
-    .building-list { grid-template-columns: 1fr; }
-    .floor-plan { transform: scale(0.85); transform-origin: top left; }
+@media (max-width: 640px) {
+    .layout-stage { padding: 10px 12px; }
+    .blueprint-card-frame { padding: 12px; min-height: 420px; }
 }

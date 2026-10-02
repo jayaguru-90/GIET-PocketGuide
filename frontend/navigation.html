@@ -8,32 +8,30 @@
     <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Unified CSS Architecture -->
+    <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/navigation.css" />
-    <!-- Non-blocking FontAwesome for instant mobile first-paint -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" />
 </head>
 <body class="nav-body">
 
-    <!-- FLOATING TOP BAR -->
-    <header class="header nav-header">
-        <a href="index.html" class="logo-section nav-brand">
-            <img src="assets/images/LOGO.png" alt="GIET Logo" class="logo brand-logo" />
-            <div class="brand-text">
-                <span class="brand-main">GIET Guide</span>
-                <span class="brand-status"><span class="status-dot"></span> Live GPS</span>
+    <!-- TOP HEADER NAVBAR -->
+    <header class="app-header nav-header">
+        <a href="index.html" class="brand-unit nav-brand">
+            <div class="brand-icon-box">
+                <img src="assets/images/LOGO.png" alt="GIET Logo" />
+            </div>
+            <div class="brand-title-wrap">
+                <span class="brand-title-main">GIET Guide</span>
+                <span class="brand-title-sub"><span class="pulse-dot-sm"></span> Live GPS</span>
             </div>
         </a>
 
-        <!-- AMENITY CHIPS, CAMPUS TOUR, THEME & HOME -->
-        <div class="header-controls">
-            <!-- Theme Toggle Button (Light/Dark) -->
-            <button type="button" id="theme-toggle-btn" class="btn-theme-toggle" title="Toggle Light/Dark Theme" aria-label="Toggle Theme">
-                <i class="fa-solid fa-moon"></i>
-            </button>
-
-            <!-- Campus Tour Launch Button -->
+        <!-- SCROLLABLE UTILITIES & TOUR -->
+        <div class="header-nav-group">
             <button type="button" id="start-tour-btn" class="btn-tour-launch" title="Freshers' Tour">
                 🎓 Tour
             </button>
@@ -42,15 +40,30 @@
                 <button type="button" class="util-chip" data-type="water" title="Drinking Water">🚰 Water</button>
                 <button type="button" class="util-chip" data-type="washroom" title="Restrooms">🚻 Restrooms</button>
                 <button type="button" class="util-chip" data-type="medical" title="First Aid / Medical">🏥 Medical</button>
-                <button type="button" class="util-chip" data-type="security" title="Security / Gate">🛡️ Security</button>
+                <button type="button" data-type="security" class="util-chip" title="Security / Gate">🛡️ Security</button>
             </div>
-            <a href="index.html" class="btn-back navbar"><i class="fa-solid fa-arrow-left"></i> Home</a>
+        </div>
+
+        <!-- QUICK PAGE ACTIONS (INCLUDES DIRECT ADMIN STUDIO LINK) -->
+        <div class="header-actions-group">
+            <button type="button" id="theme-toggle-btn" class="btn-theme-circle" title="Toggle Theme" aria-label="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <a href="building.html" class="btn-nav-link" title="Building Blueprint">
+                <i class="fa-solid fa-building"></i> <span class="nav-link-text">Floors</span>
+            </a>
+            <a href="admin.html" class="btn-nav-link" title="Admin Studio" style="background: rgba(37, 99, 235, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+                <i class="fa-solid fa-gear"></i> <span class="nav-link-text">Admin</span>
+            </a>
+            <a href="index.html" class="btn-nav-link" title="Home">
+                <i class="fa-solid fa-house"></i> <span class="nav-link-text">Home</span>
+            </a>
         </div>
     </header>
 
     <!-- LIVE TURN-BY-TURN FLOATING HUD -->
     <div id="turn-by-turn-hud" class="turn-hud hidden">
-        <div class="turn-icon" id="turn-icon">⬆️</div>
+        <div class="turn-icon" id="turn-icon">⬆</div>
         <div class="turn-details">
             <div class="turn-instruction" id="turn-instruction">Follow designated walkway</div>
             <div class="turn-distance" id="turn-distance">in 25 meters</div>
@@ -92,7 +105,7 @@
         <i class="fa-solid fa-crosshairs"></i>
     </button>
 
-    <!-- MOBILE-OPTIMIZED DRAWER / BOTTOM SHEET -->
+    <!-- MOBILE-OPTIMIZED DRAWER / DESKTOP SIDE PANEL -->
     <section class="nav-panel" id="nav-panel">
         <div class="panel-handle-area" id="panel-handle-area">
             <button class="panel-toggle-btn" id="toggle-panel-btn" aria-label="Expand or collapse navigation drawer">
@@ -101,7 +114,7 @@
         </div>
 
         <div class="panel-body">
-            <!-- Search Bar with Floating Autocomplete Overlay -->
+            <!-- Search Bar with Autocomplete Overlay -->
             <div class="search-section search-container">
                 <div class="search-input-wrapper">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -148,21 +161,21 @@
 
             <!-- Primary Action Grid -->
             <div class="btn-grid action-buttons">
-                <button type="button" id="find-route-btn" class="btn btn-primary">
+                <button type="button" id="find-route-btn" class="btn-action btn-primary-action">
                     <i class="fa-solid fa-route"></i> <span>Find Routes</span>
                 </button>
-                <button type="button" id="clear-route-btn" class="btn btn-secondary">
+                <button type="button" id="clear-route-btn" class="btn-action btn-secondary-action">
                     <span>Clear</span>
                 </button>
             </div>
 
             <!-- Simulation Controls with Fast-Forward Toggle -->
             <div class="btn-grid live-grid action-buttons">
-                <button type="button" id="start-nav-btn" class="btn btn-gps">
+                <button type="button" id="start-nav-btn" class="btn-action btn-gps">
                     <i class="fa-solid fa-location-arrow"></i> <span>Live GPS</span>
                 </button>
                 <div class="sim-controls-group">
-                    <button type="button" id="simulate-btn" class="btn btn-sim">
+                    <button type="button" id="simulate-btn" class="btn-action btn-sim">
                         <i class="fa-solid fa-play"></i> <span>Simulate</span>
                     </button>
                     <button type="button" id="speed-toggle-btn" class="btn-speed-toggle" title="Cycle Walk Speed (1x, 2x, 4x)">
@@ -211,8 +224,8 @@
     <div id="loading-screen" class="loading-overlay loading-screen">
         <div class="loading-content loader-content">
             <div class="spinner"></div>
-            <h3>Loading GIET Campus Guide...</h3>
-            <p>Syncing walkable campus pathways</p>
+            <h3 style="color: #fff; margin-top: 10px;">Loading GIET Campus Guide...</h3>
+            <p style="color: #94a3b8; font-size: 13px;">Syncing walkable campus pathways</p>
         </div>
     </div>
 

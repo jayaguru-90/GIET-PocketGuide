@@ -8,31 +8,59 @@
     <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Unified CSS Architecture -->
+    <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/admin.css" />
 </head>
 <body class="admin-body">
 
-    <!-- TOP HEADER -->
-    <header class="header">
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-            <a href="index.html" class="logo-section">
-                <img src="assets/images/LOGO.png" class="logo" alt="GIET Logo" />
-                <div>
-                    <div class="brand-title">GIETU <span style="color: #60a5fa;">Map Studio</span></div>
-                    <div class="brand-sub"><span class="pulse-dot"></span> Spatial Registry & Amenity Placement</div>
-                </div>
-            </a>
-            <div style="display: flex; gap: 10px;">
-                <a href="navigation.html" class="btn-secondary" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-map-location-dot"></i> Test Navigation
-                </a>
-                <button id="auth-action-btn" class="btn-secondary" type="button">
-                    <span id="auth-btn-text">Admin Login</span>
-                </button>
+    <!-- DESKTOP REQUIRED OVERLAY FOR MOBILE DEVICES -->
+    <div id="mobile-blocker-overlay" class="mobile-blocker-screen">
+        <div class="mobile-blocker-card">
+            <div class="mobile-icon-box">
+                <i class="fa-solid fa-desktop"></i>
             </div>
+            <h2>Desktop Only Studio</h2>
+            <p>
+                The GIETU Map & Floor Studio requires high-precision coordinate plotting, vector underlays, and multi-pane spatial canvases.
+            </p>
+            <div class="mobile-tip-pill">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>Please open this portal on a laptop or desktop monitor.</span>
+            </div>
+            <a href="navigation.html" class="btn-return-mobile">
+                <i class="fa-solid fa-map-location-dot"></i> Return to Campus Map
+            </a>
+        </div>
+    </div>
+
+    <!-- TOP APPLICATION BAR -->
+    <header class="app-header">
+        <a href="index.html" class="brand-unit">
+            <div class="brand-icon-box">
+                <img src="assets/images/LOGO.png" alt="GIET Logo" />
+            </div>
+            <div class="brand-title-wrap">
+                <span class="brand-title-main">GIETU <span style="color: #60a5fa;">Map Studio</span></span>
+                <span class="brand-title-sub"><span class="pulse-dot-sm"></span> Spatial & Floor DB Registry</span>
+            </div>
+        </a>
+
+        <!-- PARALLEL TEST TAB PREVIEWS -->
+        <div class="header-tools">
+            <a href="navigation.html" target="_blank" rel="noopener noreferrer" class="btn-nav-link" title="Test Outdoor Navigation in new tab">
+                <i class="fa-solid fa-map-location-dot"></i> Test Map <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i>
+            </a>
+            <a href="building.html" target="_blank" rel="noopener noreferrer" class="btn-nav-link" title="View Indoor Floor Layout in new tab">
+                <i class="fa-solid fa-building"></i> View Floors <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i>
+            </a>
+            <button id="auth-action-btn" class="btn-solid-secondary" type="button" style="padding: 6px 12px; font-size: 12px;">
+                <span id="auth-btn-text">Admin Login</span>
+            </button>
         </div>
     </header>
 
@@ -40,8 +68,8 @@
     <div id="auth-modal" class="auth-overlay">
         <div class="auth-card">
             <img src="assets/images/LOGO.png" alt="GIET Logo" style="width: 54px; height: 54px; margin-bottom: 12px;" />
-            <h2 style="font-size: 1.2rem; margin-bottom: 4px;">Studio Access</h2>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.5rem;">Authenticate to place amenities and manage corridors</p>
+            <h2 style="font-size: 1.2rem; margin-bottom: 4px; color: #fff;">Studio Access</h2>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.5rem;">Authenticate to manage outdoor pathways and building floor plans</p>
 
             <form id="login-form">
                 <div class="input-field" style="text-align: left;">
@@ -53,7 +81,7 @@
                     <input type="password" id="password" placeholder="gietu@123" required />
                 </div>
                 <div id="login-error" style="color: #ef4444; font-size: 0.8rem; margin-bottom: 10px;"></div>
-                <button type="submit" class="btn-primary">
+                <button type="submit" class="btn-solid-primary" style="width: 100%;">
                     <span>Unlock Studio</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
@@ -67,27 +95,30 @@
                 
                 <!-- Panel Mode Tabs -->
                 <div class="panel-tabs">
-                    <button class="tab-btn active" id="tab-locations-btn">
-                        <i class="fa-solid fa-location-dot"></i> Buildings & Amenities
+                    <button type="button" class="tab-btn active" id="tab-locations-btn">
+                        <i class="fa-solid fa-location-dot"></i> Landmarks
                     </button>
-                    <button class="tab-btn" id="tab-routes-btn">
-                        <i class="fa-solid fa-draw-polygon"></i> Walkway Corridors
+                    <button type="button" class="tab-btn" id="tab-routes-btn">
+                        <i class="fa-solid fa-draw-polygon"></i> Walkways
+                    </button>
+                    <button type="button" class="tab-btn" id="tab-structure-btn">
+                        <i class="fa-solid fa-layer-group"></i> Floors & Rooms
                     </button>
                 </div>
 
-                <!-- LOCATION & AMENITY REGISTRATION PANEL -->
+                <!-- 1. LOCATION & AMENITY REGISTRATION PANEL -->
                 <div id="location-panel" class="glass-card">
                     <div class="card-title">
                         <span id="form-heading">Add Location or Amenity</span>
-                        <span style="font-size: 0.7rem; color: #60a5fa;"><i class="fa-solid fa-crosshairs"></i> Click / Drag Pin</span>
+                        <span style="font-size: 0.7rem; color: #60a5fa;"><i class="fa-solid fa-crosshairs"></i> Drag Pin</span>
                     </div>
-                    <p class="card-desc">Click anywhere on the map to drop a pin. Drag the red pin directly to doorways, washrooms, or water coolers.</p>
+                    <p class="card-desc">Click anywhere on the map to drop a pin. Drag the pin directly to doorways, washrooms, or water coolers.</p>
 
                     <form id="location-form">
                         <input type="hidden" id="loc-id" />
                         <div class="input-field">
                             <label>Name / Identifier</label>
-                            <input type="text" id="loc-name" placeholder="e.g. Canteen Water Cooler, Admin Block Restroom" required />
+                            <input type="text" id="loc-name" placeholder="e.g. Canteen Water Cooler, Admin Block" required />
                         </div>
                         <div class="input-field">
                             <label>Feature Category</label>
@@ -112,15 +143,15 @@
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn-primary" id="submit-btn">
+                            <button type="submit" class="btn-solid-primary" id="submit-btn" style="flex: 1;">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Position
                             </button>
-                            <button type="button" class="btn-secondary hidden" id="cancel-edit-btn">Cancel</button>
+                            <button type="button" class="btn-solid-secondary hidden" id="cancel-edit-btn">Cancel</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- WALKWAY ROUTE MANAGER PANEL -->
+                <!-- 2. WALKWAY ROUTE BUILDER PANEL -->
                 <div id="route-panel" class="glass-card hidden">
                     <div class="card-title">
                         <span id="route-form-heading">Walkway Route Builder</span>
@@ -135,10 +166,10 @@
                             <input type="text" id="route-name" placeholder="e.g. Canteen to Library Footpath" required />
                         </div>
                         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                            <button type="button" class="btn-primary" id="start-drawing-btn">
+                            <button type="button" class="btn-solid-primary" id="start-drawing-btn">
                                 <i class="fa-solid fa-pen-nib"></i> <span>Draw Path</span>
                             </button>
-                            <button type="button" class="btn-secondary btn-danger hidden" id="clear-drawing-btn">
+                            <button type="button" class="btn-solid-secondary hidden" id="clear-drawing-btn" style="background:#ef4444; color:#fff;">
                                 Reset
                             </button>
                         </div>
@@ -146,19 +177,117 @@
                             Click <strong>Draw Path</strong>, then click consecutive points on the satellite map.
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button type="submit" class="btn-primary" id="save-route-btn" disabled>
+                            <button type="submit" class="btn-solid-primary" id="save-route-btn" disabled style="flex: 1;">
                                 <i class="fa-solid fa-check"></i> Save Walkway
                             </button>
-                            <button type="button" class="btn-secondary hidden" id="cancel-route-btn">Cancel</button>
+                            <button type="button" class="btn-solid-secondary hidden" id="cancel-route-btn">Cancel</button>
                         </div>
                     </form>
+                </div>
+
+                <!-- 3. FLOOR & ROOM BLUEPRINT STUDIO -->
+                <div id="structure-panel" class="glass-card hidden">
+                    <div class="card-title">
+                        <span id="room-form-title">Floor & Room Studio</span>
+                        <span style="font-size: 0.7rem; color: #38bdf8;"><i class="fa-solid fa-database"></i> SQLite Sync</span>
+                    </div>
+                    <p class="card-desc">Manage floor plans, boundaries, hallways, corridors, and stairs.</p>
+
+                    <div class="input-field">
+                        <label>Select Building</label>
+                        <select id="admin-bldg-select"></select>
+                    </div>
+
+                    <div class="input-field">
+                        <label>Select Floor</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="admin-floor-select" style="flex: 1;"></select>
+                            <button type="button" class="btn-solid-secondary" id="btn-add-floor" title="Add Floor Level" style="padding: 0 10px; font-size: 11px;">+ Floor</button>
+                            <button type="button" class="btn-solid-secondary" id="btn-delete-floor" title="Delete Selected Floor" style="padding: 0 10px; font-size: 11px; background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Room Form -->
+                    <form id="admin-room-form" style="margin-top: 10px;">
+                        <input type="hidden" id="admin-room-id" />
+
+                        <div style="display: flex; gap: 8px;">
+                            <div class="input-field" style="flex: 1;">
+                                <label>Room Code / No.</label>
+                                <input type="text" id="room-num-val" placeholder="e.g. CSA-4, CORR-1, STAIR-1" required />
+                            </div>
+                            <div class="input-field" style="flex: 1;">
+                                <label>Category</label>
+                                <select id="room-type-val" required>
+                                    <option value="Classroom">Classroom</option>
+                                    <option value="Laboratory">Laboratory</option>
+                                    <option value="Office">Office / Cabin</option>
+                                    <option value="Corridor">🚶 Walk Corridor / Hallway</option>
+                                    <option value="Stairs">🪜 Stairs / Staircase</option>
+                                    <option value="Lift">🛗 Lift / Elevator</option>
+                                    <option value="Washroom">Washroom</option>
+                                    <option value="Auditorium">Auditorium</option>
+                                    <option value="Utility">Utility / Water</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="input-field">
+                            <label>Room / Corridor Title</label>
+                            <input type="text" id="room-name-val" placeholder="e.g. Microprocessor Lab, Main Walking Hallway" required />
+                        </div>
+
+                        <div class="input-field">
+                            <label>Description / Facilities</label>
+                            <textarea id="room-desc-val" rows="2" style="width:100%; border-radius:8px; padding:6px; background:#1e293b; color:#fff; border:1px solid rgba(255,255,255,0.1);" placeholder="Workstations, equipment, faculty, connected floors..."></textarea>
+                        </div>
+
+                        <!-- Coordinates matching blueprint canvas -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                            <div class="input-field">
+                                <label>X (px)</label>
+                                <input type="number" id="room-x-val" placeholder="105" required />
+                            </div>
+                            <div class="input-field">
+                                <label>Y (px)</label>
+                                <input type="number" id="room-y-val" placeholder="40" required />
+                            </div>
+                            <div class="input-field">
+                                <label>W (px)</label>
+                                <input type="number" id="room-w-val" placeholder="65" required />
+                            </div>
+                            <div class="input-field">
+                                <label>H (px)</label>
+                                <input type="number" id="room-h-val" placeholder="125" required />
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons Including Form Delete Box -->
+                        <div style="display: flex; gap: 8px; margin-top: 10px;">
+                            <button type="submit" class="btn-solid-primary" style="flex: 1;">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Room to DB
+                            </button>
+                            <button type="button" class="btn-solid-secondary hidden" id="btn-delete-active-room" title="Delete this room from DB" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border-color: rgba(239, 68, 68, 0.4); padding: 0 12px;">
+                                <i class="fa-solid fa-trash"></i> Delete Box
+                            </button>
+                            <button type="button" class="btn-solid-secondary hidden" id="btn-cancel-edit-room">Cancel</button>
+                        </div>
+                    </form>
+
+                    <!-- Rooms List in Active Floor -->
+                    <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                        <label style="font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">Rooms on this floor</label>
+                        <div id="admin-floor-rooms-list" style="max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 6px;"></div>
+                    </div>
                 </div>
 
                 <!-- REGISTERED FEATURES DIRECTORY -->
                 <div class="glass-card">
                     <div class="card-title">
-                        <span id="registry-title">Registered Features</span>
-                        <button id="export-geojson-btn" class="btn-secondary" style="font-size: 0.68rem; padding: 4px 8px;">
+                        <span id="registry-title">Registered Outdoor Features</span>
+                        <button type="button" id="export-geojson-btn" class="btn-solid-secondary" style="font-size: 0.68rem; padding: 4px 8px;">
                             <i class="fa-solid fa-copy"></i> Export JSON
                         </button>
                     </div>
@@ -171,11 +300,38 @@
             </div>
         </aside>
 
-        <!-- MAP CONTAINER -->
+        <!-- RIGHT VIEWPORT: MAP & BLUEPRINT PREVIEW -->
         <section class="map-viewport-section">
             <div id="admin-leaflet-map"></div>
+
+            <div id="admin-blueprint-viewport" class="admin-blueprint-viewport hidden">
+                <div class="blueprint-preview-header">
+                    <div>
+                        <span id="preview-floor-title" style="font-weight: 800; color: #f8fafc; font-size: 14px;">Live Blueprint Preview</span>
+                        <span style="font-size: 11px; color: #38bdf8; margin-left: 8px;"><i class="fa-solid fa-eye"></i> Real-time DB Canvas</span>
+                    </div>
+
+                    <!-- AUTO-DETECT & SKETCH UPLOAD CONTROLS -->
+                    <div class="blueprint-header-controls">
+                        <input type="file" id="sketch-file-input" accept="image/*" class="hidden" />
+                        <button type="button" class="btn-solid-secondary" id="btn-upload-sketch" style="padding: 5px 10px; font-size: 11.5px; border-color: #38bdf8; color: #38bdf8; white-space: nowrap;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Upload Sketch / PNG
+                        </button>
+                        <button type="button" class="btn-solid-secondary hidden" id="btn-toggle-underlay" style="padding: 5px 10px; font-size: 11.5px; white-space: nowrap;">
+                            <i class="fa-solid fa-image"></i> Toggle Underlay
+                        </button>
+                        <button type="button" class="btn-solid-secondary" id="btn-draw-room" style="padding: 5px 10px; font-size: 11.5px; white-space: nowrap;">
+                            <i class="fa-solid fa-vector-square"></i> Draw Box
+                        </button>
+                    </div>
+                </div>
+                <div class="blueprint-preview-board-wrap">
+                    <div id="admin-blueprint-canvas" class="admin-blueprint-canvas"></div>
+                </div>
+            </div>
+
             <div class="map-status-pill">
-                <span class="pulse-dot"></span>
+                <span class="pulse-dot-sm"></span>
                 <span id="map-mode-text">Inspection Mode</span>
             </div>
         </section>

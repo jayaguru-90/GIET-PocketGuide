@@ -97,37 +97,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let utilityMarkers = [];
     let activeCategory = 'all';
     let isTrackingOrSimulating = false;
+    let isTourActive = false;
+    let currentTourIndex = 0;
 
-    // ================= 2. THEME ENGINE =================
+    // ================= 2. THEME ENGINE (SYNCHRONIZED) =================
     function initTheme() {
-        const savedTheme = localStorage.getItem('giet_theme') || 'light';
+        const savedTheme = localStorage.getItem('giet-theme') || 'light';
         applyTheme(savedTheme);
     }
 
     function applyTheme(theme) {
         if (theme === 'dark') {
-            document.body.classList.add('dark-theme');
+            document.body.classList.add('dark-mode');
             if (themeToggleBtn) {
-                themeToggleBtn.innerHTML = `<i class="fa-solid fa-sun" style="color:#f59e0b;"></i>`;
+                themeToggleBtn.innerHTML = `<i class="fa-solid fa-sun" style="color:#fbbf24;"></i>`;
                 themeToggleBtn.title = "Switch to Light Theme";
             }
         } else {
-            document.body.classList.remove('dark-theme');
+            document.body.classList.remove('dark-mode');
             if (themeToggleBtn) {
                 themeToggleBtn.innerHTML = `<i class="fa-solid fa-moon"></i>`;
                 themeToggleBtn.title = "Switch to Dark Theme";
             }
         }
-        localStorage.setItem('giet_theme', theme);
+        localStorage.setItem('giet-theme', theme);
     }
 
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', () => {
-            const isDark = document.body.classList.contains('dark-theme');
+            const isDark = document.body.classList.contains('dark-mode');
             applyTheme(isDark ? 'light' : 'dark');
         });
     }
-
     initTheme();
 
     // ================= 3. VOICE GUIDANCE =================
@@ -166,104 +167,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. FULL OFFICIAL GIETU TOUR DATA =================
+    // ================= 4. TOUR STOPS =================
     const campusTourStops = [
-        {
-            name: "security",
-            title: "GIETU Main Gate & Security",
-            desc: "The primary entry to GIET University Gunupur campus, monitored 24/7 with digital gate security and transport terminal links.",
-            url: "https://www.giet.edu/campus-tour/"
-        },
-        {
-            name: "Admin Block",
-            title: "Administrative Headquarters",
-            desc: "The central administrative building housing the Vice Chancellor's Secretariat, Registrar, Admissions, and Academic Affairs.",
-            url: "https://www.giet.edu"
-        },
-        {
-            name: "Library",
-            title: "Biju Patnaik Central Digital Library",
-            desc: "A central 24x7 air-conditioned library spanning 1,649 sq.m with over 81,000 volumes, international print/e-journals, and seating for 500 scholars.",
-            url: "https://www.giet.edu/infrastructure/central-library/"
-        },
-        {
-            name: "CSE Building",
-            title: "School of Computer Science & Engineering",
-            desc: "State-of-the-art software development labs, high-performance GPU AI workstations, and modern cloud infrastructure.",
-            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/computer-science-and-engineering/"
-        },
-        {
-            name: "CSA block",
-            title: "Computer Science & Applications Block",
-            desc: "Dedicated computing hubs for advanced coding, algorithms, cybersecurity research, and application development.",
-            url: "https://www.giet.edu/academics/departments/computer-science-applications/"
-        },
-        {
-            name: "BSH Building",
-            title: "Basic Sciences & Humanities Block",
-            desc: "Foundation classrooms, advanced Physics, Chemistry, and language laboratories fostering early engineering rigor.",
-            url: "https://www.giet.edu/schools/school-of-basic-sciences/"
-        },
-        {
-            name: "Agriculture Block",
-            title: "School of Agriculture & Research Fields",
-            desc: "Agronomy, soil science, crop research, and horticulture testing units on campus farmland.",
-            url: "https://www.giet.edu/schools/school-of-agriculture/"
-        },
-        {
-            name: "Bio tech Building",
-            title: "School of Biotechnology & E-YUVA Centre",
-            desc: "Advanced biotechnology research laboratories supported by BIRAC and Department of Biotechnology (DBT), Govt. of India.",
-            url: "https://www.giet.edu/academics/e-yuva-center/"
-        },
-        {
-            name: "Mechanical building",
-            title: "School of Mechanical Engineering & Central Workshops",
-            desc: "Heavy machinery workshops, CNC manufacturing centers, thermal, fluid mechanics, and CAD/CAM computing facilities.",
-            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/mechanical-engineering/"
-        },
-        {
-            name: "Hardware section",
-            title: "Hardware, ECE & Robotics Laboratories",
-            desc: "Embedded systems, VLSI design, IoT micro-controller hardware sections, and industrial automation labs.",
-            url: "https://www.giet.edu/schools/school-of-engineering-technology/departments/electronics-communication-engineering/"
-        },
-        {
-            name: "Mega Auditorium",
-            title: "GIETU Mega University Auditorium",
-            desc: "A massive acoustically engineered auditorium hosting national symposiums, annual convocation, and student cultural fests.",
-            url: "https://www.giet.edu/infrastructure/"
-        },
-        {
-            name: "Canteen",
-            title: "Student Food Court & Canteen",
-            desc: "A multi-cuisine campus cafeteria serving fresh snacks, regional specialties, fruit beverages, and meals.",
-            url: "https://www.giet.edu/infrastructure/"
-        },
-        {
-            name: "Cool Parlour",
-            title: "Cool Parlour Refreshment Zone",
-            desc: "A popular campus relaxation hub known for iced beverages, snacks, and student discussions between classes.",
-            url: "https://www.giet.edu/campus-tour/"
-        },
-        {
-            name: "Swimming pool",
-            title: "National Standard 6-Lane Swimming Pool",
-            desc: "A national standard aquatic facility with dedicated swimming coaching and scheduled hours for boys and girls.",
-            url: "https://www.giet.edu/sports-facilities/"
-        },
-        {
-            name: "Giet main ground",
-            title: "University Sports Arena & Athletic Track",
-            desc: "A multipurpose stadium ground hosting state-level cricket, football tournaments, basketball courts, and track sports.",
-            url: "https://www.giet.edu/sports-facilities/"
-        },
-        {
-            name: "Central Mess",
-            title: "Central Dining Complex & Residential Hostels",
-            desc: "Hygienic multi-story student dining complex with 1,200+ seating capacity, serving nutritious meals across the NC hostel clusters.",
-            url: "https://www.giet.edu/schools/school-of-nursing/infrastructure/hostels/"
-        }
+        { name: "security", title: "GIETU Main Gate & Security", desc: "The primary entry to GIET University Gunupur campus, monitored 24/7 with digital gate security.", url: "https://www.giet.edu" },
+        { name: "Admin Block", title: "Administrative Headquarters", desc: "The central administrative building housing the Vice Chancellor's Secretariat, Registrar, and Admissions.", url: "https://www.giet.edu" },
+        { name: "Library", title: "Biju Patnaik Central Digital Library", desc: "A central 24x7 air-conditioned library spanning 1,649 sq.m with over 81,000 volumes.", url: "https://www.giet.edu/infrastructure/central-library/" },
+        { name: "CSE Building", title: "School of Computer Science & Engineering", desc: "State-of-the-art software development labs, high-performance GPU AI workstations.", url: "https://www.giet.edu" },
+        { name: "CSA block", title: "Computer Science & Applications Block", desc: "Dedicated computing hubs for advanced coding, algorithms, and cybersecurity research.", url: "https://www.giet.edu" },
+        { name: "BSH Building", title: "Basic Sciences & Humanities Block", desc: "Foundation classrooms, advanced Physics, Chemistry, and language laboratories.", url: "https://www.giet.edu" },
+        { name: "Agriculture Block", title: "School of Agriculture & Research Fields", desc: "Agronomy, soil science, crop research, and horticulture testing units.", url: "https://www.giet.edu" },
+        { name: "Bio tech Building", title: "School of Biotechnology & E-YUVA Centre", desc: "Advanced biotechnology research laboratories supported by BIRAC and DBT.", url: "https://www.giet.edu" },
+        { name: "Mechanical building", title: "School of Mechanical Engineering", desc: "Heavy machinery workshops, CNC manufacturing centers, thermal, and CAD/CAM computing facilities.", url: "https://www.giet.edu" },
+        { name: "Hardware section", title: "Hardware, ECE & Robotics Laboratories", desc: "Embedded systems, VLSI design, and IoT micro-controller hardware sections.", url: "https://www.giet.edu" },
+        { name: "Mega Auditorium", title: "GIETU Mega University Auditorium", desc: "A massive acoustically engineered auditorium hosting national symposiums and convocation.", url: "https://www.giet.edu" },
+        { name: "Canteen", title: "Student Food Court & Canteen", desc: "A multi-cuisine campus cafeteria serving fresh snacks, regional specialties, and beverages.", url: "https://www.giet.edu" },
+        { name: "Cool Parlour", title: "Cool Parlour Refreshment Zone", desc: "A popular campus relaxation hub known for iced beverages and snacks.", url: "https://www.giet.edu" },
+        { name: "Swimming pool", title: "Olympic Standard 6-Lane Swimming Pool", desc: "A national standard aquatic facility with dedicated swimming coaching.", url: "https://www.giet.edu" },
+        { name: "Giet main ground", title: "University Sports Arena & Track", desc: "A multipurpose stadium ground hosting cricket, football, basketball courts, and athletics.", url: "https://www.giet.edu" },
+        { name: "Central Mess", title: "Central Dining Complex & Residential Hostels", desc: "Hygienic multi-story student dining complex with 1,200+ seating capacity.", url: "https://www.giet.edu" }
     ];
 
     function hideLoader() {
@@ -288,48 +209,29 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 6. CAMPUS EMOJI TAXONOMY =================
+    // ================= 6. PLACE ICONS =================
     function getPlaceIcon(name, rawCategory = '') {
         const n = (name || '').toLowerCase().trim();
         const c = (rawCategory || '').toLowerCase().trim();
 
-        if (n.includes('wc') || n.includes('washroom') || n.includes('restroom') || n.includes('toilet') || c.includes('washroom')) {
-            if (n.includes('gens') || n.includes('men') || n.includes('boys')) return '🚹';
-            if (n.includes('ladies') || n.includes('women') || n.includes('girls')) return '🚺';
-            return '🚻';
-        }
-        if (n.includes('dispensary') || n.includes('medical') || n.includes('first aid') || c.includes('medical')) return '🏥';
+        if (n.includes('wc') || n.includes('washroom') || n.includes('restroom') || n.includes('toilet') || c.includes('washroom')) return '🚻';
+        if (n.includes('dispensary') || n.includes('medical') || c.includes('medical')) return '🏥';
         if (n.includes('security') || n.includes('guard') || c.includes('security')) return '🛡️';
         if (n.includes('temple')) return '🛕';
-        if (n.includes('park') || n.includes('garden')) return '🌳';
-        if (n.includes('open gym')) return '🧘';
-        if (n.includes('cool parlour') || n.includes('parloor')) return '🍧';
-        if (n.includes('tea') || n.includes('coffee') || n.includes('cafe')) return '☕';
         if (n.includes('canteen')) return '🍱';
         if (n.includes('mess')) return '🍲';
         if (n.includes('swimming') || n.includes('pool')) return '🏊‍♂️';
-        if (n.includes('badminton')) return '🏸';
-        if (n.includes('basket ball') || n.includes('basketball')) return '🏀';
-        if (n.includes('ground') || n.includes('stadium') || n.includes('cricket')) return '⚽';
+        if (n.includes('ground') || n.includes('stadium')) return '⚽';
         if (n.includes('bus')) return '🚌';
         if (n.includes('parking')) return '🅿️';
-        if (n.includes('gate') || n.includes('entrance')) return '🚪';
         if (n.includes('library')) return '📚';
         if (n.includes('auditorium')) return '🎭';
-        if (n.includes('cse') || n.includes('computer') || n.includes('csa')) return '💻';
-        if (n.includes('bio tech') || n.includes('biotech')) return '🧪';
-        if (n.includes('agriculture') || n.includes('agri')) return '🌾';
-        if (n.includes('hardware') || n.includes('ece') || n.includes('electrical')) return '⚡';
-        if (n.includes('mechanical') || n.includes('mech')) return '⚙️';
-        if (n.includes('civil')) return '📐';
-        if (n.includes('manegment') || n.includes('management') || n.includes('mba')) return '📊';
-        if (n.includes('bsh') || n.includes('basic science')) return '🔬';
-        if (n.includes('admin') || n.includes('office')) return '🏛️';
-        if (n.includes('guest house')) return '🏨';
-        if (n.startsWith('nc-') || n.includes('hostel')) return '🏢';
-        if (n.includes('building') || n.includes('block')) return '🏫';
-
-        return '📍';
+        if (n.includes('cse') || n.includes('csa')) return '💻';
+        if (n.includes('bio tech')) return '🧪';
+        if (n.includes('agriculture')) return '🌾';
+        if (n.includes('mechanical')) return '⚙️';
+        if (n.includes('admin')) return '🏛️';
+        return '🏢';
     }
 
     // ================= 7. UTILITIES OVERLAY =================
@@ -382,26 +284,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 8. CATEGORY FILTERING =================
+    // ================= 8. CATEGORY CLASSIFICATION =================
     function getCategoryClassification(name, rawCategory = '') {
         const n = name.toLowerCase();
         const c = rawCategory.toLowerCase();
 
-        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('dept') || n.includes('csa') || n.includes('ame') || n.includes('bsh') || n.includes('hardware')) {
-            return 'academic';
-        }
-        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess') || n.includes('hostel') || n.includes('guest house')) {
-            return 'hostel';
-        }
-        if (c.includes('food') || n.includes('canteen') || n.includes('parlour') || n.includes('parloor')) {
-            return 'food';
-        }
-        if (c.includes('sports') || n.includes('court') || n.includes('pool') || n.includes('ground') || n.includes('gym')) {
-            return 'sports';
-        }
-        if (c.includes('parking') || c.includes('gate') || n.includes('parking') || n.includes('gate') || n.includes('bus')) {
-            return 'parking';
-        }
+        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('csa') || n.includes('bsh')) return 'academic';
+        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess')) return 'hostel';
+        if (c.includes('food') || n.includes('canteen') || n.includes('parlour')) return 'food';
+        if (c.includes('sports') || n.includes('pool') || n.includes('ground')) return 'sports';
+        if (c.includes('parking') || c.includes('gate') || n.includes('bus')) return 'parking';
         return 'academic';
     }
 
@@ -437,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 9. GEOMETRY & GRAPH HELPERS =================
+    // ================= 9. GEOMETRY & CLIENT DIJKSTRA ROUTING =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -448,13 +340,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    function toKey(lat, lng) {
-        return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
-    }
-
-    function parseKey(key) {
-        return key.split(',').map(Number);
-    }
+    function toKey(lat, lng) { return `${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`; }
+    function parseKey(key) { return key.split(',').map(Number); }
 
     function getBearing(lat1, lon1, lat2, lon2) {
         const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
@@ -482,12 +369,8 @@ document.addEventListener('DOMContentLoaded', () => {
             regNode(vKey);
             if (!clientGraph[uKey]) clientGraph[uKey] = [];
             if (!clientGraph[vKey]) clientGraph[vKey] = [];
-            if (!clientGraph[uKey].some(e => e.node === vKey)) {
-                clientGraph[uKey].push({ node: vKey, weight: d, coord: vCoord });
-            }
-            if (!clientGraph[vKey].some(e => e.node === uKey)) {
-                clientGraph[vKey].push({ node: uKey, weight: d, coord: uCoord });
-            }
+            if (!clientGraph[uKey].some(e => e.node === vKey)) clientGraph[uKey].push({ node: vKey, weight: d, coord: vCoord });
+            if (!clientGraph[vKey].some(e => e.node === uKey)) clientGraph[vKey].push({ node: uKey, weight: d, coord: uCoord });
         }
 
         (geojson.features || []).forEach(feat => {
@@ -568,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let iter = 0; iter < 3; iter++) {
             let fullCoords = [];
-            allNodePath = [];
+            let allNodePath = [];
             let failed = false;
 
             for (let leg = 0; leg < coordsArray.length - 1; leg++) {
@@ -633,14 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const instructions = [];
         let accumulatedDistance = 0;
 
-        instructions.push({
-            id: "step_start",
-            action: "start",
-            icon: "📍",
-            text: "Start walking along the path",
-            distance: 0,
-            coord: coords[0]
-        });
+        instructions.push({ id: "step_start", action: "start", icon: "📍", text: "Start walking along the path", distance: 0, coord: coords[0] });
 
         for (let i = 1; i < coords.length - 1; i++) {
             const pPrev = coords[i - 1];
@@ -675,15 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const finalSeg = getDistance(coords[coords.length - 2][0], coords[coords.length - 2][1], coords[coords.length - 1][0], coords[coords.length - 1][1]);
         accumulatedDistance += finalSeg;
 
-        instructions.push({
-            id: "step_arrive",
-            action: "arrive",
-            icon: "🏁",
-            text: "Arrive at destination doorway",
-            distance: Math.round(accumulatedDistance),
-            coord: coords[coords.length - 1]
-        });
-
+        instructions.push({ id: "step_arrive", action: "arrive", icon: "🏁", text: "Arrive at destination doorway", distance: Math.round(accumulatedDistance), coord: coords[coords.length - 1] });
         return instructions;
     }
 
@@ -702,13 +570,11 @@ document.addEventListener('DOMContentLoaded', () => {
             turnStepsList.appendChild(div);
         });
 
-        if (stepsTotalCount) {
-            stepsTotalCount.textContent = `${instructions.length} steps`;
-        }
+        if (stepsTotalCount) stepsTotalCount.textContent = `${instructions.length} steps`;
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 11. LIVE GPS & LINE ERASING =================
+    // ================= 11. LIVE GPS & POLYLINE TRIMMING =================
     function updateUserLiveLocation(lat, lng, accuracy = 5) {
         currentUserLat = lat;
         currentUserLng = lng;
@@ -759,17 +625,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const remainingCoords = [currentPos, ...fullRouteCoords.slice(closestIdx + 1)];
             const walkedCoords = fullRouteCoords.slice(0, closestIdx + 1);
 
-            if (remainingRoutePolyline) {
-                remainingRoutePolyline.setLatLngs(remainingCoords);
-            }
-
+            if (remainingRoutePolyline) remainingRoutePolyline.setLatLngs(remainingCoords);
             if (!breadcrumbPolyline) {
-                breadcrumbPolyline = L.polyline(walkedCoords, {
-                    color: '#94a3b8',
-                    weight: 4,
-                    opacity: 0.5,
-                    dashArray: '3, 6'
-                }).addTo(map);
+                breadcrumbPolyline = L.polyline(walkedCoords, { color: '#94a3b8', weight: 4, opacity: 0.5, dashArray: '3, 6' }).addTo(map);
             } else {
                 breadcrumbPolyline.setLatLngs(walkedCoords);
             }
@@ -817,12 +675,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!spokenMilestones.has("arrived")) {
                 spokenMilestones.add("arrived");
-                speakVoicePrompt("You have arrived at your destination.");
+                speakVoicePrompt("You have arrived at your destination doorway.");
             }
         }
     }
 
-    // ================= 12. ROUTE SELECTION & VISUALIZATION =================
+    // ================= 12. ROUTE VISUALIZATION =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -878,11 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!isTrackingOrSimulating && remainingRoutePolyline) {
-            map.fitBounds(remainingRoutePolyline.getBounds(), {
-                padding: [40, 40],
-                maxZoom: 19,
-                animate: true
-            });
+            map.fitBounds(remainingRoutePolyline.getBounds(), { padding: [40, 40], maxZoom: 19, animate: true });
         }
     }
 
@@ -904,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                     <span>~${Math.ceil(route.totalDistance / 75)} min</span>
                 </div>
-                <div class="route-card-sub" style="margin-left: 16px;">${route.totalDistance} meters • Road verified</div>
+                <div class="route-card-sub" style="margin-left: 16px;">${route.totalDistance} meters • Walkway connected</div>
             `;
             card.addEventListener('click', () => selectActiveRoute(idx));
             routeCardsList.appendChild(card);
@@ -914,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectActiveRoute(0);
     }
 
-    // ================= 13. IN-APP LOCATION PICKER MODAL =================
+    // ================= 13. IN-APP LOCATION PICKER =================
     function openLocationPicker(targetKey, titleText) {
         activePickerTarget = targetKey;
         pickerTitle.textContent = titleText || "Select Campus Location";
@@ -976,24 +830,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             pickerItemsList.appendChild(item);
         });
-
-        if (matchingPlaces.length === 0) {
-            pickerItemsList.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:13px;">No matching places found</div>`;
-        }
     }
 
-    if (startDisplay) {
-        startDisplay.parentElement.addEventListener('click', () => openLocationPicker('start', 'Choose Starting Point'));
-    }
-
-    if (destinationDisplay) {
-        destinationDisplay.parentElement.addEventListener('click', () => openLocationPicker('destination', 'Choose Destination'));
-    }
-
-    if (pickerFilterInput) {
-        pickerFilterInput.addEventListener('input', (e) => renderPickerList(e.target.value));
-    }
-
+    if (startDisplay) startDisplay.parentElement.addEventListener('click', () => openLocationPicker('start', 'Choose Starting Point'));
+    if (destinationDisplay) destinationDisplay.parentElement.addEventListener('click', () => openLocationPicker('destination', 'Choose Destination'));
+    if (pickerFilterInput) pickerFilterInput.addEventListener('input', (e) => renderPickerList(e.target.value));
     if (closePickerBtn) closePickerBtn.addEventListener('click', closeLocationPicker);
     if (pickerBackdrop) pickerBackdrop.addEventListener('click', closeLocationPicker);
 
@@ -1011,7 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="waypoint-text placeholder">Next Stop ${stopIndex + 1}</span>
                     <i class="fa-solid fa-chevron-down waypoint-arrow"></i>
                 </div>
-                <button type="button" class="btn-remove-stop" title="Remove stop" aria-label="Remove stop">✕</button>
+                <button type="button" class="btn-remove-stop" title="Remove stop">✕</button>
             `;
 
             waypointsContainer.appendChild(div);
@@ -1025,16 +866,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 div.remove();
                 selectedWaypoints.extraStops.splice(stopIndex, 1);
             });
-
-            const panelBody = document.querySelector('.panel-body');
-            if (panelBody) panelBody.scrollTop = panelBody.scrollHeight;
         });
     }
 
-    // ================= 14. MOBILE DRAWER SNAP GESTURES =================
+    // ================= 14. MOBILE BOTTOM DRAWER =================
     let isDraggingHandle = false;
     let startTouchY = 0;
-    let currentPanelState = 0; // 0 = Expanded (Show All Steps), 1 = Collapsed (Show Map)
+    let currentPanelState = 0;
     const dragArea = document.getElementById('panel-handle-area') || togglePanelBtn;
 
     function applySheetSnap(stateIndex) {
@@ -1067,7 +905,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let baseOffset = currentPanelState === 1 ? maxOffset : 0;
             let targetOffset = baseOffset + deltaY;
-
             if (targetOffset < 0) targetOffset = 0;
             if (targetOffset > maxOffset) targetOffset = maxOffset;
 
@@ -1080,13 +917,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const endTouchY = e.changedTouches[0].clientY;
             const distanceMoved = endTouchY - startTouchY;
 
-            if (distanceMoved > 40) {
-                applySheetSnap(1);
-            } else if (distanceMoved < -40) {
-                applySheetSnap(0);
-            } else {
-                applySheetSnap(currentPanelState);
-            }
+            if (distanceMoved > 40) applySheetSnap(1);
+            else if (distanceMoved < -40) applySheetSnap(0);
+            else applySheetSnap(currentPanelState);
         });
     }
 
@@ -1098,14 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 640 && navPanel) {
-            navPanel.style.transform = '';
-            navPanel.style.transition = '';
-            currentPanelState = 0;
-        }
-    });
-
     // ================= 15. CAMPUS TOUR MODE =================
     function startCampusTour() {
         isTourActive = true;
@@ -1113,15 +938,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tourCoords = campusTourStops.map(s => buildings[s.name]).filter(Boolean);
         if (tourCoords.length < 2) {
-            alert("Tour landmarks are synchronizing with the campus mesh. Please retry in a few seconds.");
+            alert("Tour landmarks are synchronizing with the campus mesh. Please retry in a moment.");
             return;
         }
 
         const routes = computeClientSideRoutes(tourCoords);
-        if (routes && routes.length > 0) {
-            renderRoutes(routes);
-        }
+        if (routes && routes.length > 0) renderRoutes(routes);
 
+        if (window.innerWidth <= 640) applySheetSnap(1);
         showTourStopCard(currentTourIndex);
     }
 
@@ -1133,9 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tourStopNum.textContent = `${idx + 1}/${campusTourStops.length}`;
         tourStopTitle.textContent = stop.title;
         tourStopDesc.textContent = stop.desc;
-        if (tourOfficialLink) {
-            tourOfficialLink.href = stop.url || "https://www.giet.edu";
-        }
+        if (tourOfficialLink) tourOfficialLink.href = stop.url || "https://www.giet.edu";
         tourCardModal.classList.remove('hidden');
 
         const coords = buildings[stop.name];
@@ -1148,34 +970,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (startTourBtn) startTourBtn.addEventListener('click', startCampusTour);
-
     if (tourNextBtn) {
         tourNextBtn.addEventListener('click', () => {
-            if (currentTourIndex < campusTourStops.length - 1) {
-                showTourStopCard(currentTourIndex + 1);
-            } else {
+            if (currentTourIndex < campusTourStops.length - 1) showTourStopCard(currentTourIndex + 1);
+            else {
                 alert("You have completed the GIET University Campus Tour! Welcome to GIETU.");
                 tourCardModal.classList.add('hidden');
                 isTourActive = false;
             }
         });
     }
-
     if (tourPrevBtn) {
         tourPrevBtn.addEventListener('click', () => {
-            if (currentTourIndex > 0) {
-                showTourStopCard(currentTourIndex - 1);
-            }
+            if (currentTourIndex > 0) showTourStopCard(currentTourIndex - 1);
         });
     }
-
     if (tourSpeakBtn) {
         tourSpeakBtn.addEventListener('click', () => {
             const stop = campusTourStops[currentTourIndex];
             if (stop) speakVoicePrompt(`${stop.title}. ${stop.desc}`);
         });
     }
-
     if (closeTourModalBtn) {
         closeTourModalBtn.addEventListener('click', () => {
             tourCardModal.classList.add('hidden');
@@ -1184,7 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 16. DATA INITIALIZER & INSTANT LOCAL-FIRST LOADER =================
+    // ================= 16. DATA INITIALIZER & POPUP TRANSITIONS =================
     function processGeoJSONData(data) {
         campusGeoJSON = data;
         buildings = {};
@@ -1195,13 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
         L.geoJSON(data, {
             style: (feature) => {
                 if (feature.geometry.type === 'LineString') {
-                    return {
-                        color: '#f8fafc',
-                        weight: 3.5,
-                        opacity: 0.85,
-                        dashArray: '5, 5',
-                        className: 'campus-walkway-base'
-                    };
+                    return { color: '#f8fafc', weight: 3.5, opacity: 0.85, dashArray: '5, 5', className: 'campus-walkway-base' };
                 }
                 return { color: '#3b82f6', weight: 2 };
             },
@@ -1211,19 +1020,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const icon = getPlaceIcon(name, rawCat);
 
                 let dotColor = '#2563eb';
-                if (icon === '🚻' || icon === '🚹' || icon === '🚺') dotColor = '#8b5cf6';
+                if (icon === '🚻') dotColor = '#8b5cf6';
                 else if (icon === '🏥') dotColor = '#ef4444';
                 else if (icon === '🛡️') dotColor = '#f59e0b';
-                else if (icon === '🏊‍♂️' || icon === '🏸' || icon === '🏀' || icon === '⚽') dotColor = '#10b981';
+                else if (icon === '🏊‍♂️' || icon === '⚽') dotColor = '#10b981';
 
-                return L.circleMarker(latlng, {
-                    radius: 5,
-                    fillColor: '#ffffff',
-                    color: dotColor,
-                    weight: 3,
-                    opacity: 1,
-                    fillOpacity: 1
-                });
+                return L.circleMarker(latlng, { radius: 5, fillColor: '#ffffff', color: dotColor, weight: 3, opacity: 1, fillOpacity: 1 });
             },
             onEachFeature: (feature, layer) => {
                 const name = feature.properties?.name?.trim();
@@ -1231,9 +1033,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (feature.geometry.type === 'Point' && name) {
                     markerLayers[name] = layer;
                     buildings[name] = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
-                    placeMetadata[name] = {
-                        category: getCategoryClassification(name, rawCat)
-                    };
+                    placeMetadata[name] = { category: getCategoryClassification(name, rawCat) };
                     placeNamesSorted.push(name);
 
                     const icon = getPlaceIcon(name, rawCat);
@@ -1243,13 +1043,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         offset: [0, -6],
                         className: 'satellite-label'
                     });
+
+                    // Direct link to floor structure viewer
+                    layer.bindPopup(`
+                        <div style="font-family: 'Inter', sans-serif;">
+                            <strong>${name}</strong><br>
+                            <span style="font-size: 11px; color: #64748b;">Walkway Connected</span><br>
+                            <a href="building.html?name=${encodeURIComponent(name)}" style="display: inline-block; margin-top: 6px; color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none;">
+                                🏢 View Inside Floor Layout &rarr;
+                            </a>
+                        </div>
+                    `);
                 }
             }
         }).addTo(map);
 
         placeNamesSorted.sort();
         buildClientGraph(data);
-
         applyCategoryAndZoomFilter();
         clearTimeout(safetyTimer);
         hideLoader();
@@ -1262,29 +1072,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // INSTANT LOCAL-FIRST LOADER (Bypasses Render 30s Cold Start)
+    // Instant Local-First Loader
     fetch('assets/data/giet_campus.geojson')
         .then(res => {
-            if (!res.ok) throw new Error("Local GeoJSON not found");
+            if (!res.ok) throw new Error("Local bundle not available");
             return res.json();
         })
         .then(data => {
             processGeoJSONData(data);
             hideLoader();
-            console.log("⚡ Campus spatial data loaded instantly (<0.5s) from static bundle.");
-
-            // Background non-blocking sync with backend
+            // Background sync
             fetch(`${API_URL}/api/campus-data`, { signal: AbortSignal.timeout(5000) })
-                .then(res => res.json())
-                .then(serverData => {
-                    if (serverData && serverData.geojson) {
-                        console.log("🔄 Background sync completed with live backend.");
-                    }
-                })
-                .catch(() => console.log("Backend asleep; running on static campus data."));
+                .catch(() => console.log("Backend offline; running on local campus data."));
         })
         .catch(err => {
-            console.warn("Local bundle failed, falling back to API:", err);
+            console.warn("Falling back to API:", err);
             fetch(`${API_URL}/api/campus-data`)
                 .then(res => res.json())
                 .then(data => processGeoJSONData(data.geojson))
@@ -1295,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
 
-    // ================= 17. ROUTE CALCULATION =================
+    // ================= 17. ROUTE TRIGGER =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -1306,7 +1108,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const coordsArray = [];
-
             if (selectedWaypoints.start.id === "LIVE_LOCATION") {
                 if (!currentUserLat || !currentUserLng) {
                     alert("Acquiring GPS location... Please ensure location permissions are enabled.");
@@ -1352,10 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => {
                     const panel = document.querySelector('.panel-body');
                     if (panel && turnStepsContainer) {
-                        panel.scrollTo({
-                            top: turnStepsContainer.offsetTop - 20,
-                            behavior: 'smooth'
-                        });
+                        panel.scrollTo({ top: turnStepsContainer.offsetTop - 20, behavior: 'smooth' });
                     }
                 }, 280);
             }
@@ -1385,10 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
             startNavBtn.classList.add('btn-danger');
 
-            if (window.innerWidth <= 640) {
-                applySheetSnap(1);
-            }
-
+            if (window.innerWidth <= 640) applySheetSnap(1);
             speakVoicePrompt("Starting GPS live navigation.");
 
             watchId = navigator.geolocation.watchPosition(
@@ -1422,7 +1217,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 points.push([lat, lng]);
             }
         }
-
         points.push(coords[coords.length - 1]);
         return points;
     }
@@ -1470,10 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isTrackingOrSimulating = true;
             simulateBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause</span>`;
 
-            if (window.innerWidth <= 640) {
-                applySheetSnap(1);
-            }
-
+            if (window.innerWidth <= 640) applySheetSnap(1);
             speakVoicePrompt("Simulating walk.");
 
             const animationPoints = generateUniformAnimationPoints(fullRouteCoords, 1.0);
@@ -1541,9 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
             routeOptionsContainer.classList.add('hidden');
             map.setView(GIET_CENTER, 18);
 
-            if (window.innerWidth <= 640) {
-                applySheetSnap(0);
-            }
+            if (window.innerWidth <= 640) applySheetSnap(0);
         });
     }
 
@@ -1554,35 +1343,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 20. SEARCH =================
+    // ================= 20. SEARCH & INDOOR SHORTCUTS =================
+    // Specific classrooms routed to building entrance with direct indoor link
+    const INDOOR_ROOM_SHORTCUTS = [
+        { code: "csa-4", name: "CSA 4 (3rd Floor)", building: "CSA block", roomParam: "CSA-4" },
+        { code: "csa-3", name: "CSA 3 (3rd Floor)", building: "CSA block", roomParam: "CSA-3" },
+        { code: "bee lab", name: "BEE LAB (3rd Floor)", building: "CSA block", roomParam: "BEE-LAB" },
+        { code: "be lab", name: "BE LAB (3rd Floor)", building: "CSA block", roomParam: "BE-LAB" },
+        { code: "mpmc lab", name: "MPMC LAB (3rd Floor)", building: "CSA block", roomParam: "MPMC-LAB" },
+        { code: "fc-2", name: "FC-2 Exam Section", building: "CSA block", roomParam: "FC-2" }
+    ];
+
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
             searchResults.innerHTML = '';
 
-            if (searchClearBtn) {
-                searchClearBtn.classList.toggle('hidden', query.length === 0);
-            }
-
+            if (searchClearBtn) searchClearBtn.classList.toggle('hidden', query.length === 0);
             if (!query) {
                 searchResults.classList.add('hidden');
                 return;
             }
 
-            const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
-            if (matchedPlaces.length === 0) {
-                searchResults.innerHTML = `<div style="padding: 12px; text-align: center; color: #94a3b8; font-size: 13px;">No places found</div>`;
-                searchResults.classList.remove('hidden');
-                return;
-            }
+            // Check classroom shortcuts
+            const matchedRooms = INDOOR_ROOM_SHORTCUTS.filter(r => r.code.includes(query) || r.name.toLowerCase().includes(query));
+            matchedRooms.forEach(rm => {
+                const item = document.createElement('div');
+                item.className = 'search-item';
+                item.innerHTML = `<span style="font-size:18px;">🎓</span> <div><strong>${rm.name}</strong><br><small style="color:#64748b;">Inside ${rm.building}</small></div>`;
 
+                item.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    buildingSearch.value = rm.name;
+                    searchResults.classList.add('hidden');
+
+                    selectedWaypoints.destination = { id: rm.building, name: rm.building };
+                    destinationDisplay.querySelector('.waypoint-text').textContent = `🏢 ${rm.building}`;
+                    destinationDisplay.querySelector('.waypoint-text').classList.remove('placeholder');
+
+                    findRouteBtn.click();
+
+                    turnHud.classList.remove('hidden');
+                    turnInstruction.innerHTML = `
+                        Destination: ${rm.name}<br>
+                        <a href="building.html?name=${encodeURIComponent(rm.building)}&room=${encodeURIComponent(rm.roomParam)}" style="color:#38bdf8; font-size:11px; text-decoration:underline;">
+                            Open 3rd Floor Blueprint &rarr;
+                        </a>
+                    `;
+                });
+                searchResults.appendChild(item);
+            });
+
+            // Match outdoor campus landmarks
+            const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
             matchedPlaces.slice(0, 8).forEach(place => {
                 const icon = getPlaceIcon(place);
                 const item = document.createElement('div');
                 item.className = 'search-item';
                 item.innerHTML = `<span style="font-size:18px;">${icon}</span> <strong>${place}</strong>`;
 
-                const handleSelection = (ev) => {
+                item.addEventListener('click', (ev) => {
                     ev.preventDefault();
                     ev.stopPropagation();
 
@@ -1600,13 +1421,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (markerLayers[place]) markerLayers[place].openTooltip();
                     }
 
-                    if (window.innerWidth <= 640) {
-                        applySheetSnap(0);
-                    }
-                };
-
-                item.addEventListener('touchend', handleSelection);
-                item.addEventListener('click', handleSelection);
+                    if (window.innerWidth <= 640) applySheetSnap(0);
+                });
 
                 searchResults.appendChild(item);
             });

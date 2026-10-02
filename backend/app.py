@@ -2,10 +2,15 @@ import math
 import json
 import os
 import heapq
+import io
 from typing import Dict, List, Tuple, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import func
+from PIL import Image
+import cv2
+import numpy as np
 
 from database import SessionLocal, Floor, Room, init_db
 
@@ -90,7 +95,11 @@ def build_routing_graph(features: List[dict]):
 
     return graph, nodes_list
 
-# --- Models ---
+# Exclusion filters so courts, grounds, and parking are omitted from floor building selectors
+EXCLUDED_CATEGORIES = {"sports ground", "water", "washroom", "security", "medical", "parking"}
+EXCLUDED_KEYWORDS = ["court", "ground", "swimming", "bus-stop", "parking", "garden", "temple", "park"]
+
+# --- Request / Response Models ---
 class PointPayload(BaseModel):
     id: Optional[int] = None
     name: str
@@ -106,6 +115,13 @@ class RoutePayload(BaseModel):
 
 class WaypointRequest(BaseModel):
     waypoints: List[str]
+
+class FloorPayload(BaseModel):
+    id: Optional[int] = None
+    building_name: str
+    floor_number: int
+    name: str
+    department: Optional[str] = ""
 
 class RoomPayload(BaseModel):
     id: Optional[int] = None
@@ -186,13 +202,6 @@ def save_route(payload: RoutePayload):
 
     save_geojson(geojson)
     return {"status": "success", "message": "Walkway saved"}
-
-@app.post("/api/admin/import-geojson")
-def import_geojson(data: dict):
-    if data.get("type") != "FeatureCollection" or "features" not in data:
-        raise HTTPException(status_code=400, detail="Invalid FeatureCollection GeoJSON")
-    save_geojson(data)
-    return {"status": "success", "count": len(data["features"])}
 
 @app.delete("/api/admin/feature/{index}")
 def delete_feature(index: int):
@@ -297,7 +306,6 @@ def calculate_routes(req: WaypointRequest):
                 break
 
             total_dist += leg_dist
-
             segment_full = [list(p1)]
             for pt in leg_coords:
                 if list(pt) != segment_full[-1]:
@@ -341,12 +349,83 @@ def calculate_routes(req: WaypointRequest):
 
     return {"routes": routes}
 
+# --- Unified Search Endpoint: Outdoor Points & Indoor Rooms ---
+@app.get("/api/search-destinations")
+def search_destinations(q: str):
+    query = q.strip().lower()
+    results = []
+
+    geojson = load_geojson()
+    for feat in geojson.get("features", []):
+        if feat.get("geometry", {}).get("type") == "Point":
+            name = feat.get("properties", {}).get("name", "")
+            cat = feat.get("properties", {}).get("category", "")
+            if query in name.lower():
+                results.append({
+                    "title": name,
+                    "subtitle": cat or "Outdoor Landmark",
+                    "type": "outdoor",
+                    "target": name
+                })
+
+    db = SessionLocal()
+    try:
+        rooms = db.query(Room).join(Floor).filter(
+            (func.lower(Room.number).contains(query)) |
+            (func.lower(Room.name).contains(query))
+        ).all()
+
+        for r in rooms:
+            results.append({
+                "title": f"{r.number} - {r.name}",
+                "subtitle": f"{r.floor.building_name} • {r.floor.name}",
+                "type": "indoor",
+                "building": r.floor.building_name,
+                "floor_number": r.floor.floor_number,
+                "room_code": r.number
+            })
+    finally:
+        db.close()
+
+    return results[:10]
+
 # --- Floor & Room Layout Endpoints ---
+@app.get("/api/admin/buildings-list")
+def get_buildings_list():
+    db = SessionLocal()
+    try:
+        db_buildings = [b[0].strip() for b in db.query(Floor.building_name).distinct().all() if b[0]]
+        geojson = load_geojson()
+        
+        map_buildings = []
+        for f in geojson.get("features", []):
+            if f.get("geometry", {}).get("type") == "Point":
+                name = f.get("properties", {}).get("name", "").strip()
+                cat = f.get("properties", {}).get("category", "").strip().lower()
+                
+                # Exclude outdoor non-building areas
+                if not name or cat in EXCLUDED_CATEGORIES:
+                    continue
+                if any(k in name.lower() for k in EXCLUDED_KEYWORDS):
+                    continue
+                map_buildings.append(name)
+
+        unique_map = {}
+        for bldg in (db_buildings + map_buildings):
+            key = bldg.lower().strip()
+            if key not in unique_map or ("Block" in bldg and "block" in unique_map[key]):
+                unique_map[key] = bldg
+
+        return sorted(list(unique_map.values()))
+    finally:
+        db.close()
+
 @app.get("/api/buildings/{building_name}/floors")
 def get_floors_by_building(building_name: str):
     db = SessionLocal()
     try:
-        floors = db.query(Floor).filter(Floor.building_name == building_name).all()
+        clean_target = building_name.strip().lower()
+        floors = db.query(Floor).filter(func.lower(Floor.building_name) == clean_target).order_by(Floor.floor_number).all()
         result = []
         for f in floors:
             result.append({
@@ -368,6 +447,45 @@ def get_floors_by_building(building_name: str):
                 ]
             })
         return result
+    finally:
+        db.close()
+
+@app.post("/api/admin/save-floor")
+def save_floor(payload: FloorPayload):
+    db = SessionLocal()
+    try:
+        if payload.id:
+            floor = db.query(Floor).filter(Floor.id == payload.id).first()
+            if not floor:
+                raise HTTPException(status_code=404, detail="Floor not found")
+            floor.building_name = payload.building_name.strip()
+            floor.floor_number = payload.floor_number
+            floor.name = payload.name
+            floor.department = payload.department
+        else:
+            floor = Floor(
+                building_name=payload.building_name.strip(),
+                floor_number=payload.floor_number,
+                name=payload.name,
+                department=payload.department
+            )
+            db.add(floor)
+        db.commit()
+        db.refresh(floor)
+        return {"status": "success", "id": floor.id, "message": "Floor saved"}
+    finally:
+        db.close()
+
+@app.delete("/api/admin/floor/{floor_id}")
+def delete_floor(floor_id: int):
+    db = SessionLocal()
+    try:
+        floor = db.query(Floor).filter(Floor.id == floor_id).first()
+        if not floor:
+            raise HTTPException(status_code=404, detail="Floor not found")
+        db.delete(floor)
+        db.commit()
+        return {"status": "success", "message": "Floor deleted"}
     finally:
         db.close()
 
@@ -417,3 +535,46 @@ def delete_room(room_id: int):
         return {"status": "success", "message": "Room deleted"}
     finally:
         db.close()
+
+# --- Computer Vision Sketch / PNG Auto-Detector Endpoint ---
+@app.post("/api/admin/detect-sketch")
+async def detect_sketch_layout(file: UploadFile = File(...)):
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    img_np = np.array(image)
+    
+    canvas_w, canvas_h = 900, 480
+    resized = cv2.resize(img_np, (canvas_w, canvas_h))
+
+    gray = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    thresh = cv2.adaptiveThreshold(
+        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY_INV, 15, 4
+    )
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4))
+    closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+
+    contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    detected_rooms = []
+    counter = 1
+
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w > 35 and h > 35 and (w * h) > 1600 and (w < canvas_w - 20 or h < canvas_h - 20):
+            detected_rooms.append({
+                "number": f"ROOM-{counter}",
+                "name": f"Room {counter}",
+                "type": "Classroom",
+                "description": "Auto-detected boundary",
+                "x": int(x),
+                "y": int(y),
+                "w": int(w),
+                "h": int(h)
+            })
+            counter += 1
+
+    detected_rooms.sort(key=lambda r: (r["y"] // 50, r["x"]))
+    return {"status": "success", "count": len(detected_rooms), "rooms": detected_rooms}

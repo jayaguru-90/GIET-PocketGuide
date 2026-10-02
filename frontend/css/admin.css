@@ -1,84 +1,145 @@
-:root {
-    --bg-dark: #0f172a;
-    --card-bg: rgba(30, 41, 59, 0.95);
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
-    --accent: #10b981;
-    --danger: #ef4444;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border: rgba(255, 255, 255, 0.1);
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
+/* ==========================================================================
+   GIET CAMPUS GUIDE - ADMIN STUDIO STYLESHEET (admin.css)
+   Requires: common.css
+   ========================================================================== */
 
 body.admin-body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
+    background-color: #0f172a;
+    color: #f8fafc;
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-.header {
-    height: 58px;
-    background: #1e293b;
-    border-bottom: 1px solid var(--border);
-    display: flex;
+/* ================= 1. MOBILE BLOCKER SCREEN ================= */
+.mobile-blocker-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 30%, #1e293b, #090d16);
+    z-index: 99999;
     align-items: center;
-    padding: 0 1.5rem;
-    z-index: 1000;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
 }
 
-.logo-section {
+.mobile-blocker-card {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: scaleInCard 0.25s ease-out;
+}
+
+@keyframes scaleInCard {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.mobile-icon-box {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: rgba(56, 189, 248, 0.12);
+    border: 1.5px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+}
+
+.mobile-blocker-card h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+
+.mobile-blocker-card p {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.mobile-tip-pill {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+}
+
+.btn-return-mobile {
+    background: #2563eb;
+    color: #ffffff;
     text-decoration: none;
-    color: #fff;
-}
-
-.logo {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
-}
-
-.brand-title {
-    font-size: 1.05rem;
+    font-size: 13.5px;
     font-weight: 700;
-}
-
-.brand-sub {
-    font-size: 0.72rem;
-    color: var(--accent);
-    display: flex;
+    padding: 12px 20px;
+    border-radius: 14px;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    margin-top: 6px;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s ease;
 }
 
+.btn-return-mobile:active {
+    transform: scale(0.96);
+}
+
+/* Activate Blocker on Mobile and Small Tablet Screens (<992px) */
+@media (max-width: 992px) {
+    .mobile-blocker-screen {
+        display: flex !important;
+    }
+    .admin-workspace,
+    .app-header {
+        filter: blur(10px);
+        pointer-events: none;
+        user-select: none;
+    }
+}
+
+/* ================= 2. WORKSPACE LAYOUT ================= */
 .admin-workspace {
     flex: 1;
     display: flex;
-    height: calc(100vh - 58px);
+    height: calc(100vh - 56px);
     position: relative;
 }
 
 .sidebar-editor {
     width: 410px;
-    background: var(--card-bg);
+    background: rgba(30, 41, 59, 0.95);
     backdrop-filter: blur(12px);
-    border-right: 1px solid var(--border);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
     z-index: 500;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-content {
@@ -90,39 +151,43 @@ body.admin-body {
     gap: 1.25rem;
 }
 
+/* Panel Tabs */
 .panel-tabs {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     background: #0f172a;
     padding: 4px;
     border-radius: 10px;
+    gap: 4px;
 }
 
 .tab-btn {
-    padding: 9px;
+    padding: 8px 6px;
     border: none;
     background: transparent;
-    color: var(--text-muted);
+    color: #94a3b8;
     font-weight: 600;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .tab-btn.active {
-    background: var(--primary);
+    background: #3b82f6;
     color: #fff;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
+/* Glass Card Containers */
 .glass-card {
     background: rgba(15, 23, 42, 0.65);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     padding: 1rem;
 }
@@ -138,10 +203,12 @@ body.admin-body {
 
 .card-desc {
     font-size: 0.75rem;
-    color: var(--text-muted);
+    color: #94a3b8;
     margin-bottom: 1rem;
+    line-height: 1.45;
 }
 
+/* Inputs & Form Fields */
 .input-field {
     margin-bottom: 0.85rem;
 }
@@ -150,15 +217,16 @@ body.admin-body {
     display: block;
     font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: #94a3b8;
     margin-bottom: 4px;
 }
 
-.input-field input, .input-field select {
+.input-field input, 
+.input-field select {
     width: 100%;
     padding: 8px 12px;
     background: #1e293b;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: #fff;
     font-size: 0.85rem;
@@ -166,8 +234,9 @@ body.admin-body {
     transition: border 0.2s;
 }
 
-.input-field input:focus, .input-field select:focus {
-    border-color: var(--primary);
+.input-field input:focus, 
+.input-field select:focus {
+    border-color: #3b82f6;
 }
 
 .coords-row {
@@ -176,51 +245,7 @@ body.admin-body {
     gap: 8px;
 }
 
-.btn-primary {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.82rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: 0.2s;
-    width: 100%;
-}
-
-.btn-primary:hover {
-    background: var(--primary-hover);
-}
-
-.btn-danger {
-    background: rgba(239, 68, 68, 0.15) !important;
-    color: #f87171 !important;
-    border: 1px solid rgba(239, 68, 68, 0.3) !important;
-}
-
-.btn-danger:hover {
-    background: var(--danger) !important;
-    color: white !important;
-}
-
-.btn-secondary {
-    background: #334155;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
+/* Registry List */
 .registry-list {
     max-height: 230px;
     overflow-y: auto;
@@ -229,32 +254,36 @@ body.admin-body {
     gap: 6px;
 }
 
-.reg-item {
+.reg-item,
+.registry-item {
     background: #1e293b;
     padding: 8px 12px;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.reg-info h5 {
+.reg-info h5,
+.registry-item-info {
     font-size: 0.82rem;
     font-weight: 600;
 }
 
 .reg-info p {
     font-size: 0.7rem;
-    color: var(--text-muted);
+    color: #94a3b8;
 }
 
-.reg-actions {
+.reg-actions,
+.registry-actions {
     display: flex;
     gap: 4px;
 }
 
-.action-btn {
+.action-btn,
+.btn-icon {
     background: #334155;
     border: none;
     color: #fff;
@@ -266,15 +295,23 @@ body.admin-body {
     justify-content: center;
     cursor: pointer;
     font-size: 0.72rem;
+    transition: background 0.15s ease;
 }
 
-.action-btn.del:hover {
-    background: var(--danger);
+.action-btn.del:hover,
+.btn-icon.btn-delete:hover { 
+    background: #ef4444; 
 }
 
+.btn-icon.btn-edit:hover {
+    background: #2563eb;
+}
+
+/* ================= 3. RIGHT VIEWPORT & PREVIEW ================= */
 .map-viewport-section {
     flex: 1;
     position: relative;
+    overflow: hidden;
 }
 
 #admin-leaflet-map {
@@ -287,26 +324,20 @@ body.admin-body {
     top: 16px;
     right: 16px;
     z-index: 1000;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.88);
     backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     padding: 8px 14px;
     border-radius: 50px;
     font-size: 0.78rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
 }
 
-.pulse-dot {
-    width: 8px;
-    height: 8px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--accent);
-}
-
+/* Authentication Modal */
 .auth-overlay {
     position: fixed;
     inset: 0;
@@ -320,18 +351,15 @@ body.admin-body {
 
 .auth-card {
     background: #1e293b;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     padding: 2rem;
     width: 380px;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.hidden {
-    display: none !important;
-}
-/* Permanent Building & Amenity Badges */
+/* Map Tooltips */
 .leaflet-tooltip.admin-map-tooltip {
     background: transparent !important;
     border: none !important;
@@ -358,4 +386,147 @@ body.admin-body {
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     pointer-events: none;
+}
+
+/* ================= 4. BLUEPRINT CANVAS & RESIZING ================= */
+.admin-blueprint-viewport {
+    position: absolute;
+    inset: 0;
+    background: #0b1120;
+    z-index: 800;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+}
+
+.blueprint-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 180px 8px 14px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 10;
+}
+
+.blueprint-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.blueprint-preview-board-wrap {
+    flex: 1;
+    overflow: auto;
+    background: #0f172a;
+    border: 1.5px dashed #334155;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.admin-blueprint-canvas {
+    position: relative;
+    width: 900px;
+    height: 480px;
+    background: #1e293b;
+    border: 2px solid #475569;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    user-select: none;
+}
+
+/* Interactive Room Boxes */
+.admin-preview-room {
+    position: absolute;
+    border-radius: 8px;
+    padding: 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: move !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    user-select: none;
+    transition: border-color 0.15s ease;
+}
+
+.admin-preview-room:hover {
+    transform: scale(1.02);
+    z-index: 10;
+}
+
+.admin-preview-room.active-editing {
+    border: 2.5px solid #38bdf8 !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.6) !important;
+    z-index: 20;
+}
+
+.room-resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 12px;
+    height: 12px;
+    background: #38bdf8;
+    border-radius: 2px 0 6px 0;
+    cursor: se-resize;
+    display: none;
+}
+
+.admin-preview-room.active-editing .room-resize-handle {
+    display: block;
+}
+
+.drawing-selection-box {
+    position: absolute;
+    border: 2px dashed #38bdf8;
+    background: rgba(56, 189, 248, 0.2);
+    pointer-events: none;
+    z-index: 999;
+}
+
+/* Category Color Coding */
+.admin-preview-room.classroom   { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #a7f3d0; }
+.admin-preview-room.laboratory  { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #93c5fd; }
+.admin-preview-room.office      { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fde68a; }
+.admin-preview-room.washroom    { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; color: #ddd6fe; }
+.admin-preview-room.auditorium  { background: rgba(239, 68, 68, 0.2);  border-color: #ef4444; color: #fca5a5; }
+.admin-preview-room.utility     { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; color: #ddd6fe; }
+
+/* Corridor */
+.admin-preview-room.corridor {
+    background: rgba(148, 163, 184, 0.12) !important;
+    border: 1.5px dashed #94a3b8 !important;
+    color: #cbd5e1 !important;
+    z-index: 1;
+}
+
+/* Stairs & Lifts */
+.admin-preview-room.stairs {
+    background: rgba(245, 158, 11, 0.22) !important;
+    border: 2px solid #f59e0b !important;
+    color: #fde68a !important;
+    font-weight: 700;
+}
+
+.admin-preview-room.lift {
+    background: rgba(234, 88, 12, 0.22) !important;
+    border: 2px solid #ea580c !important;
+    color: #fed7aa !important;
+    font-weight: 700;
 }
