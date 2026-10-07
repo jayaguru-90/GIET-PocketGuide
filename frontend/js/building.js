@@ -19,10 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let floorsData = [];
     let activeFloorIndex = 0;
 
-    // Read URL query parameters (e.g. building.html?name=CSA+Block&room=CSA-4)
+    // Read URL query parameters (?name=... or ?building=..., and ?room=...)
     const urlParams = new URLSearchParams(window.location.search);
-    let activeBuilding = urlParams.get('name') || "CSA Block";
-    const targetRoomCode = urlParams.get('room');
+    let activeBuilding = (urlParams.get('building') || urlParams.get('name') || "CSA Block").trim();
+    const targetFloorParam = urlParams.get('floor');
+    const targetRoomCode = urlParams.get('room') ? urlParams.get('room').trim().toLowerCase() : null;
 
     // ================= 1. THEME ENGINE =================
     function initTheme() {
@@ -50,64 +51,73 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`${API_URL}/api/admin/buildings-list`, { signal: AbortSignal.timeout(3000) });
             const buildings = await res.json();
-            buildingSelector.innerHTML = "";
-            buildings.forEach(b => {
-                const opt = document.createElement("option");
-                opt.value = b;
-                opt.textContent = b;
-                if (b.toLowerCase() === activeBuilding.toLowerCase()) {
-                    opt.selected = true;
-                    activeBuilding = b;
-                }
-                buildingSelector.appendChild(opt);
-            });
+            populateSelector(buildings);
         } catch (e) {
-            const defaults = ["CSA Block", "CSE Building", "Admin Block", "Library", "Mechanical building"];
-            buildingSelector.innerHTML = "";
-            defaults.forEach(b => {
-                const opt = document.createElement("option");
-                opt.value = b;
-                opt.textContent = b;
-                if (b.toLowerCase() === activeBuilding.toLowerCase()) {
-                    opt.selected = true;
-                    activeBuilding = b;
-                }
-                buildingSelector.appendChild(opt);
-            });
+            const defaults = ["CSA Block", "CSE Building", "Admin Block", "Library", "Mechanical building", "Bio tech Building", "Agriculture Block", "BSH Building"];
+            populateSelector(defaults);
         }
         loadBuildingFloors();
     }
 
-    // ================= 3. FETCH LIVE FLOORS & ROOMS FROM SQLITE =================
+    function populateSelector(list) {
+        if (!buildingSelector) return;
+        buildingSelector.innerHTML = "";
+        let matched = false;
+
+        list.forEach(b => {
+            const opt = document.createElement("option");
+            opt.value = b;
+            opt.textContent = b;
+            if (b.toLowerCase().trim() === activeBuilding.toLowerCase().trim()) {
+                opt.selected = true;
+                activeBuilding = b;
+                matched = true;
+            }
+            buildingSelector.appendChild(opt);
+        });
+
+        if (!matched && list.length > 0) {
+            activeBuilding = list[0];
+            buildingSelector.value = list[0];
+        }
+    }
+
+    // ================= 3. FETCH LIVE FLOORS & ROOMS =================
     async function loadBuildingFloors() {
-        buildingHeaderName.textContent = activeBuilding;
-        blueprintBoard.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted);">Loading blueprint from database...</div>`;
+        if (buildingHeaderName) buildingHeaderName.textContent = activeBuilding;
+        if (blueprintBoard) {
+            blueprintBoard.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading layout from database...</div>`;
+        }
 
         try {
             const res = await fetch(`${API_URL}/api/buildings/${encodeURIComponent(activeBuilding)}/floors`);
             floorsData = await res.json();
 
             if (!floorsData || floorsData.length === 0) {
-                blueprintBoard.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted);">No floors configured for ${activeBuilding} in database yet.</div>`;
-                floorTabsContainer.innerHTML = "";
+                if (blueprintBoard) {
+                    blueprintBoard.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-muted);">No floors configured for ${activeBuilding} yet.</div>`;
+                }
+                if (floorTabsContainer) floorTabsContainer.innerHTML = "";
                 return;
             }
 
-            renderFloorTabs();
-
-            // Auto-switch to floor if target room parameter is present
-            if (targetRoomCode) {
+            // Target floor priority: 1) URL floor parameter, 2) floor containing target room, 3) 0th index
+            if (targetFloorParam !== null && targetFloorParam !== undefined) {
+                const fIdx = floorsData.findIndex(f => f.floor_number === parseInt(targetFloorParam));
+                activeFloorIndex = fIdx !== -1 ? fIdx : 0;
+            } else if (targetRoomCode) {
                 const foundIdx = floorsData.findIndex(f => 
-                    (f.rooms || []).some(r => r.number.toLowerCase() === targetRoomCode.toLowerCase())
+                    (f.rooms || []).some(r => r.number.toLowerCase().trim() === targetRoomCode)
                 );
-                if (foundIdx !== -1) {
-                    activeFloorIndex = foundIdx;
-                }
+                activeFloorIndex = foundIdx !== -1 ? foundIdx : 0;
+            } else {
+                activeFloorIndex = 0;
             }
 
+            renderFloorTabs();
             renderBlueprintCanvas();
         } catch (err) {
-            console.warn("DB offline; using fallback data:", err);
+            console.warn("Database offline; using fallback dataset", err);
             loadFallbackCSA();
         }
     }
@@ -140,8 +150,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 4. RENDER BLUEPRINT =================
+    // ================= 4. RENDER BLUEPRINT & AUTO-FIT =================
     function renderFloorTabs() {
+        if (!floorTabsContainer) return;
         floorTabsContainer.innerHTML = "";
         floorsData.forEach((f, idx) => {
             const btn = document.createElement("button");
@@ -157,14 +168,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function autoFitCanvasToScreen() {
+        if (!blueprintBoard) return;
+        const viewport = document.querySelector('.blueprint-viewport-wrap');
+        if (!viewport) return;
+
+        const availableWidth = viewport.clientWidth - 24;
+        const availableHeight = viewport.clientHeight - 24;
+        const baseWidth = 900;
+        const baseHeight = 480;
+
+        // Auto-scale on mobile/narrow screens so all boundary rooms remain visible
+        if (availableWidth < baseWidth || availableHeight < baseHeight) {
+            const scaleX = availableWidth / baseWidth;
+            const scaleY = availableHeight / baseHeight;
+            const finalScale = Math.min(scaleX, scaleY, 1.0);
+
+            blueprintBoard.style.transform = `scale(${finalScale.toFixed(3)})`;
+        } else {
+            blueprintBoard.style.transform = 'scale(1)';
+        }
+    }
+
+    window.addEventListener('resize', autoFitCanvasToScreen);
+
     function renderBlueprintCanvas() {
         const currentFloor = floorsData[activeFloorIndex];
-        if (!currentFloor) return;
+        if (!currentFloor || !blueprintBoard) return;
 
-        currentFloorLabel.textContent = `${activeBuilding} - ${currentFloor.name}`;
+        if (currentFloorLabel) {
+            currentFloorLabel.textContent = `${activeBuilding} - ${currentFloor.name}`;
+        }
         blueprintBoard.innerHTML = "";
 
-        const query = roomSearchInput.value.trim().toLowerCase();
+        const query = roomSearchInput ? roomSearchInput.value.trim().toLowerCase() : "";
         const rooms = currentFloor.rooms || [];
 
         const filteredRooms = rooms.filter(r => 
@@ -179,52 +216,83 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        let highlightedElement = null;
+
         filteredRooms.forEach(room => {
             const block = document.createElement("div");
             const typeClass = (room.type || "classroom").toLowerCase();
             block.className = `blueprint-room-box ${typeClass}`;
             
-            // Map spatial coordinates from DB
             const p = room.plan || { x: 40, y: 40, w: 60, h: 60 };
             block.style.left = `${p.x}px`;
             block.style.top = `${p.y}px`;
             block.style.width = `${p.w}px`;
             block.style.height = `${p.h}px`;
 
-            // Highlight if arriving from navigation search
-            if (targetRoomCode && room.number.toLowerCase() === targetRoomCode.toLowerCase()) {
-                block.classList.add("active-pulse");
-            }
+            // Clean title: Avoid duplicate text if number equals name
+            const isDuplicate = room.name.trim().toLowerCase() === room.number.trim().toLowerCase();
+            const subNameHtml = isDuplicate ? "" : `<div style="font-size: 10px; font-weight: 600; line-height: 1.2; margin-top: 2px; pointer-events: none;">${room.name}</div>`;
 
             block.innerHTML = `
-                <div style="font-size: 11px; font-weight: 800;">${room.number}</div>
-                <div style="font-size: 10px; font-weight: 600; line-height: 1.2; margin-top: 2px;">${room.name}</div>
+                <div style="font-size: 11px; font-weight: 800; pointer-events: none;">${room.number}</div>
+                ${subNameHtml}
             `;
 
-            block.addEventListener("click", () => {
-                roomTypeTag.textContent = (room.type || "ROOM").toUpperCase();
-                roomTitle.textContent = `${room.number}: ${room.name}`;
-                roomDescription.textContent = room.description || "No additional equipment specifications registered.";
-                roomDetailCard.classList.remove("hidden");
-                roomDetailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            });
+            // Check if this room is the targeted destination
+            if (targetRoomCode && room.number.toLowerCase().trim() === targetRoomCode) {
+                block.classList.add("active-pulse");
+                highlightedElement = block;
+                setTimeout(() => openRoomDetail(room), 350);
+            }
 
+            block.addEventListener("click", () => openRoomDetail(room));
             blueprintBoard.appendChild(block);
         });
+
+        // Trigger dynamic scale calculation for mobile viewport fitting
+        autoFitCanvasToScreen();
+
+        // Center target room inside the viewport
+        if (highlightedElement) {
+            const viewport = document.querySelector('.blueprint-viewport-wrap');
+            if (viewport) {
+                const roomX = parseInt(highlightedElement.style.left) || 0;
+                const roomY = parseInt(highlightedElement.style.top) || 0;
+                viewport.scrollTo({
+                    left: Math.max(0, roomX - (viewport.clientWidth / 2) + 50),
+                    top: Math.max(0, roomY - (viewport.clientHeight / 2) + 50),
+                    behavior: 'smooth'
+                });
+            }
+        }
+    }
+
+    function openRoomDetail(room) {
+        if (!roomDetailCard) return;
+        if (roomTypeTag) roomTypeTag.textContent = (room.type || "ROOM").toUpperCase();
+        if (roomTitle) roomTitle.textContent = `${room.number}: ${room.name}`;
+        if (roomDescription) roomDescription.textContent = room.description || "Standard campus room facility.";
+        
+        roomDetailCard.classList.remove("hidden");
+        roomDetailCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
     // ================= 5. EVENT LISTENERS =================
-    roomSearchInput.addEventListener("input", renderBlueprintCanvas);
+    if (roomSearchInput) {
+        roomSearchInput.addEventListener("input", renderBlueprintCanvas);
+    }
 
     if (closeCardBtn) {
         closeCardBtn.addEventListener("click", () => roomDetailCard.classList.add("hidden"));
     }
 
-    buildingSelector.addEventListener("change", (e) => {
-        activeBuilding = e.target.value;
-        activeFloorIndex = 0;
-        loadBuildingFloors();
-    });
+    if (buildingSelector) {
+        buildingSelector.addEventListener("change", (e) => {
+            activeBuilding = e.target.value;
+            activeFloorIndex = 0;
+            loadBuildingFloors();
+        });
+    }
 
     initBuildingSelector();
 });

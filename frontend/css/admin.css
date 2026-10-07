@@ -4,123 +4,111 @@
    ========================================================================== */
 
 body.admin-body {
-    background-color: #0f172a;
+    background-color: #0b1120;
     color: #f8fafc;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* ================= 1. MOBILE BLOCKER SCREEN ================= */
-.mobile-blocker-screen {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at 50% 30%, #1e293b, #090d16);
-    z-index: 99999;
+/* ================= 1. TOP APP BAR ================= */
+.app-header {
+    height: 56px;
+    background: #0f172a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 24px;
-    box-sizing: border-box;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
-.mobile-blocker-card {
-    background: rgba(30, 41, 59, 0.85);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 24px;
-    padding: 32px 24px;
-    text-align: center;
-    max-width: 420px;
-    width: 100%;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+.brand-unit {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+.brand-icon-box img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.brand-title-wrap {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    animation: scaleInCard 0.25s ease-out;
 }
 
-@keyframes scaleInCard {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: scale(1); }
+.brand-title-main {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    color: #ffffff;
 }
 
-.mobile-icon-box {
-    width: 68px;
-    height: 68px;
-    border-radius: 20px;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1.5px solid rgba(56, 189, 248, 0.3);
+.brand-title-sub {
+    font-size: 10px;
     color: #38bdf8;
+    font-weight: 700;
+    letter-spacing: 0.6px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 28px;
-    margin-bottom: 4px;
+    gap: 5px;
 }
 
-.mobile-blocker-card h2 {
-    font-size: 20px;
-    font-weight: 800;
-    color: #ffffff;
-    margin: 0;
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
-.mobile-blocker-card p {
-    font-size: 13.5px;
-    line-height: 1.55;
-    color: #94a3b8;
-    margin: 0;
-}
-
-.mobile-tip-pill {
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #fcd34d;
-    padding: 8px 12px;
-    border-radius: 12px;
+.header-actions .cat-chip,
+.header-actions a.cat-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-align: left;
-}
-
-.btn-return-mobile {
-    background: #2563eb;
-    color: #ffffff;
-    text-decoration: none;
-    font-size: 13.5px;
-    font-weight: 700;
-    padding: 12px 20px;
-    border-radius: 14px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 6px;
-    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
-    transition: transform 0.15s ease;
+    gap: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
 }
 
-.btn-return-mobile:active {
-    transform: scale(0.96);
+.header-actions .cat-chip:hover,
+.header-actions a.cat-chip:hover {
+    background: #334155;
+    border-color: #38bdf8;
+    color: #ffffff;
 }
 
-/* Activate Blocker on Mobile and Small Tablet Screens (<992px) */
-@media (max-width: 992px) {
-    .mobile-blocker-screen {
-        display: flex !important;
-    }
-    .admin-workspace,
-    .app-header {
-        filter: blur(10px);
-        pointer-events: none;
-        user-select: none;
-    }
+#auth-action-btn {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+}
+
+#auth-action-btn:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
 }
 
 /* ================= 2. WORKSPACE LAYOUT ================= */
@@ -128,37 +116,55 @@ body.admin-body {
     flex: 1;
     display: flex;
     height: calc(100vh - 56px);
+    height: calc(100dvh - 56px);
     position: relative;
+    overflow: hidden;
+}
+
+#admin-workspace.hidden {
+    display: none !important;
 }
 
 .sidebar-editor {
-    width: 410px;
-    background: rgba(30, 41, 59, 0.95);
-    backdrop-filter: blur(12px);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    width: 400px;
+    min-width: 370px;
+    max-width: 440px;
+    background: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
     z-index: 500;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+    height: 100%;
 }
 
 .sidebar-content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding: 1.25rem;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
-/* Panel Tabs */
+.sidebar-content::-webkit-scrollbar { width: 5px; }
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* Top Tab Switcher */
 .panel-tabs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    background: #0f172a;
-    padding: 4px;
-    border-radius: 10px;
+    background: #090d16;
+    padding: 5px;
+    border-radius: 12px;
     gap: 4px;
+    margin: 12px 16px 0 16px;
 }
 
 .tab-btn {
@@ -166,77 +172,87 @@ body.admin-body {
     border: none;
     background: transparent;
     color: #94a3b8;
-    font-weight: 600;
-    font-size: 0.78rem;
+    font-weight: 700;
+    font-size: 11.5px;
     border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    cursor: pointer;
+    transition: all 0.18s ease;
     white-space: nowrap;
 }
 
-.tab-btn.active {
-    background: #3b82f6;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+.tab-btn:hover {
+    color: #f8fafc;
 }
 
-/* Glass Card Containers */
+.tab-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+}
+
+/* Glass Card Blocks */
 .glass-card {
     background: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
+    font-size: 14px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
 .card-desc {
-    font-size: 0.75rem;
+    font-size: 11.5px;
     color: #94a3b8;
-    margin-bottom: 1rem;
+    margin-bottom: 12px;
     line-height: 1.45;
 }
 
-/* Inputs & Form Fields */
+/* Form Inputs */
 .input-field {
-    margin-bottom: 0.85rem;
+    margin-bottom: 10px;
 }
 
 .input-field label {
     display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     color: #94a3b8;
     margin-bottom: 4px;
 }
 
 .input-field input, 
-.input-field select {
+.input-field select,
+.input-field textarea {
     width: 100%;
+    box-sizing: border-box;
     padding: 8px 12px;
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
-    color: #fff;
-    font-size: 0.85rem;
+    color: #f8fafc;
+    font-size: 12.5px;
     outline: none;
-    transition: border 0.2s;
+    transition: border-color 0.15s ease;
 }
 
 .input-field input:focus, 
-.input-field select:focus {
-    border-color: #3b82f6;
+.input-field select:focus,
+.input-field textarea:focus {
+    border-color: #38bdf8;
 }
 
 .coords-row {
@@ -245,121 +261,101 @@ body.admin-body {
     gap: 8px;
 }
 
-/* Registry List */
-.registry-list {
-    max-height: 230px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.reg-item,
-.registry-item {
-    background: #1e293b;
-    padding: 8px 12px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.reg-info h5,
-.registry-item-info {
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.reg-info p {
-    font-size: 0.7rem;
-    color: #94a3b8;
-}
-
-.reg-actions,
-.registry-actions {
-    display: flex;
-    gap: 4px;
-}
-
-.action-btn,
-.btn-icon {
-    background: #334155;
+/* Action Buttons */
+.btn-action-primary {
+    background: #2563eb;
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
     border: none;
-    color: #fff;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
-    display: flex;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    font-size: 0.72rem;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
     transition: background 0.15s ease;
 }
 
-.action-btn.del:hover,
-.btn-icon.btn-delete:hover { 
-    background: #ef4444; 
+.btn-action-primary:hover { background: #1d4ed8; }
+.btn-action-primary:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+
+.btn-action-secondary {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
-.btn-icon.btn-edit:hover {
-    background: #2563eb;
+.btn-action-secondary:hover { background: #334155; color: #fff; }
+
+/* Registry Items */
+.registry-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 5px;
 }
 
-/* ================= 3. RIGHT VIEWPORT & PREVIEW ================= */
+.registry-item-info {
+    font-size: 12px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.registry-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.btn-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-icon:hover { background: #334155; color: #ffffff; }
+.btn-icon.btn-delete:hover { background: #ef4444; color: #ffffff; }
+
+/* ================= 3. MAP VIEWPORT ================= */
 .map-viewport-section {
     flex: 1;
     position: relative;
     overflow: hidden;
+    height: 100%;
 }
 
 #admin-leaflet-map {
     width: 100%;
     height: 100%;
+    z-index: 1;
 }
 
-.map-status-pill {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 1000;
-    background: rgba(15, 23, 42, 0.88);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 8px 14px;
-    border-radius: 50px;
-    font-size: 0.78rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    pointer-events: none;
-}
-
-/* Authentication Modal */
-.auth-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-}
-
-.auth-card {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 2rem;
-    width: 380px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-/* Map Tooltips */
 .leaflet-tooltip.admin-map-tooltip {
     background: transparent !important;
     border: none !important;
@@ -372,7 +368,7 @@ body.admin-body {
 }
 
 .admin-building-tag {
-    background: rgba(15, 23, 42, 0.88);
+    background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(6px);
     color: #f8fafc;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -388,59 +384,38 @@ body.admin-body {
     pointer-events: none;
 }
 
-/* ================= 4. BLUEPRINT CANVAS & RESIZING ================= */
+/* ================= 4. BLUEPRINT CANVAS VIEWPORT ================= */
 .admin-blueprint-viewport {
     position: absolute;
     inset: 0;
-    background: #0b1120;
+    background: #090d16;
     z-index: 800;
     display: flex;
     flex-direction: column;
-    padding: 16px;
+    padding: 16px 20px;
     gap: 12px;
-}
-
-.blueprint-preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 180px 8px 14px;
-    background: rgba(30, 41, 59, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    gap: 10px;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 10;
-}
-
-.blueprint-header-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
 }
 
 .blueprint-preview-board-wrap {
     flex: 1;
     overflow: auto;
-    background: #0f172a;
-    border: 1.5px dashed #334155;
-    border-radius: 14px;
+    background: #0a0f1d;
+    border: 1.5px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 24px;
 }
 
 .admin-blueprint-canvas {
     position: relative;
     width: 900px;
     height: 480px;
-    background: #1e293b;
-    border: 2px solid #475569;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    background: #111827;
+    border: 2px solid #1f2937;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     flex-shrink: 0;
     background-size: cover;
     background-position: center;
@@ -448,11 +423,11 @@ body.admin-body {
     user-select: none;
 }
 
-/* Interactive Room Boxes */
+/* Room Box Styles */
 .admin-preview-room {
     position: absolute;
     border-radius: 8px;
-    padding: 4px;
+    padding: 6px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -462,7 +437,7 @@ body.admin-body {
     cursor: move !important;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     user-select: none;
-    transition: border-color 0.15s ease;
+    transition: transform 0.12s ease, border-color 0.12s ease;
 }
 
 .admin-preview-room:hover {
@@ -471,8 +446,8 @@ body.admin-body {
 }
 
 .admin-preview-room.active-editing {
-    border: 2.5px solid #38bdf8 !important;
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.6) !important;
+    border: 2px solid #38bdf8 !important;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.5) !important;
     z-index: 20;
 }
 
@@ -500,33 +475,145 @@ body.admin-body {
     z-index: 999;
 }
 
-/* Category Color Coding */
-.admin-preview-room.classroom   { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #a7f3d0; }
-.admin-preview-room.laboratory  { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; color: #93c5fd; }
-.admin-preview-room.office      { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #fde68a; }
-.admin-preview-room.washroom    { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; color: #ddd6fe; }
-.admin-preview-room.auditorium  { background: rgba(239, 68, 68, 0.2);  border-color: #ef4444; color: #fca5a5; }
-.admin-preview-room.utility     { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; color: #ddd6fe; }
+/* Room Categorization Outlines */
+.admin-preview-room.classroom   { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #a7f3d0; }
+.admin-preview-room.laboratory  { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #93c5fd; }
+.admin-preview-room.office      { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #fde68a; }
+.admin-preview-room.washroom    { background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #ddd6fe; }
+.admin-preview-room.auditorium  { background: rgba(239, 68, 68, 0.15);  border-color: #ef4444; color: #fca5a5; }
+.admin-preview-room.utility     { background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #ddd6fe; }
 
-/* Corridor */
 .admin-preview-room.corridor {
-    background: rgba(148, 163, 184, 0.12) !important;
+    background: rgba(148, 163, 184, 0.1) !important;
     border: 1.5px dashed #94a3b8 !important;
     color: #cbd5e1 !important;
     z-index: 1;
 }
 
-/* Stairs & Lifts */
 .admin-preview-room.stairs {
-    background: rgba(245, 158, 11, 0.22) !important;
+    background: rgba(245, 158, 11, 0.2) !important;
     border: 2px solid #f59e0b !important;
     color: #fde68a !important;
     font-weight: 700;
 }
 
 .admin-preview-room.lift {
-    background: rgba(234, 88, 12, 0.22) !important;
+    background: rgba(234, 88, 12, 0.2) !important;
     border: 2px solid #ea580c !important;
     color: #fed7aa !important;
     font-weight: 700;
+}
+
+/* ================= 5. AUTHENTICATION MODAL ================= */
+#auth-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    animation: authFadeIn 0.2s ease-out forwards;
+}
+
+#auth-modal.hidden {
+    display: none !important;
+}
+
+@keyframes authFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.auth-modal-card {
+    background: #1e293b;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    padding: 28px 24px;
+    width: 330px;
+    max-width: 90vw;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.auth-icon-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(37, 99, 235, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    font-size: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+}
+
+.auth-modal-card .input-field input {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.auth-modal-card .input-field input:-webkit-autofill,
+.auth-modal-card .input-field input:-webkit-autofill:hover, 
+.auth-modal-card .input-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f8fafc !important;
+    -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ================= 6. DESKTOP ONLY GUARD (< 992px) ================= */
+.mobile-blocker-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #090d16;
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.mobile-blocker-card {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 28px 22px;
+    text-align: center;
+    max-width: 380px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 992px) {
+    .mobile-blocker-screen {
+        display: flex !important;
+    }
+}
+
+/* ================= 7. MAGNETIC SNAP PULSE ================= */
+@keyframes snapPulse {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    100% { transform: scale(1.35); opacity: 1; }
+}
+
+.magnetic-snap-pulse {
+    pointer-events: none;
+    z-index: 1000;
 }

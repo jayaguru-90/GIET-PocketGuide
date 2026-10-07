@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const API_URL = isLocal ? "http://127.0.0.1:8000" : "https://giet-campus-api.onrender.com";
 
+    const CAMPUS_BOUNDS = L.latLngBounds(
+        [19.0430, 83.8260],
+        [19.0545, 83.8395]
+    );
+
     // ================= STATE & REFS =================
     let campusGeoJSON = { type: "FeatureCollection", features: [] };
     let activeTab = "locations";
@@ -25,10 +30,17 @@ document.addEventListener("DOMContentLoaded", () => {
     let map = null;
     let tempPlacementMarker = null;
 
-    // Route drawing
+    // Advanced Route Drawing, Vertex Editing & Midpoint Insertion
     let isDrawingRoute = false;
-    let drawnRoutePoints = [];
+    let drawnRoutePoints = [];        // [[lat, lng], [lat, lng], ...]
     let drawingPolyline = null;
+    let routeVertexMarkers = [];      // Main draggable vertex markers
+    let routeMidpointMarkers = [];    // Clickable mid-segment insertion handles
+
+    // Magnetic Snapping Guides
+    let snapGuideLayers = L.layerGroup();
+    let snapIndicatorMarker = null;
+    const SNAP_THRESHOLD_METERS = 8.0;
 
     // UI Elements
     const authModal = document.getElementById("auth-modal");
@@ -71,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const adminFloorSelect = document.getElementById("admin-floor-select");
     const btnAddFloor = document.getElementById("btn-add-floor");
     const btnDeleteFloor = document.getElementById("btn-delete-floor");
-    const adminRoomForm = document.getElementById("admin-room-form");
+    const saveRoomBtn = document.getElementById("save-room-btn");
     const adminRoomId = document.getElementById("admin-room-id");
     const roomNumVal = document.getElementById("room-num-val");
     const roomNameVal = document.getElementById("room-name-val");
@@ -85,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnDeleteActiveRoom = document.getElementById("btn-delete-active-room");
     const adminFloorRoomsList = document.getElementById("admin-floor-rooms-list");
     const roomFormTitle = document.getElementById("room-form-title");
-    
+
     // Live Blueprint Preview & Sketch Upload Elements
     const adminBlueprintViewport = document.getElementById("admin-blueprint-viewport");
     const adminBlueprintCanvas = document.getElementById("admin-blueprint-canvas");
@@ -149,8 +161,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function initAdminMap() {
         map = L.map("admin-leaflet-map", {
             zoomControl: false,
+            minZoom: 16,
             maxZoom: 22,
-            tap: false
+            tap: false,
+            maxBounds: CAMPUS_BOUNDS,
+            maxBoundsViscosity: 1.0
         }).setView(GIET_CENTER, 18);
 
         L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -158,14 +173,143 @@ document.addEventListener("DOMContentLoaded", () => {
         L.tileLayer("https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
             maxZoom: 22,
             maxNativeZoom: 20,
+            bounds: CAMPUS_BOUNDS,
             attribution: "&copy; Google Satellite &mdash; GIET University"
         }).addTo(map);
 
+        snapGuideLayers.addTo(map);
+
         map.on("click", handleMapClick);
+        map.on("mousemove", handleMapMouseMove);
         loadFeatures();
     }
 
-    // ================= 3. MAP FEATURE RENDERING =================
+    // ================= 3. GEOMETRY & MAGNETIC SNAPPING =================
+    function haversineDistMeters(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(a));
+    }
+
+    function getAllExistingNodes() {
+        const nodes = [];
+        (campusGeoJSON.features || []).forEach((feat, fIdx) => {
+            if (fIdx === editingFeatureIndex) return;
+
+            const geom = feat.geometry || {};
+            if (geom.type === "Point") {
+                nodes.push({
+                    lat: geom.coordinates[1],
+                    lng: geom.coordinates[0],
+                    name: feat.properties?.name || "Landmark"
+                });
+            } else if (geom.type === "LineString") {
+                (geom.coordinates || []).forEach(coord => {
+                    nodes.push({
+                        lat: coord[1],
+                        lng: coord[0],
+                        name: feat.properties?.name || "Walkway Node"
+                    });
+                });
+            }
+        });
+        return nodes;
+    }
+
+    function getMagneticSnapTarget(lat, lng) {
+        const allNodes = getAllExistingNodes();
+        let closest = null;
+        let minD = SNAP_THRESHOLD_METERS;
+
+        for (const n of allNodes) {
+            const d = haversineDistMeters(lat, lng, n.lat, n.lng);
+            if (d < minD) {
+                minD = d;
+                closest = { lat: n.lat, lng: n.lng, name: n.name, dist: d };
+            }
+        }
+        return closest;
+    }
+
+    function renderSnapGuides() {
+        snapGuideLayers.clearLayers();
+        if (activeTab !== "routes") return;
+
+        const allNodes = getAllExistingNodes();
+        allNodes.forEach(node => {
+            const circle = L.circleMarker([node.lat, node.lng], {
+                radius: 4,
+                fillColor: "#38bdf8",
+                color: "#ffffff",
+                weight: 1.5,
+                opacity: 0.8,
+                fillOpacity: 0.6,
+                interactive: false
+            });
+            snapGuideLayers.addLayer(circle);
+        });
+    }
+
+    function handleMapMouseMove(e) {
+        if (activeTab !== "routes" || !isDrawingRoute) {
+            if (snapIndicatorMarker) {
+                map.removeLayer(snapIndicatorMarker);
+                snapIndicatorMarker = null;
+            }
+            return;
+        }
+
+        const snapped = getMagneticSnapTarget(e.latlng.lat, e.latlng.lng);
+        if (snapped) {
+            if (!snapIndicatorMarker) {
+                snapIndicatorMarker = L.marker([snapped.lat, snapped.lng], {
+                    interactive: false,
+                    icon: L.divIcon({
+                        className: "magnetic-snap-pulse",
+                        html: `<div style="width:20px; height:20px; border:2px solid #38bdf8; border-radius:50%; background:rgba(56,189,248,0.35); box-shadow:0 0 10px #38bdf8;"></div>`,
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map);
+            } else {
+                snapIndicatorMarker.setLatLng([snapped.lat, snapped.lng]);
+            }
+        } else if (snapIndicatorMarker) {
+            map.removeLayer(snapIndicatorMarker);
+            snapIndicatorMarker = null;
+        }
+    }
+
+    // Find closest segment index on a polyline to insert a point in the middle
+    function findClosestSegmentIndex(clickLatLng, points) {
+        if (points.length < 2) return -1;
+        let bestIndex = -1;
+        let minDistance = Infinity;
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const p1 = L.latLng(points[i][0], points[i][1]);
+            const p2 = L.latLng(points[i + 1][0], points[i + 1][1]);
+            
+            // Perpendicular point projection
+            const dist = L.LineUtil.pointToSegmentDistance(
+                map.latLngToLayerPoint(clickLatLng),
+                map.latLngToLayerPoint(p1),
+                map.latLngToLayerPoint(p2)
+            );
+
+            if (dist < minDistance) {
+                minDistance = dist;
+                bestIndex = i;
+            }
+        }
+
+        // Must be clicked within 15 pixels of the segment
+        return minDistance < 15 ? bestIndex : -1;
+    }
+
+    // ================= 4. MAP FEATURE RENDERING =================
     function loadFeatures() {
         fetch(`${API_URL}/api/campus-data`)
             .then(res => res.json())
@@ -173,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 campusGeoJSON = data.geojson;
                 renderFeaturesOnMap();
                 renderRegistryList();
+                renderSnapGuides();
             })
             .catch(() => {
                 fetch("assets/data/giet_campus.geojson")
@@ -181,6 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         campusGeoJSON = data;
                         renderFeaturesOnMap();
                         renderRegistryList();
+                        renderSnapGuides();
                     });
             });
     }
@@ -205,6 +351,10 @@ document.addEventListener("DOMContentLoaded", () => {
         (campusGeoJSON.features || []).forEach((feat, index) => {
             const geom = feat.geometry || {};
             const props = feat.properties || {};
+
+            if (editingFeatureIndex === index && geom.type === "LineString") {
+                return;
+            }
 
             if (geom.type === "Point") {
                 const [lng, lat] = geom.coordinates;
@@ -236,12 +386,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const latlngs = geom.coordinates.map(c => [c[1], c[0]]);
                 const poly = L.polyline(latlngs, {
                     color: "#f8fafc",
-                    weight: 3.5,
+                    weight: 4,
                     opacity: 0.85,
                     dashArray: "5, 5"
                 });
 
                 poly.bindTooltip(props.name || "Walkway Corridor", { sticky: true });
+
                 poly.on("click", (e) => {
                     L.DomEvent.stopPropagation(e);
                     editFeature(index);
@@ -254,18 +405,19 @@ document.addEventListener("DOMContentLoaded", () => {
         mapFeatureLayers.addTo(map);
     }
 
-    // ================= 4. MAP CLICKS & DRAWING =================
+    // ================= 5. MAP CLICKS & DYNAMIC NODE INSERTION =================
     function handleMapClick(e) {
-        const { lat, lng } = e.latlng;
+        let finalLat = e.latlng.lat;
+        let finalLng = e.latlng.lng;
 
         if (activeTab === "locations") {
-            locLat.value = lat.toFixed(6);
-            locLng.value = lng.toFixed(6);
+            locLat.value = finalLat.toFixed(6);
+            locLng.value = finalLng.toFixed(6);
 
             if (tempPlacementMarker) {
-                tempPlacementMarker.setLatLng([lat, lng]);
+                tempPlacementMarker.setLatLng([finalLat, finalLng]);
             } else {
-                tempPlacementMarker = L.marker([lat, lng], {
+                tempPlacementMarker = L.marker([finalLat, finalLng], {
                     draggable: true,
                     icon: L.divIcon({
                         className: "placement-marker",
@@ -285,12 +437,144 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (activeTab === "routes" && isDrawingRoute) {
-            drawnRoutePoints.push([lat, lng]);
-            updateDrawingPolyline();
+            const snap = getMagneticSnapTarget(finalLat, finalLng);
+            if (snap) {
+                finalLat = snap.lat;
+                finalLng = snap.lng;
+            }
+
+            // Check if user clicked in the middle of an existing segment to split it
+            const segIdx = findClosestSegmentIndex(e.latlng, drawnRoutePoints);
+            if (segIdx !== -1) {
+                // Insert node between segIdx and segIdx + 1
+                drawnRoutePoints.splice(segIdx + 1, 0, [finalLat, finalLng]);
+            } else {
+                // Append point to the end
+                drawnRoutePoints.push([finalLat, finalLng]);
+            }
+
+            refreshRouteVerticesAndPolyline();
         }
     }
 
-    // ================= 5. SAVE POINT =================
+    function refreshRouteVerticesAndPolyline() {
+        routeVertexMarkers.forEach(m => map.removeLayer(m));
+        routeVertexMarkers = [];
+
+        routeMidpointMarkers.forEach(m => map.removeLayer(m));
+        routeMidpointMarkers = [];
+
+        if (!drawingPolyline) {
+            drawingPolyline = L.polyline(drawnRoutePoints, {
+                color: "#38bdf8",
+                weight: 5,
+                opacity: 0.95,
+                dashArray: "4, 6"
+            }).addTo(map);
+
+            // Allow clicking directly on the active path line to insert a middle node
+            drawingPolyline.on("click", (e) => {
+                if (!isDrawingRoute) return;
+                L.DomEvent.stopPropagation(e);
+                const segIdx = findClosestSegmentIndex(e.latlng, drawnRoutePoints);
+                if (segIdx !== -1) {
+                    drawnRoutePoints.splice(segIdx + 1, 0, [e.latlng.lat, e.latlng.lng]);
+                    refreshRouteVerticesAndPolyline();
+                }
+            });
+        } else {
+            drawingPolyline.setLatLngs(drawnRoutePoints);
+        }
+
+        // 1. Render primary draggable vertices
+        drawnRoutePoints.forEach((pt, idx) => {
+            const vMarker = L.marker(pt, {
+                draggable: true,
+                icon: L.divIcon({
+                    className: 'route-vertex-pin',
+                    html: `<div style="width:14px; height:14px; background:#38bdf8; border:2.5px solid #ffffff; border-radius:50%; box-shadow:0 0 8px rgba(0,0,0,0.8); cursor:move;"></div>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                })
+            }).addTo(map);
+
+            vMarker.bindTooltip(`Node ${idx + 1} (Right-click to remove)`, { direction: "top", offset: [0, -6] });
+
+            vMarker.on("drag", (ev) => {
+                let dragLat = ev.latlng.lat;
+                let dragLng = ev.latlng.lng;
+
+                const snap = getMagneticSnapTarget(dragLat, dragLng);
+                if (snap) {
+                    dragLat = snap.lat;
+                    dragLng = snap.lng;
+                    vMarker.setLatLng([dragLat, dragLng]);
+                }
+
+                drawnRoutePoints[idx] = [dragLat, dragLng];
+                if (drawingPolyline) drawingPolyline.setLatLngs(drawnRoutePoints);
+            });
+
+            vMarker.on("dragend", () => {
+                refreshRouteVerticesAndPolyline();
+            });
+
+            vMarker.on("contextmenu", (ev) => {
+                L.DomEvent.stopPropagation(ev);
+                drawnRoutePoints.splice(idx, 1);
+                refreshRouteVerticesAndPolyline();
+            });
+
+            routeVertexMarkers.push(vMarker);
+        });
+
+        // 2. Render clickable midpoint handles between consecutive vertices
+        for (let i = 0; i < drawnRoutePoints.length - 1; i++) {
+            const midLat = (drawnRoutePoints[i][0] + drawnRoutePoints[i + 1][0]) / 2;
+            const midLng = (drawnRoutePoints[i][1] + drawnRoutePoints[i + 1][1]) / 2;
+
+            const midMarker = L.marker([midLat, midLng], {
+                draggable: true,
+                icon: L.divIcon({
+                    className: 'route-midpoint-pin',
+                    html: `<div style="width:10px; height:10px; background:rgba(255,255,255,0.7); border:2px dashed #0284c7; border-radius:50%; box-shadow:0 0 5px rgba(0,0,0,0.5); cursor:pointer;"></div>`,
+                    iconSize: [10, 10],
+                    iconAnchor: [5, 5]
+                })
+            }).addTo(map);
+
+            midMarker.bindTooltip(`+ Add Node Here`, { direction: "top", offset: [0, -5] });
+
+            // Clicking or dragging the midpoint handle adds the new node into the line
+            midMarker.on("click", (ev) => {
+                L.DomEvent.stopPropagation(ev);
+                drawnRoutePoints.splice(i + 1, 0, [midLat, midLng]);
+                refreshRouteVerticesAndPolyline();
+            });
+
+            midMarker.on("dragstart", () => {
+                drawnRoutePoints.splice(i + 1, 0, [midLat, midLng]);
+            });
+
+            midMarker.on("drag", (ev) => {
+                drawnRoutePoints[i + 1] = [ev.latlng.lat, ev.latlng.lng];
+                if (drawingPolyline) drawingPolyline.setLatLngs(drawnRoutePoints);
+            });
+
+            midMarker.on("dragend", () => {
+                refreshRouteVerticesAndPolyline();
+            });
+
+            routeMidpointMarkers.push(midMarker);
+        }
+
+        saveRouteBtn.disabled = drawnRoutePoints.length < 2;
+        if (drawnRoutePoints.length > 0) {
+            clearDrawingBtn.classList.remove("hidden");
+        }
+    }
+
+    // ================= 6. SAVE POINT =================
     locationForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -326,6 +610,7 @@ document.addEventListener("DOMContentLoaded", () => {
             resetLocationForm();
             renderFeaturesOnMap();
             renderRegistryList();
+            renderSnapGuides();
         }
     });
 
@@ -344,45 +629,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cancelEditBtn.addEventListener("click", resetLocationForm);
 
-    // ================= 6. ROUTE DRAWING =================
+    // ================= 7. ROUTE DRAWING & EDITING =================
     startDrawingBtn.addEventListener("click", () => {
         isDrawingRoute = !isDrawingRoute;
         if (isDrawingRoute) {
-            startDrawingBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Drawing</span>`;
+            startDrawingBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Adding</span>`;
             clearDrawingBtn.classList.remove("hidden");
-            drawingInfo.textContent = "Click consecutive points along walkways.";
+            drawingInfo.innerHTML = `Click map to place nodes. Click <strong>+ midpoints</strong> or anywhere along the line to add middle nodes.<br><small style="color:#38bdf8;">Right-click any node to delete it.</small>`;
             mapModeText.textContent = "Drawing Walkway";
+            renderSnapGuides();
         } else {
-            startDrawingBtn.innerHTML = `<i class="fa-solid fa-pen-nib"></i> <span>Resume Drawing</span>`;
+            startDrawingBtn.innerHTML = `<i class="fa-solid fa-pen-nib"></i> <span>Resume Adding</span>`;
             mapModeText.textContent = "Drawing Paused";
         }
     });
 
-    function updateDrawingPolyline() {
-        if (!drawingPolyline) {
-            drawingPolyline = L.polyline(drawnRoutePoints, { color: "#38bdf8", weight: 4, dashArray: "6, 6" }).addTo(map);
-        } else {
-            drawingPolyline.setLatLngs(drawnRoutePoints);
-        }
-        saveRouteBtn.disabled = drawnRoutePoints.length < 2;
-    }
-
     clearDrawingBtn.addEventListener("click", () => {
         drawnRoutePoints = [];
+        routeVertexMarkers.forEach(m => map.removeLayer(m));
+        routeVertexMarkers = [];
+        routeMidpointMarkers.forEach(m => map.removeLayer(m));
+        routeMidpointMarkers = [];
         if (drawingPolyline) {
             map.removeLayer(drawingPolyline);
             drawingPolyline = null;
         }
         saveRouteBtn.disabled = true;
+        clearDrawingBtn.classList.add("hidden");
     });
 
     routeForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (drawnRoutePoints.length < 2) return;
+        if (drawnRoutePoints.length < 2) {
+            alert("A walkway requires at least 2 points.");
+            return;
+        }
 
         const payload = {
             id: editingFeatureIndex,
-            name: routeName.value.trim(),
+            name: routeName.value.trim() || "Walkway Corridor",
             highway: "footway",
             coordinates: drawnRoutePoints.map(p => [p[1], p[0]])
         };
@@ -416,17 +701,36 @@ document.addEventListener("DOMContentLoaded", () => {
         editingFeatureIndex = null;
         drawnRoutePoints = [];
         isDrawingRoute = false;
+
+        routeVertexMarkers.forEach(m => map.removeLayer(m));
+        routeVertexMarkers = [];
+        routeMidpointMarkers.forEach(m => map.removeLayer(m));
+        routeMidpointMarkers = [];
+
         if (drawingPolyline) {
             map.removeLayer(drawingPolyline);
             drawingPolyline = null;
         }
+        if (snapIndicatorMarker) {
+            map.removeLayer(snapIndicatorMarker);
+            snapIndicatorMarker = null;
+        }
+
         startDrawingBtn.innerHTML = `<i class="fa-solid fa-pen-nib"></i> <span>Draw Path</span>`;
         clearDrawingBtn.classList.add("hidden");
+        if (cancelRouteBtn) cancelRouteBtn.classList.add("hidden");
         saveRouteBtn.disabled = true;
+        drawingInfo.innerHTML = `Click <strong>Draw Path</strong> to begin. Click along line segments or midpoint handles to add nodes.`;
         mapModeText.textContent = "Inspection Mode";
+        renderFeaturesOnMap();
+        renderSnapGuides();
     }
 
-    // ================= 7. TAB SWITCHING (KEEPS STATE) =================
+    if (cancelRouteBtn) {
+        cancelRouteBtn.addEventListener("click", resetRouteForm);
+    }
+
+    // ================= 8. TAB SWITCHING =================
     tabLocationsBtn.addEventListener("click", () => {
         activeTab = "locations";
         tabLocationsBtn.classList.add("active");
@@ -438,6 +742,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (structurePanel) structurePanel.classList.add("hidden");
         if (adminBlueprintViewport) adminBlueprintViewport.classList.add("hidden");
         mapModeText.textContent = "Inspection Mode";
+        snapGuideLayers.clearLayers();
+        resetRouteForm();
     });
 
     tabRoutesBtn.addEventListener("click", () => {
@@ -451,6 +757,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (structurePanel) structurePanel.classList.add("hidden");
         if (adminBlueprintViewport) adminBlueprintViewport.classList.add("hidden");
         mapModeText.textContent = "Corridor Mode";
+        renderSnapGuides();
     });
 
     if (tabStructureBtn) {
@@ -467,11 +774,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (adminBlueprintViewport) adminBlueprintViewport.classList.remove("hidden");
             mapModeText.textContent = "Floor Plan Mode";
 
+            snapGuideLayers.clearLayers();
             loadBuildingsIntoDropdown();
+            resetRouteForm();
         });
     }
 
-    // ================= 8. LIVE BLUEPRINT PREVIEW & IN-CANVAS ACTIONS =================
+    // ================= 9. LIVE BLUEPRINT PREVIEW & IN-CANVAS ACTIONS =================
     function renderLiveBlueprintPreview() {
         if (!adminBlueprintCanvas) return;
         adminBlueprintCanvas.innerHTML = "";
@@ -525,7 +834,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
-            // Click room to select & edit
             block.addEventListener("click", (e) => {
                 if (isDrawMode || e.target.classList.contains("room-resize-handle") || e.target.classList.contains("btn-canvas-del-room")) return;
                 adminRoomId.value = r.id;
@@ -543,7 +851,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderLiveBlueprintPreview();
             });
 
-            // Drag to reposition
             block.addEventListener("mousedown", (e) => {
                 if (isDrawMode || e.target.classList.contains("room-resize-handle") || e.target.classList.contains("btn-canvas-del-room")) return;
                 let startX = e.clientX;
@@ -574,7 +881,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.addEventListener("mouseup", stopDrag);
             });
 
-            // Corner Resize
             const handle = block.querySelector(".room-resize-handle");
             if (handle) {
                 handle.addEventListener("mousedown", (e) => {
@@ -612,7 +918,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Unified Delete Handler
     async function deleteRoomById(roomId, label) {
         if (!confirm(`Delete ${label || "this room"}?`)) return;
 
@@ -634,29 +939,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Delete Active Room Button in Form
     if (btnDeleteActiveRoom) {
-        btnDeleteActiveRoom.addEventListener("click", async (e) => {
+        btnDeleteActiveRoom.addEventListener("click", (e) => {
             e.preventDefault();
+            e.stopPropagation();
             const currentId = adminRoomId.value ? parseInt(adminRoomId.value) : null;
             if (!currentId) return;
-            await deleteRoomById(currentId, roomNumVal.value || "selected room");
+            deleteRoomById(currentId, roomNumVal.value || "selected room");
         });
     }
 
-    // Keyboard Shortcuts: Delete or Backspace
-    window.addEventListener("keydown", async (e) => {
+    window.addEventListener("keydown", (e) => {
         if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
 
         if (e.key === "Delete" || e.key === "Backspace") {
             const currentId = adminRoomId.value ? parseInt(adminRoomId.value) : null;
             if (!currentId) return;
             e.preventDefault();
-            await deleteRoomById(currentId, roomNumVal.value || "selected room");
+            deleteRoomById(currentId, roomNumVal.value || "selected room");
         }
     });
 
-    // Real-time Coordinate Input Listener
     [roomXVal, roomYVal, roomWVal, roomHVal].forEach(input => {
         if (!input) return;
         input.addEventListener("input", () => {
@@ -678,108 +981,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ================= 9. SKETCH UPLOAD, AUTO-EXTRACTION & MANUAL BOX DRAWING =================
-    if (btnUploadSketch) {
-        btnUploadSketch.addEventListener("click", (e) => {
-            e.preventDefault();
-            sketchFileInput.click();
-        });
-    }
-
-    if (sketchFileInput) {
-        sketchFileInput.addEventListener("change", async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const selectedFloorId = parseInt(adminFloorSelect.value);
-            if (!selectedFloorId) {
-                alert("Please select or add a floor first before uploading.");
-                return;
-            }
-
-            underlayUrl = URL.createObjectURL(file);
-            adminBlueprintCanvas.style.backgroundImage = `url('${underlayUrl}')`;
-            btnToggleUnderlay.classList.remove("hidden");
-            isUnderlayVisible = true;
-
-            const formData = new FormData();
-            formData.append("file", file);
-
-            btnUploadSketch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...`;
-            btnUploadSketch.disabled = true;
-
-            try {
-                const res = await fetch(`${API_URL}/api/admin/detect-sketch`, {
-                    method: "POST",
-                    body: formData
-                });
-                const data = await res.json();
-
-                if (data.status === "success" && data.rooms && data.rooms.length > 0) {
-                    const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
-                    if (floorObj) {
-                        for (const r of data.rooms) {
-                            await fetch(`${API_URL}/api/admin/save-room`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    floor_id: selectedFloorId,
-                                    number: r.number,
-                                    name: r.name,
-                                    type: r.type,
-                                    description: r.description,
-                                    x: r.x,
-                                    y: r.y,
-                                    w: r.w,
-                                    h: r.h
-                                })
-                            });
-                        }
-                        alert(`Detected & created ${data.rooms.length} room boundaries! You can now adjust them.`);
-                        loadFloorsForSelectedBuilding();
-                    }
-                } else {
-                    alert("No distinct closed rooms detected. You can trace rooms using 'Draw Box'.");
-                }
-            } catch (err) {
-                alert("Auto-detect endpoint offline. Image loaded as background underlay!");
-            } finally {
-                btnUploadSketch.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Upload Sketch / PNG`;
-                btnUploadSketch.disabled = false;
-                sketchFileInput.value = "";
-            }
-        });
-    }
-
-    if (btnToggleUnderlay) {
-        btnToggleUnderlay.addEventListener("click", (e) => {
-            e.preventDefault();
-            isUnderlayVisible = !isUnderlayVisible;
-            adminBlueprintCanvas.style.backgroundImage = (isUnderlayVisible && underlayUrl) ? `url('${underlayUrl}')` : "none";
-        });
-    }
-
-    if (btnDrawRoom) {
-        btnDrawRoom.addEventListener("click", (e) => {
-            e.preventDefault();
-            isDrawMode = !isDrawMode;
-            btnDrawRoom.style.background = isDrawMode ? "#2563eb" : "";
-            btnDrawRoom.style.color = isDrawMode ? "#fff" : "";
-            btnDrawRoom.innerHTML = isDrawMode 
-                ? `<i class="fa-solid fa-check"></i> Exit Draw` 
-                : `<i class="fa-solid fa-vector-square"></i> Draw Box`;
-            adminBlueprintCanvas.style.cursor = isDrawMode ? "crosshair" : "default";
-
-            renderLiveBlueprintPreview();
-        });
-    }
-
+    // ================= 10. MANUAL BOX DRAWING =================
     let drawStartX = 0, drawStartY = 0;
     let tempDrawBox = null;
 
     adminBlueprintCanvas.addEventListener("mousedown", (e) => {
         if (!isDrawMode) return;
         e.preventDefault();
+        e.stopPropagation();
+
         const rect = adminBlueprintCanvas.getBoundingClientRect();
         drawStartX = e.clientX - rect.left;
         drawStartY = e.clientY - rect.top;
@@ -791,6 +1001,8 @@ document.addEventListener("DOMContentLoaded", () => {
         adminBlueprintCanvas.appendChild(tempDrawBox);
 
         function onMouseMove(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
             const curX = Math.max(0, Math.min(900, ev.clientX - rect.left));
             const curY = Math.max(0, Math.min(480, ev.clientY - rect.top));
             const x = Math.min(drawStartX, curX);
@@ -798,13 +1010,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const w = Math.abs(curX - drawStartX);
             const h = Math.abs(curY - drawStartY);
 
-            tempDrawBox.style.left = `${x}px`;
-            tempDrawBox.style.top = `${y}px`;
-            tempDrawBox.style.width = `${w}px`;
-            tempDrawBox.style.height = `${h}px`;
+            if (tempDrawBox) {
+                tempDrawBox.style.left = `${x}px`;
+                tempDrawBox.style.top = `${y}px`;
+                tempDrawBox.style.width = `${w}px`;
+                tempDrawBox.style.height = `${h}px`;
+            }
         }
 
         async function onMouseUp(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mouseup", onMouseUp);
 
@@ -820,10 +1037,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 tempDrawBox = null;
             }
 
-            if (w > 25 && h > 25) {
+            if (w > 20 && h > 20) {
                 const selectedFloorId = parseInt(adminFloorSelect.value);
                 if (!selectedFloorId) {
-                    alert("Please select or add a floor first.");
+                    alert("Please select or add a floor first before drawing.");
                     return;
                 }
 
@@ -843,31 +1060,50 @@ document.addEventListener("DOMContentLoaded", () => {
                     h: h
                 };
 
+                if (floorObj) {
+                    if (!floorObj.rooms) floorObj.rooms = [];
+                    floorObj.rooms.push({
+                        id: Date.now(),
+                        number: defaultCode,
+                        name: `Room ${nextNum}`,
+                        type: payload.type,
+                        description: "",
+                        plan: { x, y, w, h }
+                    });
+                }
+
+                if (roomXVal) roomXVal.value = x;
+                if (roomYVal) roomYVal.value = y;
+                if (roomWVal) roomWVal.value = w;
+                if (roomHVal) roomHVal.value = h;
+                if (roomNumVal) roomNumVal.value = defaultCode;
+                if (roomNameVal) roomNameVal.value = `Room ${nextNum}`;
+
+                activeTab = "structure";
+                tabStructureBtn.classList.add("active");
+                tabLocationsBtn.classList.remove("active");
+                tabRoutesBtn.classList.remove("active");
+                structurePanel.classList.remove("hidden");
+                locationPanel.classList.add("hidden");
+                routePanel.classList.add("hidden");
+                if (adminBlueprintViewport) adminBlueprintViewport.classList.remove("hidden");
+
+                renderAdminRoomsList();
+                renderLiveBlueprintPreview();
+
                 try {
                     const res = await fetch(`${API_URL}/api/admin/save-room`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
-
                     if (res.ok) {
-                        activeTab = "structure";
-                        if (adminBlueprintViewport) adminBlueprintViewport.classList.remove("hidden");
-                        
-                        const fRes = await fetch(`${API_URL}/api/buildings/${encodeURIComponent(adminBldgSelect.value)}/floors`);
-                        currentFloorsCache = await fRes.json();
-
-                        roomXVal.value = x;
-                        roomYVal.value = y;
-                        roomWVal.value = w;
-                        roomHVal.value = h;
-                        roomNumVal.value = defaultCode;
-                        roomNameVal.value = `Room ${nextNum}`;
-
-                        renderAdminRoomsList();
+                        const savedData = await res.json();
+                        const target = floorObj.rooms.find(r => r.number === defaultCode);
+                        if (target && savedData.id) target.id = savedData.id;
                     }
                 } catch (err) {
-                    console.error("Failed to save drawn room:", err);
+                    console.warn("Backend offline or slow; preserved locally:", err);
                 }
             }
         }
@@ -876,7 +1112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.addEventListener("mouseup", onMouseUp);
     });
 
-    // ================= 10. CASE-INSENSITIVE DEDUPLICATION =================
+    // ================= 11. BUILDINGS DEDUPLICATION =================
     async function loadBuildingsIntoDropdown() {
         let buildingsList = [];
         try {
@@ -1012,6 +1248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnAddFloor) {
         btnAddFloor.addEventListener("click", async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             const floorNum = prompt("Enter Floor Number (e.g. 0 for Ground, 1 for 1st, 3 for 3rd):", "1");
             if (floorNum === null) return;
             const floorName = prompt("Enter Floor Display Name:", `Floor ${floorNum}`);
@@ -1036,6 +1273,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnDeleteFloor) {
         btnDeleteFloor.addEventListener("click", async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             const selectedFloorId = parseInt(adminFloorSelect.value);
             if (!selectedFloorId) {
                 alert("Please select a valid floor to delete.");
@@ -1064,45 +1302,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    adminRoomForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const floorId = parseInt(adminFloorSelect.value);
-        if (!floorId) {
-            alert("Please select or add a floor first.");
-            return;
-        }
+    if (saveRoomBtn) {
+        saveRoomBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-        const payload = {
-            id: adminRoomId.value ? parseInt(adminRoomId.value) : null,
-            floor_id: floorId,
-            number: roomNumVal.value.trim(),
-            name: roomNameVal.value.trim(),
-            type: roomTypeVal.value,
-            description: roomDescVal.value.trim(),
-            x: parseInt(roomXVal.value),
-            y: parseInt(roomYVal.value),
-            w: parseInt(roomWVal.value),
-            h: parseInt(roomHVal.value)
-        };
+            const floorId = parseInt(adminFloorSelect.value);
+            if (!floorId) {
+                alert("Please select or add a floor first.");
+                return;
+            }
 
-        const res = await fetch(`${API_URL}/api/admin/save-room`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            const payload = {
+                id: adminRoomId.value ? parseInt(adminRoomId.value) : null,
+                floor_id: floorId,
+                number: roomNumVal.value.trim(),
+                name: roomNameVal.value.trim(),
+                type: roomTypeVal.value,
+                description: roomDescVal.value.trim(),
+                x: parseInt(roomXVal.value) || 40,
+                y: parseInt(roomYVal.value) || 40,
+                w: parseInt(roomWVal.value) || 60,
+                h: parseInt(roomHVal.value) || 60
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/save-room`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert(payload.id ? "Room updated in DB!" : "Room saved to DB!");
+                    resetRoomEditor();
+                    loadFloorsForSelectedBuilding();
+                } else {
+                    alert("Failed to save room.");
+                }
+            } catch (err) {
+                console.error("Save room failed:", err);
+            }
         });
-
-        if (res.ok) {
-            alert(payload.id ? "Room updated in DB!" : "Room saved to DB!");
-            resetRoomEditor();
-            loadFloorsForSelectedBuilding();
-        } else {
-            alert("Failed to save room.");
-        }
-    });
+    }
 
     function resetRoomEditor() {
-        adminRoomForm.reset();
         adminRoomId.value = "";
+        roomNumVal.value = "";
+        roomNameVal.value = "";
+        roomDescVal.value = "";
         roomFormTitle.textContent = "Floor & Room Studio";
         btnCancelEditRoom.classList.add("hidden");
         if (btnDeleteActiveRoom) btnDeleteActiveRoom.classList.add("hidden");
@@ -1110,10 +1358,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnCancelEditRoom.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         resetRoomEditor();
     });
 
-    // ================= 11. REGISTERED OUTDOOR DIRECTORY =================
+    // ================= 12. REGISTERED OUTDOOR DIRECTORY =================
     function renderRegistryList() {
         const query = searchFilter.value.trim().toLowerCase();
         registryList.innerHTML = "";
@@ -1179,10 +1428,22 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (feat.geometry.type === "LineString") {
             tabRoutesBtn.click();
             routeId.value = index;
-            routeName.value = feat.properties.name || "";
+            routeName.value = feat.properties.name || "Walkway Corridor";
+            
             drawnRoutePoints = feat.geometry.coordinates.map(c => [c[1], c[0]]);
-            updateDrawingPolyline();
-            map.fitBounds(drawingPolyline.getBounds(), { padding: [50, 50] });
+            
+            if (cancelRouteBtn) cancelRouteBtn.classList.remove("hidden");
+            startDrawingBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Editing Nodes</span>`;
+            isDrawingRoute = true;
+            drawingInfo.innerHTML = `Editing <strong>${routeName.value}</strong>.<br><small style="color:#38bdf8;">Click midpoints to insert new nodes &bull; Drag dots or right-click to delete.</small>`;
+            
+            renderFeaturesOnMap();
+            renderSnapGuides();
+            refreshRouteVerticesAndPolyline();
+            
+            if (drawingPolyline) {
+                map.fitBounds(drawingPolyline.getBounds(), { padding: [50, 50] });
+            }
         }
     }
 
@@ -1198,8 +1459,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         campusGeoJSON.features.splice(index, 1);
-        renderFeaturesOnMap();
-        renderRegistryList();
+        resetRouteForm();
+        loadFeatures();
     }
 
     exportGeojsonBtn.addEventListener("click", () => {
@@ -1208,6 +1469,105 @@ document.addEventListener("DOMContentLoaded", () => {
             alert("Campus GeoJSON copied to clipboard!");
         });
     });
+
+    // ================= 13. SKETCH UPLOAD & AUTO-EXTRACTION =================
+    if (btnUploadSketch) {
+        btnUploadSketch.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sketchFileInput.click();
+        });
+    }
+
+    if (sketchFileInput) {
+        sketchFileInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const selectedFloorId = parseInt(adminFloorSelect.value);
+            if (!selectedFloorId) {
+                alert("Please select or add a floor first before uploading.");
+                return;
+            }
+
+            underlayUrl = URL.createObjectURL(file);
+            adminBlueprintCanvas.style.backgroundImage = `url('${underlayUrl}')`;
+            btnToggleUnderlay.classList.remove("hidden");
+            isUnderlayVisible = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            btnUploadSketch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...`;
+            btnUploadSketch.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/detect-sketch`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.status === "success" && data.rooms && data.rooms.length > 0) {
+                    const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
+                    if (floorObj) {
+                        for (const r of data.rooms) {
+                            await fetch(`${API_URL}/api/admin/save-room`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    floor_id: selectedFloorId,
+                                    number: r.number,
+                                    name: r.name,
+                                    type: r.type,
+                                    description: r.description,
+                                    x: r.x,
+                                    y: r.y,
+                                    w: r.w,
+                                    h: r.h
+                                })
+                            });
+                        }
+                        alert(`Detected & created ${data.rooms.length} room boundaries! You can now adjust them.`);
+                        loadFloorsForSelectedBuilding();
+                    }
+                } else {
+                    alert("No distinct closed rooms detected. You can trace rooms using 'Draw Box'.");
+                }
+            } catch (err) {
+                alert("Auto-detect endpoint offline. Image loaded as background underlay!");
+            } finally {
+                btnUploadSketch.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Upload Sketch / PNG`;
+                btnUploadSketch.disabled = false;
+                sketchFileInput.value = "";
+            }
+        });
+    }
+
+    if (btnToggleUnderlay) {
+        btnToggleUnderlay.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isUnderlayVisible = !isUnderlayVisible;
+            adminBlueprintCanvas.style.backgroundImage = (isUnderlayVisible && underlayUrl) ? `url('${underlayUrl}')` : "none";
+        });
+    }
+
+    if (btnDrawRoom) {
+        btnDrawRoom.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            isDrawMode = !isDrawMode;
+            btnDrawRoom.style.background = isDrawMode ? "#2563eb" : "";
+            btnDrawRoom.style.color = isDrawMode ? "#fff" : "";
+            btnDrawRoom.innerHTML = isDrawMode 
+                ? `<i class="fa-solid fa-check"></i> Exit Draw` 
+                : `<i class="fa-solid fa-vector-square"></i> Draw Box`;
+            adminBlueprintCanvas.style.cursor = isDrawMode ? "crosshair" : "default";
+
+            renderLiveBlueprintPreview();
+        });
+    }
 
     checkAuth();
 });

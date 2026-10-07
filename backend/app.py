@@ -33,6 +33,8 @@ if not os.path.exists(GEOJSON_PATH):
     GEOJSON_PATH = os.path.join(os.path.dirname(__file__), "assets", "data", "giet_campus.geojson")
 
 def load_geojson():
+    if not os.path.exists(GEOJSON_PATH):
+        return {"type": "FeatureCollection", "features": []}
     with open(GEOJSON_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -40,8 +42,9 @@ def save_geojson(data):
     with open(GEOJSON_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
+# --- Spatial Math Functions ---
 def haversine_distance(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
-    R = 6371000
+    R = 6371000  # Earth's radius in meters
     lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
     lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
     dlat = lat2 - lat1
@@ -55,6 +58,15 @@ def to_key(lat: float, lon: float) -> str:
 def parse_key(key: str) -> Tuple[float, float]:
     lat, lon = map(float, key.split(","))
     return lat, lon
+
+def calculate_bearing(coord1: Tuple[float, float], coord2: Tuple[float, float]) -> float:
+    """Calculates compass heading angle (0-360 degrees) between two GPS points."""
+    lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
+    lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
+    dlon = lon2 - lon1
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1) * math.cos(lat2) * math.cos(dlon))
+    return (math.degrees(math.atan2(x, y)) + 360) % 360
 
 def build_routing_graph(features: List[dict]):
     graph: Dict[str, List[dict]] = {}
@@ -85,6 +97,7 @@ def build_routing_graph(features: List[dict]):
                 v = (coords[i+1][1], coords[i+1][0])
                 add_edge(to_key(u[0], u[1]), to_key(v[0], v[1]), u, v)
 
+    # Tolerance-based node welding: weld nodes within 12 meters to guarantee connectivity
     for i in range(len(nodes_list)):
         p1 = parse_key(nodes_list[i])
         for j in range(i + 1, len(nodes_list)):
@@ -95,11 +108,11 @@ def build_routing_graph(features: List[dict]):
 
     return graph, nodes_list
 
-# Exclusion filters so courts, grounds, and parking are omitted from floor building selectors
+# Exclusions so outdoor amenities aren't listed as multi-floor buildings
 EXCLUDED_CATEGORIES = {"sports ground", "water", "washroom", "security", "medical", "parking"}
 EXCLUDED_KEYWORDS = ["court", "ground", "swimming", "bus-stop", "parking", "garden", "temple", "park"]
 
-# --- Request / Response Models ---
+# --- Pydantic Data Contracts ---
 class PointPayload(BaseModel):
     id: Optional[int] = None
     name: str
@@ -212,6 +225,7 @@ def delete_feature(index: int):
         return {"status": "success", "deleted": deleted.get("properties", {}).get("name")}
     raise HTTPException(status_code=404, detail="Feature not found")
 
+# --- Core A* Pathfinding with Turn Penalties ---
 @app.post("/api/routes")
 def calculate_routes(req: WaypointRequest):
     cleaned_waypoints = [wp.strip() for wp in req.waypoints if wp and wp.strip()]
@@ -228,11 +242,44 @@ def calculate_routes(req: WaypointRequest):
                 buildings[name.strip().lower()] = (c[1], c[0])
 
     resolved_coords = []
-    for wp in cleaned_waypoints:
-        wp_lower = wp.lower()
-        if wp_lower not in buildings:
-            raise HTTPException(status_code=400, detail=f"Location '{wp}' not found")
-        resolved_coords.append(buildings[wp_lower])
+    indoor_metadata = None
+    db = SessionLocal()
+
+    try:
+        for idx, wp in enumerate(cleaned_waypoints):
+            wp_lower = wp.lower()
+
+            # 1. Direct match with outdoor landmark
+            if wp_lower in buildings:
+                resolved_coords.append(buildings[wp_lower])
+                continue
+
+            # 2. Check if waypoint is a room in database (e.g., "CSA-4")
+            room_match = db.query(Room).join(Floor).filter(
+                (func.lower(Room.number) == wp_lower) |
+                (func.lower(Room.name) == wp_lower)
+            ).first()
+
+            if room_match:
+                host_bldg = room_match.floor.building_name.lower().strip()
+                # Find matching building coordinate
+                matched_bldg_key = next((b for b in buildings if b in host_bldg or host_bldg in b), None)
+
+                if matched_bldg_key:
+                    resolved_coords.append(buildings[matched_bldg_key])
+                    # If this room was the final destination, save deep-link metadata
+                    if idx == len(cleaned_waypoints) - 1:
+                        indoor_metadata = {
+                            "building": room_match.floor.building_name,
+                            "floor_number": room_match.floor.floor_number,
+                            "room_code": room_match.number,
+                            "room_name": room_match.name
+                        }
+                    continue
+
+            raise HTTPException(status_code=400, detail=f"Location or Room '{wp}' not found on campus map.")
+    finally:
+        db.close()
 
     graph, nodes_list = build_routing_graph(geojson.get("features", []))
 
@@ -247,28 +294,55 @@ def calculate_routes(req: WaypointRequest):
                 best_node = node_key
         return best_node
 
-    def dijkstra(start_node: str, target_node: str, penalties: dict):
-        distances = {start_node: 0.0}
+    # A* Search with Turn Angle Penalty Implementation
+    def a_star_search(start_node: str, target_node: str, penalties: dict):
+        target_coord = parse_key(target_node)
+        
+        # Priority queue holds tuples of: (f_score, current_node, previous_bearing)
+        initial_h = haversine_distance(parse_key(start_node), target_coord)
+        unvisited = [(initial_h, start_node, None)]
+        
+        g_score = {start_node: 0.0}
         previous = {}
-        unvisited = [(0.0, start_node)]
+        node_bearings = {start_node: None}
 
         while unvisited:
-            cur_dist, u = heapq.heappop(unvisited)
+            _, u, prev_bearing = heapq.heappop(unvisited)
+            
             if u == target_node:
                 break
-            if cur_dist > distances.get(u, float("inf")):
-                continue
+
+            cur_g = g_score.get(u, float("inf"))
+            u_coord = parse_key(u)
 
             for edge in graph.get(u, []):
                 v = edge["node"]
+                v_coord = edge["coord"]
                 pen_multiplier = penalties.get((u, v), 1.0)
-                alt = cur_dist + (edge["weight"] * pen_multiplier)
-                if alt < distances.get(v, float("inf")):
-                    distances[v] = alt
-                    previous[v] = u
-                    heapq.heappush(unvisited, (alt, v))
+                edge_weight = edge["weight"] * pen_multiplier
 
-        if target_node not in distances:
+                # Compute turn deflection penalty (>60 degrees adds +4m cost)
+                current_bearing = calculate_bearing(u_coord, v_coord)
+                turn_penalty = 0.0
+                if prev_bearing is not None:
+                    angle_diff = abs(current_bearing - prev_bearing)
+                    if angle_diff > 180:
+                        angle_diff = 360 - angle_diff
+                    if angle_diff > 60:
+                        turn_penalty = 4.0  # +4 meter turn penalty
+
+                tentative_g = cur_g + edge_weight + turn_penalty
+
+                if tentative_g < g_score.get(v, float("inf")):
+                    g_score[v] = tentative_g
+                    previous[v] = u
+                    node_bearings[v] = current_bearing
+                    
+                    h_score = haversine_distance(v_coord, target_coord)
+                    f_score = tentative_g + h_score
+                    heapq.heappush(unvisited, (f_score, v, current_bearing))
+
+        if target_node not in g_score:
             return None, float("inf")
 
         path = []
@@ -278,7 +352,7 @@ def calculate_routes(req: WaypointRequest):
             curr = previous[curr]
         path.append(parse_key(start_node))
         path.reverse()
-        return path, distances[target_node]
+        return path, g_score[target_node]
 
     routes = []
     penalties = {}
@@ -300,7 +374,7 @@ def calculate_routes(req: WaypointRequest):
                 failed = True
                 break
 
-            leg_coords, leg_dist = dijkstra(n1, n2, penalties)
+            leg_coords, leg_dist = a_star_search(n1, n2, penalties)
             if not leg_coords:
                 failed = True
                 break
@@ -328,6 +402,7 @@ def calculate_routes(req: WaypointRequest):
                 if len(routes) >= (2 if is_multi else 3):
                     break
 
+            # Penalize edges for diverse alternatives
             for i in range(len(full_coords) - 1):
                 u_k = to_key(full_coords[i][0], full_coords[i][1])
                 v_k = to_key(full_coords[i+1][0], full_coords[i+1][1])
@@ -335,7 +410,7 @@ def calculate_routes(req: WaypointRequest):
                 penalties[(v_k, u_k)] = penalties.get((v_k, u_k), 1.0) * 2.5
 
     if not routes:
-        raise HTTPException(status_code=404, detail="No route connected between selected points")
+        raise HTTPException(status_code=404, detail="No walkway route connected between selected locations.")
 
     routes.sort(key=lambda r: r["totalDistance"])
     labels = [
@@ -347,7 +422,11 @@ def calculate_routes(req: WaypointRequest):
     for idx, r in enumerate(routes):
         r["name"] = labels[idx] if idx < len(labels) else f"Route Option {idx + 1}"
 
-    return {"routes": routes}
+    response = {"routes": routes}
+    if indoor_metadata:
+        response["indoorTarget"] = indoor_metadata
+
+    return response
 
 # --- Unified Search Endpoint: Outdoor Points & Indoor Rooms ---
 @app.get("/api/search-destinations")
@@ -403,7 +482,6 @@ def get_buildings_list():
                 name = f.get("properties", {}).get("name", "").strip()
                 cat = f.get("properties", {}).get("category", "").strip().lower()
                 
-                # Exclude outdoor non-building areas
                 if not name or cat in EXCLUDED_CATEGORIES:
                     continue
                 if any(k in name.lower() for k in EXCLUDED_KEYWORDS):
@@ -496,7 +574,9 @@ def save_room(payload: RoomPayload):
         if payload.id:
             room = db.query(Room).filter(Room.id == payload.id).first()
             if not room:
-                raise HTTPException(status_code=404, detail="Room not found")
+                room = Room(id=payload.id)
+                db.add(room)
+            room.floor_id = payload.floor_id
             room.number = payload.number
             room.name = payload.name
             room.type = payload.type
@@ -519,7 +599,8 @@ def save_room(payload: RoomPayload):
             )
             db.add(room)
         db.commit()
-        return {"status": "success", "message": "Room saved"}
+        db.refresh(room)
+        return {"status": "success", "id": room.id, "message": "Room saved"}
     finally:
         db.close()
 

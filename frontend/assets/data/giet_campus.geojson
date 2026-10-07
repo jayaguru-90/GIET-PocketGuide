@@ -890,42 +890,34 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Line 41",
+        "highway": "footway"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
             83.8343097,
-            19.0490597,
-            0
+            19.0490597
           ],
           [
-            83.8345297,
-            19.0486851,
-            0
+            83.83452012893599,
+            19.048698268465383
           ],
           [
             83.8346692,
-            19.0484597,
-            0
+            19.0484597
           ],
           [
             83.8348784,
-            19.0481228,
-            0
+            19.0481228
           ],
           [
             83.8351897,
-            19.0476017,
-            0
+            19.0476017
           ]
         ]
-      },
-      "properties": {
-        "name": "Line 41",
-        "styleUrl": "#line-000000-1200-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 1.2
       }
     },
     {
@@ -1020,87 +1012,74 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Line 38",
+        "highway": "footway"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
             83.8338431,
-            19.048839,
-            0
+            19.048839
           ],
           [
             83.8343097,
-            19.0490597,
-            0
+            19.0490597
           ],
           [
             83.8348749,
-            19.0493368,
-            0
+            19.0493368
           ],
           [
             83.8355225,
-            19.048267,
-            0
+            19.048267
+          ],
+          [
+            83.8356647421762,
+            19.04803988090161
           ],
           [
             83.8357463,
-            19.047907,
-            0
+            19.047907
           ],
           [
             83.8364817,
-            19.0466832,
-            0
+            19.0466832
           ],
           [
             83.8369727,
-            19.0458673,
-            0
+            19.0458673
           ],
           [
             83.837016,
-            19.0458234,
-            0
+            19.0458234
           ],
           [
             83.8370754,
-            19.0458074,
-            0
+            19.0458074
           ],
           [
             83.8373051,
-            19.0459346,
-            0
+            19.0459346
           ],
           [
             83.8375296,
-            19.0461145,
-            0
+            19.0461145
           ],
           [
             83.8375034,
-            19.0462792,
-            0
+            19.0462792
           ],
           [
             83.8374347,
-            19.0463576,
-            0
+            19.0463576
           ],
           [
             83.8375174,
-            19.046465,
-            0
+            19.046465
           ]
         ]
-      },
-      "properties": {
-        "name": "Line 38",
-        "styleUrl": "#line-000000-1200-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 1.2
       }
     },
     {
@@ -1792,27 +1771,26 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Line 71",
+        "highway": "footway"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            83.8341556,
-            19.0482015,
-            0
+            83.8341547,
+            19.0481938
           ],
           [
             83.8342082,
-            19.0482299,
-            0
+            19.0482299
+          ],
+          [
+            83.8342082,
+            19.0482299
           ]
         ]
-      },
-      "properties": {
-        "name": "Line 71",
-        "styleUrl": "#line-000000-1200-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 1.2
       }
     },
     {
@@ -2184,30 +2162,29 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "guest house walkway",
+        "highway": "footway"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
             83.8356647421762,
-            19.04803988090161,
-            0
+            19.04803988090161
           ],
           [
-            83.83578675523522,
-            19.048108312663903,
-            0
+            83.8357854,
+            19.0481121
           ]
         ]
-      },
-      "properties": {
-        "name": "guest house walkway"
       }
     },
     {
       "type": "Feature",
       "properties": {
         "name": "main road giet",
-        "highway": "road"
+        "highway": "footway"
       },
       "geometry": {
         "type": "LineString",
@@ -2255,10 +2232,6 @@
           [
             83.8338431,
             19.048839
-          ],
-          [
-            83.8330831,
-            19.0484282
           ]
         ]
       }
@@ -2392,6 +2365,176 @@
         "coordinates": [
           83.831606,
           19.04753
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-12",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834911,
+          19.048184
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-11",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834813,
+          19.048103
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-123",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834718,
+          19.048476
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-6",
+        "category": "Academic Building"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834694,
+          19.0488
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-4",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834466,
+          19.048672
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-5",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834618,
+          19.04842
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-7",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.834097,
+          19.048354
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-6 eoad",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.83452012893599,
+            19.048698268465383
+          ],
+          [
+            83.834694,
+            19.0488
+          ],
+          [
+            83.83452012893599,
+            19.048698268465383
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "dispensary road",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8330831,
+            19.0484282
+          ],
+          [
+            83.833198,
+            19.04831
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "BSH WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.831472,
+          19.048959
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "AME WC",
+        "category": "Water"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.832016,
+          19.049539
         ]
       }
     }

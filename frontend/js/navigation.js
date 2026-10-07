@@ -27,25 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceToggleBtn = document.getElementById('voice-toggle-btn');
     const recenterFabBtn = document.getElementById('recenter-fab-btn');
 
-    // Picker Modal Elements
+    // Location Picker Modal Elements
     const locationPickerModal = document.getElementById('location-picker-modal');
     const pickerBackdrop = document.getElementById('picker-backdrop');
     const closePickerBtn = document.getElementById('close-picker-btn');
     const pickerTitle = document.getElementById('picker-title');
     const pickerFilterInput = document.getElementById('picker-filter-input');
     const pickerItemsList = document.getElementById('picker-items-list');
-
-    // Tour Elements
-    const startTourBtn = document.getElementById('start-tour-btn');
-    const tourCardModal = document.getElementById('tour-card-modal');
-    const tourStopNum = document.getElementById('tour-stop-num');
-    const tourStopTitle = document.getElementById('tour-stop-title');
-    const tourStopDesc = document.getElementById('tour-stop-desc');
-    const tourOfficialLink = document.getElementById('tour-official-link');
-    const tourPrevBtn = document.getElementById('tour-prev-btn');
-    const tourNextBtn = document.getElementById('tour-next-btn');
-    const tourSpeakBtn = document.getElementById('tour-speak-btn');
-    const closeTourModalBtn = document.getElementById('close-tour-modal-btn');
 
     const catChips = document.querySelectorAll('.cat-chip');
     const utilChips = document.querySelectorAll('.util-chip');
@@ -59,6 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const GIET_CENTER = [19.0485, 83.8320];
     const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
+    // Campus geographic fence
+    const CAMPUS_BOUNDS = L.latLngBounds(
+        [19.0430, 83.8260],
+        [19.0545, 83.8395]
+    );
+
     let campusGeoJSON = null;
     let buildings = {};
     let markerLayers = {};
@@ -67,12 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let calculatedRoutes = [];
     let activeRouteIndex = 0;
 
+    // Indoor Rooms Cache for search & pickers
+    let allIndoorRooms = [];
+
     let selectedWaypoints = {
         start: { id: "LIVE_LOCATION", name: "My Live Location (GPS)" },
         destination: null,
         extraStops: []
     };
     let activePickerTarget = null;
+    let activeIndoorDestination = null; // Stores { building, roomCode, floorNum, roomName }
 
     let fullRouteCoords = [];
     let remainingRoutePolyline = null;
@@ -97,10 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let utilityMarkers = [];
     let activeCategory = 'all';
     let isTrackingOrSimulating = false;
-    let isTourActive = false;
-    let currentTourIndex = 0;
 
-    // ================= 2. THEME ENGINE (SYNCHRONIZED) =================
+    // ================= 2. THEME ENGINE =================
     function initTheme() {
         const savedTheme = localStorage.getItem('giet-theme') || 'light';
         applyTheme(savedTheme);
@@ -167,38 +163,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 4. TOUR STOPS =================
-    const campusTourStops = [
-        { name: "security", title: "GIETU Main Gate & Security", desc: "The primary entry to GIET University Gunupur campus, monitored 24/7 with digital gate security.", url: "https://www.giet.edu" },
-        { name: "Admin Block", title: "Administrative Headquarters", desc: "The central administrative building housing the Vice Chancellor's Secretariat, Registrar, and Admissions.", url: "https://www.giet.edu" },
-        { name: "Library", title: "Biju Patnaik Central Digital Library", desc: "A central 24x7 air-conditioned library spanning 1,649 sq.m with over 81,000 volumes.", url: "https://www.giet.edu/infrastructure/central-library/" },
-        { name: "CSE Building", title: "School of Computer Science & Engineering", desc: "State-of-the-art software development labs, high-performance GPU AI workstations.", url: "https://www.giet.edu" },
-        { name: "CSA block", title: "Computer Science & Applications Block", desc: "Dedicated computing hubs for advanced coding, algorithms, and cybersecurity research.", url: "https://www.giet.edu" },
-        { name: "BSH Building", title: "Basic Sciences & Humanities Block", desc: "Foundation classrooms, advanced Physics, Chemistry, and language laboratories.", url: "https://www.giet.edu" },
-        { name: "Agriculture Block", title: "School of Agriculture & Research Fields", desc: "Agronomy, soil science, crop research, and horticulture testing units.", url: "https://www.giet.edu" },
-        { name: "Bio tech Building", title: "School of Biotechnology & E-YUVA Centre", desc: "Advanced biotechnology research laboratories supported by BIRAC and DBT.", url: "https://www.giet.edu" },
-        { name: "Mechanical building", title: "School of Mechanical Engineering", desc: "Heavy machinery workshops, CNC manufacturing centers, thermal, and CAD/CAM computing facilities.", url: "https://www.giet.edu" },
-        { name: "Hardware section", title: "Hardware, ECE & Robotics Laboratories", desc: "Embedded systems, VLSI design, and IoT micro-controller hardware sections.", url: "https://www.giet.edu" },
-        { name: "Mega Auditorium", title: "GIETU Mega University Auditorium", desc: "A massive acoustically engineered auditorium hosting national symposiums and convocation.", url: "https://www.giet.edu" },
-        { name: "Canteen", title: "Student Food Court & Canteen", desc: "A multi-cuisine campus cafeteria serving fresh snacks, regional specialties, and beverages.", url: "https://www.giet.edu" },
-        { name: "Cool Parlour", title: "Cool Parlour Refreshment Zone", desc: "A popular campus relaxation hub known for iced beverages and snacks.", url: "https://www.giet.edu" },
-        { name: "Swimming pool", title: "Olympic Standard 6-Lane Swimming Pool", desc: "A national standard aquatic facility with dedicated swimming coaching.", url: "https://www.giet.edu" },
-        { name: "Giet main ground", title: "University Sports Arena & Track", desc: "A multipurpose stadium ground hosting cricket, football, basketball courts, and athletics.", url: "https://www.giet.edu" },
-        { name: "Central Mess", title: "Central Dining Complex & Residential Hostels", desc: "Hygienic multi-story student dining complex with 1,200+ seating capacity.", url: "https://www.giet.edu" }
-    ];
-
     function hideLoader() {
         if (!loadingScreen) return;
         loadingScreen.classList.add('hidden');
+        loadingScreen.style.display = 'none';
         setTimeout(() => { if (map) map.invalidateSize(); }, 200);
     }
     const safetyTimer = setTimeout(hideLoader, 2000);
 
-    // ================= 5. SATELLITE CANVAS =================
+    // ================= 4. MAP INITIALIZATION WITH BOUNDS =================
     const map = L.map('map', {
         zoomControl: false,
+        minZoom: 16,
         maxZoom: 22,
-        tap: false
+        tap: false,
+        maxBounds: CAMPUS_BOUNDS,
+        maxBoundsViscosity: 1.0
     }).setView(GIET_CENTER, 18);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -206,10 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
         maxZoom: 22,
         maxNativeZoom: 20,
+        bounds: CAMPUS_BOUNDS,
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 6. PLACE ICONS =================
+    // ================= 5. PLACE ICONS & CATEGORIES =================
     function getPlaceIcon(name, rawCategory = '') {
         const n = (name || '').toLowerCase().trim();
         const c = (rawCategory || '').toLowerCase().trim();
@@ -234,7 +215,51 @@ document.addEventListener('DOMContentLoaded', () => {
         return '🏢';
     }
 
-    // ================= 7. UTILITIES OVERLAY =================
+    function getCategoryClassification(name, rawCategory = '') {
+        const n = name.toLowerCase();
+        const c = rawCategory.toLowerCase();
+
+        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('csa') || n.includes('bsh')) return 'academic';
+        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess')) return 'hostel';
+        if (c.includes('food') || n.includes('canteen') || n.includes('parlour')) return 'food';
+        if (c.includes('sports') || n.includes('pool') || n.includes('ground')) return 'sports';
+        if (c.includes('parking') || c.includes('gate') || n.includes('bus')) return 'parking';
+        return 'academic';
+    }
+
+    function applyCategoryAndZoomFilter() {
+        const currentZoom = map.getZoom();
+        const isZoomedOut = currentZoom < 18;
+        const majorLandmarks = ['admin block', 'library', 'canteen', 'giet temple', 'bus-stop', 'central mess', 'giet main ground'];
+
+        Object.keys(markerLayers).forEach(name => {
+            const layer = markerLayers[name];
+            const meta = placeMetadata[name] || {};
+            const itemCat = meta.category || 'academic';
+
+            const categoryMatches = (activeCategory === 'all' || itemCat === activeCategory);
+            const zoomMatches = !isZoomedOut || majorLandmarks.some(landmark => name.toLowerCase().includes(landmark));
+
+            if (categoryMatches && zoomMatches) {
+                if (!map.hasLayer(layer)) map.addLayer(layer);
+            } else {
+                if (map.hasLayer(layer)) map.removeLayer(layer);
+            }
+        });
+    }
+
+    map.on('zoomend', applyCategoryAndZoomFilter);
+
+    catChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            catChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            activeCategory = chip.getAttribute('data-cat');
+            applyCategoryAndZoomFilter();
+        });
+    });
+
+    // ================= 6. UTILITIES OVERLAY =================
     function renderUtilities(filterType) {
         utilityMarkers.forEach(m => map.removeLayer(m));
         utilityMarkers = [];
@@ -284,52 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 8. CATEGORY CLASSIFICATION =================
-    function getCategoryClassification(name, rawCategory = '') {
-        const n = name.toLowerCase();
-        const c = rawCategory.toLowerCase();
-
-        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('csa') || n.includes('bsh')) return 'academic';
-        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess')) return 'hostel';
-        if (c.includes('food') || n.includes('canteen') || n.includes('parlour')) return 'food';
-        if (c.includes('sports') || n.includes('pool') || n.includes('ground')) return 'sports';
-        if (c.includes('parking') || c.includes('gate') || n.includes('bus')) return 'parking';
-        return 'academic';
-    }
-
-    function applyCategoryAndZoomFilter() {
-        const currentZoom = map.getZoom();
-        const isZoomedOut = currentZoom < 18;
-        const majorLandmarks = ['admin block', 'library', 'canteen', 'giet temple', 'bus-stop', 'central mess', 'giet main ground'];
-
-        Object.keys(markerLayers).forEach(name => {
-            const layer = markerLayers[name];
-            const meta = placeMetadata[name] || {};
-            const itemCat = meta.category || 'academic';
-
-            const categoryMatches = (activeCategory === 'all' || itemCat === activeCategory);
-            const zoomMatches = !isZoomedOut || majorLandmarks.some(landmark => name.toLowerCase().includes(landmark));
-
-            if (categoryMatches && zoomMatches) {
-                if (!map.hasLayer(layer)) map.addLayer(layer);
-            } else {
-                if (map.hasLayer(layer)) map.removeLayer(layer);
-            }
-        });
-    }
-
-    map.on('zoomend', applyCategoryAndZoomFilter);
-
-    catChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-            catChips.forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            activeCategory = chip.getAttribute('data-cat');
-            applyCategoryAndZoomFilter();
-        });
-    });
-
-    // ================= 9. GEOMETRY & CLIENT DIJKSTRA ROUTING =================
+    // ================= 7. CLIENT DIJKSTRA ROUTING ENGINE =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -510,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
     }
 
-    // ================= 10. TURN-BY-TURN INSTRUCTIONS =================
+    // ================= 8. TURN-BY-TURN INSTRUCTIONS =================
     function generateTurnInstructions(coords) {
         if (!coords || coords.length < 2) return [];
         const instructions = [];
@@ -535,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (Math.abs(diff) >= 32) {
                 const turnType = diff > 0 ? "Turn Right" : "Turn Left";
-                const icon = diff > 0 ? "↗️" : "↖️";
+                const icon = diff > 0 ? "↗" : "↖️";
                 instructions.push({
                     id: `turn_${i}_${Math.round(pCurr[0] * 1000)}`,
                     action: "turn",
@@ -574,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 11. LIVE GPS & POLYLINE TRIMMING =================
+    // ================= 9. LIVE GPS & POLYLINE TRIMMING =================
     function updateUserLiveLocation(lat, lng, accuracy = 5) {
         currentUserLat = lat;
         currentUserLng = lng;
@@ -636,6 +616,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showArrivalTransitionModal() {
+        if (!activeIndoorDestination) return;
+        if (document.getElementById('arrival-popup-overlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'arrival-popup-overlay';
+        overlay.className = 'arrival-popup-overlay';
+        overlay.innerHTML = `
+            <div class="arrival-popup-card">
+                <div class="arrival-icon-badge">
+                    <i class="fa-solid fa-door-open"></i>
+                </div>
+                <h3 style="color:#ffffff; font-size:18px; font-weight:800; margin:0;">You Have Arrived!</h3>
+                <p style="color:#94a3b8; font-size:13px; line-height:1.5; margin:0;">
+                    Reached <strong>${activeIndoorDestination.building}</strong>.<br>
+                    Destination room: <strong style="color:#38bdf8;">${activeIndoorDestination.roomCode}</strong> (Floor ${activeIndoorDestination.floorNum}).
+                </p>
+                <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
+                   class="btn-open-blueprint">
+                    <i class="fa-solid fa-map"></i> View Floor ${activeIndoorDestination.floorNum} Layout &rarr;
+                </a>
+                <button type="button" id="close-arrival-btn" style="background:transparent; color:#64748b; font-size:12px; cursor:pointer; border:none; padding:4px;">
+                    Stay on Outdoor Map
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#close-arrival-btn').addEventListener('click', () => {
+            overlay.remove();
+        });
+    }
+
     function updateHudInstruction(remainingCoords, currentPos) {
         if (!turnInstructions || turnInstructions.length === 0) return;
 
@@ -670,7 +683,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             turnHud.classList.remove('hidden');
             turnIcon.textContent = "🏁";
-            turnInstruction.textContent = "Approaching destination";
+            
+            if (activeIndoorDestination) {
+                turnInstruction.innerHTML = `
+                    Arrived at ${activeIndoorDestination.building}!<br>
+                    <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
+                       style="display:inline-block; margin-top:4px; padding:3px 8px; background:#2563eb; color:#fff; border-radius:4px; font-weight:700; text-decoration:none; font-size:11px;">
+                       🏢 Open Room ${activeIndoorDestination.roomCode} Layout &rarr;
+                    </a>
+                `;
+                showArrivalTransitionModal();
+            } else {
+                turnInstruction.textContent = "Arrived at destination entrance";
+            }
             turnDistance.textContent = "within 5 meters";
 
             if (!spokenMilestones.has("arrived")) {
@@ -680,7 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ================= 12. ROUTE VISUALIZATION =================
+    // ================= 10. ROUTE VISUALIZATION =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -727,7 +752,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (routeOutput) {
             routeOutput.classList.remove('hidden');
+            let indoorBanner = '';
+            if (activeIndoorDestination) {
+                indoorBanner = `
+                    <div style="margin-bottom:10px; padding:10px; background:rgba(37,99,235,0.22); border:1.5px solid #2563eb; border-radius:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:12px; color:#93c5fd; font-weight:800;">Target Room: ${activeIndoorDestination.roomCode}</span>
+                            <span style="font-size:10px; background:#1e293b; padding:2px 6px; border-radius:4px; color:#cbd5e1;">Floor ${activeIndoorDestination.floorNum}</span>
+                        </div>
+                        <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
+                           style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:8px; background:#2563eb; color:#ffffff; padding:7px 12px; border-radius:6px; font-size:12px; text-decoration:none; font-weight:700;">
+                           🏢 Open Inside Floor Layout &rarr;
+                        </a>
+                    </div>
+                `;
+            }
+
             routeOutput.innerHTML = `
+                ${indoorBanner}
                 <div style="font-size: 13px;">
                     <strong style="color: ${ROUTE_PALETTE[index] || '#10b981'}">${selectedRoute.name}</strong><br>
                     Distance: <strong>${selectedRoute.totalDistance} meters</strong> (~${estTime} mins walk)
@@ -736,7 +778,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!isTrackingOrSimulating && remainingRoutePolyline) {
-            map.fitBounds(remainingRoutePolyline.getBounds(), { padding: [40, 40], maxZoom: 19, animate: true });
+            const isMobile = window.innerWidth <= 640;
+            const bottomPadding = isMobile ? 180 : 40;
+            const topPadding = isMobile ? 90 : 40;
+
+            map.fitBounds(remainingRoutePolyline.getBounds(), {
+                paddingTopLeft: [20, topPadding],
+                paddingBottomRight: [20, bottomPadding],
+                maxZoom: 19,
+                animate: true
+            });
         }
     }
 
@@ -768,11 +819,14 @@ document.addEventListener('DOMContentLoaded', () => {
         selectActiveRoute(0);
     }
 
-    // ================= 13. IN-APP LOCATION PICKER =================
+    // ================= 11. IN-APP LOCATION PICKER (SCALABLE & GROUPED) =================
+    let pickerCategoryFilter = 'all';
+
     function openLocationPicker(targetKey, titleText) {
         activePickerTarget = targetKey;
         pickerTitle.textContent = titleText || "Select Campus Location";
         pickerFilterInput.value = "";
+        pickerCategoryFilter = 'all';
         renderPickerList("");
         locationPickerModal.classList.remove('hidden');
         setTimeout(() => pickerFilterInput.focus(), 100);
@@ -783,11 +837,48 @@ document.addEventListener('DOMContentLoaded', () => {
         activePickerTarget = null;
     }
 
+    function renderPickerCategoryBar() {
+        let chipBar = document.getElementById('picker-category-chip-bar');
+        const pickerSearchBox = document.querySelector('.picker-search-box');
+        if (!chipBar && pickerSearchBox) {
+            chipBar = document.createElement('div');
+            chipBar.id = 'picker-category-chip-bar';
+            chipBar.className = 'picker-filter-chips';
+            pickerSearchBox.parentNode.insertBefore(chipBar, pickerItemsList);
+        }
+
+        if (!chipBar) return;
+
+        const categories = [
+            { key: 'all', label: 'All Places' },
+            { key: 'classroom', label: 'Classrooms' },
+            { key: 'laboratory', label: 'Labs' },
+            { key: 'office', label: 'Offices' },
+            { key: 'washroom', label: 'Washrooms' }
+        ];
+
+        chipBar.innerHTML = '';
+        categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `picker-chip-btn ${pickerCategoryFilter === cat.key ? 'active' : ''}`;
+            btn.textContent = cat.label;
+            btn.addEventListener('click', () => {
+                pickerCategoryFilter = cat.key;
+                renderPickerCategoryBar();
+                renderPickerList(pickerFilterInput.value);
+            });
+            chipBar.appendChild(btn);
+        });
+    }
+
     function renderPickerList(filterTerm) {
+        renderPickerCategoryBar();
         pickerItemsList.innerHTML = "";
         const term = filterTerm.toLowerCase().trim();
 
-        if (activePickerTarget === 'start') {
+        // 1. Live Location Option (Only for Starting point)
+        if (activePickerTarget === 'start' && pickerCategoryFilter === 'all') {
             const liveItem = document.createElement('div');
             liveItem.className = 'picker-item';
             liveItem.innerHTML = `<span class="picker-item-icon">📍</span> <span>My Live Location (GPS)</span>`;
@@ -799,37 +890,127 @@ document.addEventListener('DOMContentLoaded', () => {
             pickerItemsList.appendChild(liveItem);
         }
 
-        const matchingPlaces = placeNamesSorted.filter(name => !term || name.toLowerCase().includes(term));
+        // 2. Filter & Group Indoor Rooms
+        let filteredRooms = allIndoorRooms.filter(r => {
+            const matchesQuery = !term || 
+                r.number.toLowerCase().includes(term) || 
+                r.name.toLowerCase().includes(term) || 
+                r.building.toLowerCase().includes(term);
+            const matchesCat = pickerCategoryFilter === 'all' || (r.type || '').toLowerCase() === pickerCategoryFilter;
+            return matchesQuery && matchesCat;
+        });
 
-        matchingPlaces.forEach(name => {
-            const icon = getPlaceIcon(name);
-            const item = document.createElement('div');
-            item.className = 'picker-item';
-            item.innerHTML = `<span class="picker-item-icon">${icon}</span> <span>${name}</span>`;
-
-            item.addEventListener('click', () => {
-                if (activePickerTarget === 'start') {
-                    selectedWaypoints.start = { id: name, name: name };
-                    startDisplay.querySelector('.waypoint-text').textContent = `${icon} ${name}`;
-                } else if (activePickerTarget === 'destination') {
-                    selectedWaypoints.destination = { id: name, name: name };
-                    const destText = destinationDisplay.querySelector('.waypoint-text');
-                    destText.textContent = `${icon} ${name}`;
-                    destText.classList.remove('placeholder');
-                } else if (typeof activePickerTarget === 'number') {
-                    selectedWaypoints.extraStops[activePickerTarget] = { id: name, name: name };
-                    const stopCard = waypointsContainer.querySelectorAll('.stop-row')[activePickerTarget];
-                    if (stopCard) {
-                        const txt = stopCard.querySelector('.waypoint-text');
-                        txt.textContent = `${icon} ${name}`;
-                        txt.classList.remove('placeholder');
-                    }
-                }
-                closeLocationPicker();
+        // Group rooms by Building -> Floor
+        if (filteredRooms.length > 0) {
+            const grouped = {};
+            filteredRooms.forEach(rm => {
+                const groupKey = `${rm.building} — Floor ${rm.floor_number}`;
+                if (!grouped[groupKey]) grouped[groupKey] = [];
+                grouped[groupKey].push(rm);
             });
 
-            pickerItemsList.appendChild(item);
-        });
+            Object.keys(grouped).forEach(groupTitle => {
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'picker-group-heading';
+                groupHeader.innerHTML = `
+                    <span>🏢 ${groupTitle}</span>
+                    <span style="font-size:10px; opacity:0.8;">${grouped[groupTitle].length} rooms</span>
+                `;
+                pickerItemsList.appendChild(groupHeader);
+
+                grouped[groupTitle].forEach(rm => {
+                    const item = document.createElement('div');
+                    item.className = 'picker-item-room';
+
+                    const isDuplicate = rm.name.trim().toLowerCase() === rm.number.trim().toLowerCase();
+                    const titleText = isDuplicate ? rm.number : `${rm.number}: ${rm.name}`;
+                    const category = (rm.type || 'classroom').toLowerCase();
+
+                    item.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:16px;">🚪</span>
+                            <div>
+                                <div style="font-weight:700; color:#ffffff; font-size:13px;">${titleText}</div>
+                                <div style="font-size:11px; color:#94a3b8;">${rm.building} &bull; Level ${rm.floor_number}</div>
+                            </div>
+                        </div>
+                        <span class="room-item-badge ${category}">${rm.type || 'Room'}</span>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        handleSelectDestinationRoom(rm);
+                        closeLocationPicker();
+                    });
+                    pickerItemsList.appendChild(item);
+                });
+            });
+        }
+
+        // 3. Outdoor Blocks & Sites
+        if (pickerCategoryFilter === 'all') {
+            const matchingPlaces = placeNamesSorted.filter(name => !term || name.toLowerCase().includes(term));
+            if (matchingPlaces.length > 0) {
+                const catLabel2 = document.createElement('div');
+                catLabel2.className = 'picker-group-heading';
+                catLabel2.style.color = '#94a3b8';
+                catLabel2.innerHTML = `<span>🏛️ Campus Blocks & Landmarks</span>`;
+                pickerItemsList.appendChild(catLabel2);
+
+                matchingPlaces.forEach(name => {
+                    const icon = getPlaceIcon(name);
+                    const item = document.createElement('div');
+                    item.className = 'picker-item';
+                    item.innerHTML = `<span class="picker-item-icon">${icon}</span> <span>${name}</span>`;
+
+                    item.addEventListener('click', () => {
+                        if (activePickerTarget === 'start') {
+                            selectedWaypoints.start = { id: name, name: name };
+                            startDisplay.querySelector('.waypoint-text').textContent = `${icon} ${name}`;
+                        } else if (activePickerTarget === 'destination') {
+                            activeIndoorDestination = null;
+                            selectedWaypoints.destination = { id: name, name: name };
+                            const destText = destinationDisplay.querySelector('.waypoint-text');
+                            destText.textContent = `${icon} ${name}`;
+                            destText.classList.remove('placeholder');
+                        } else if (typeof activePickerTarget === 'number') {
+                            selectedWaypoints.extraStops[activePickerTarget] = { id: name, name: name };
+                            const stopCard = waypointsContainer.querySelectorAll('.stop-row')[activePickerTarget];
+                            if (stopCard) {
+                                const txt = stopCard.querySelector('.waypoint-text');
+                                txt.textContent = `${icon} ${name}`;
+                                txt.classList.remove('placeholder');
+                            }
+                        }
+                        closeLocationPicker();
+                    });
+
+                    pickerItemsList.appendChild(item);
+                });
+            }
+        }
+    }
+
+    function handleSelectDestinationRoom(rm) {
+        const hostBuilding = resolveHostBuildingName(rm.building);
+        activeIndoorDestination = { 
+            building: hostBuilding, 
+            roomCode: rm.number, 
+            floorNum: rm.floor_number,
+            roomName: rm.name 
+        };
+        selectedWaypoints.destination = { id: hostBuilding, name: hostBuilding };
+
+        const destText = destinationDisplay.querySelector('.waypoint-text');
+        destText.textContent = `🚪 ${rm.number} (${hostBuilding})`;
+        destText.classList.remove('placeholder');
+
+        findRouteBtn.click();
+    }
+
+    function resolveHostBuildingName(bldgRaw) {
+        const clean = bldgRaw.trim().toLowerCase();
+        const found = Object.keys(buildings).find(k => k.toLowerCase() === clean || clean.includes(k.toLowerCase()) || k.toLowerCase().includes(clean));
+        return found || bldgRaw;
     }
 
     if (startDisplay) startDisplay.parentElement.addEventListener('click', () => openLocationPicker('start', 'Choose Starting Point'));
@@ -869,22 +1050,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 14. MOBILE BOTTOM DRAWER =================
+    // ================= 12. MOBILE BOTTOM DRAWER & PEEK ENGINE =================
     let isDraggingHandle = false;
     let startTouchY = 0;
-    let currentPanelState = 0;
+    let currentPanelState = 1;
     const dragArea = document.getElementById('panel-handle-area') || togglePanelBtn;
 
     function applySheetSnap(stateIndex) {
         if (window.innerWidth > 640 || !navPanel) return;
         currentPanelState = stateIndex;
-        navPanel.style.transition = 'transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        navPanel.style.transition = 'transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1)';
 
         const panelHeight = navPanel.offsetHeight;
         if (stateIndex === 0) {
             navPanel.style.transform = 'translateY(0px)';
         } else {
-            const peekOffset = Math.max(0, panelHeight - 64);
+            const peekVisibleHeight = 130;
+            const peekOffset = Math.max(0, panelHeight - peekVisibleHeight);
             navPanel.style.transform = `translateY(${peekOffset}px)`;
         }
     }
@@ -901,12 +1083,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDraggingHandle) return;
             const deltaY = e.touches[0].clientY - startTouchY;
             const panelHeight = navPanel.offsetHeight;
-            const maxOffset = Math.max(0, panelHeight - 64);
+            const peekOffset = Math.max(0, panelHeight - 130);
 
-            let baseOffset = currentPanelState === 1 ? maxOffset : 0;
+            let baseOffset = currentPanelState === 1 ? peekOffset : 0;
             let targetOffset = baseOffset + deltaY;
             if (targetOffset < 0) targetOffset = 0;
-            if (targetOffset > maxOffset) targetOffset = maxOffset;
+            if (targetOffset > peekOffset) targetOffset = peekOffset;
 
             navPanel.style.transform = `translateY(${targetOffset}px)`;
         }, { passive: true });
@@ -917,8 +1099,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const endTouchY = e.changedTouches[0].clientY;
             const distanceMoved = endTouchY - startTouchY;
 
-            if (distanceMoved > 40) applySheetSnap(1);
-            else if (distanceMoved < -40) applySheetSnap(0);
+            if (distanceMoved > 35) applySheetSnap(1);
+            else if (distanceMoved < -35) applySheetSnap(0);
             else applySheetSnap(currentPanelState);
         });
     }
@@ -931,75 +1113,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 15. CAMPUS TOUR MODE =================
-    function startCampusTour() {
-        isTourActive = true;
-        currentTourIndex = 0;
-
-        const tourCoords = campusTourStops.map(s => buildings[s.name]).filter(Boolean);
-        if (tourCoords.length < 2) {
-            alert("Tour landmarks are synchronizing with the campus mesh. Please retry in a moment.");
-            return;
-        }
-
-        const routes = computeClientSideRoutes(tourCoords);
-        if (routes && routes.length > 0) renderRoutes(routes);
-
-        if (window.innerWidth <= 640) applySheetSnap(1);
-        showTourStopCard(currentTourIndex);
+    // ================= 13. DATA INITIALIZER & INTERACTIVE POPUPS =================
+    function createBuildingInteractivePopup(name, category) {
+        const isNotBuilding = ["court", "ground", "parking", "bus-stop", "pool", "temple", "garden"].some(k => name.toLowerCase().includes(k));
+        
+        let html = `
+            <div style="font-family:'Inter',sans-serif; min-width:200px; padding:4px;">
+                <div style="font-weight:800; font-size:14px; color:#0f172a;">${name}</div>
+                <div style="font-size:11px; color:#64748b; margin-bottom:8px;">${category || "Campus Location"}</div>
+                
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button type="button" class="btn-popup-route" style="background:#2563eb; color:#fff; padding:6px 10px; border-radius:6px; font-weight:700; font-size:11.5px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        🎯 Set as Destination
+                    </button>
+                    ${!isNotBuilding ? `
+                        <a href="building.html?name=${encodeURIComponent(name)}" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:6px 10px; border-radius:6px; font-weight:700; font-size:11px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            🏢 View Inside Floor Layout &rarr;
+                        </a>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        return html;
     }
 
-    function showTourStopCard(idx) {
-        if (idx < 0 || idx >= campusTourStops.length) return;
-        currentTourIndex = idx;
-        const stop = campusTourStops[idx];
-
-        tourStopNum.textContent = `${idx + 1}/${campusTourStops.length}`;
-        tourStopTitle.textContent = stop.title;
-        tourStopDesc.textContent = stop.desc;
-        if (tourOfficialLink) tourOfficialLink.href = stop.url || "https://www.giet.edu";
-        tourCardModal.classList.remove('hidden');
-
-        const coords = buildings[stop.name];
-        if (coords) {
-            map.flyTo(coords, 19, { duration: 1.0 });
-            if (markerLayers[stop.name]) markerLayers[stop.name].openTooltip();
-        }
-
-        speakVoicePrompt(`Tour Stop ${idx + 1}: ${stop.title}. ${stop.desc}`);
-    }
-
-    if (startTourBtn) startTourBtn.addEventListener('click', startCampusTour);
-    if (tourNextBtn) {
-        tourNextBtn.addEventListener('click', () => {
-            if (currentTourIndex < campusTourStops.length - 1) showTourStopCard(currentTourIndex + 1);
-            else {
-                alert("You have completed the GIET University Campus Tour! Welcome to GIETU.");
-                tourCardModal.classList.add('hidden');
-                isTourActive = false;
-            }
-        });
-    }
-    if (tourPrevBtn) {
-        tourPrevBtn.addEventListener('click', () => {
-            if (currentTourIndex > 0) showTourStopCard(currentTourIndex - 1);
-        });
-    }
-    if (tourSpeakBtn) {
-        tourSpeakBtn.addEventListener('click', () => {
-            const stop = campusTourStops[currentTourIndex];
-            if (stop) speakVoicePrompt(`${stop.title}. ${stop.desc}`);
-        });
-    }
-    if (closeTourModalBtn) {
-        closeTourModalBtn.addEventListener('click', () => {
-            tourCardModal.classList.add('hidden');
-            isTourActive = false;
-            window.speechSynthesis.cancel();
-        });
-    }
-
-    // ================= 16. DATA INITIALIZER & POPUP TRANSITIONS =================
     function processGeoJSONData(data) {
         campusGeoJSON = data;
         buildings = {};
@@ -1025,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (icon === '🛡️') dotColor = '#f59e0b';
                 else if (icon === '🏊‍♂️' || icon === '⚽') dotColor = '#10b981';
 
-                return L.circleMarker(latlng, { radius: 5, fillColor: '#ffffff', color: dotColor, weight: 3, opacity: 1, fillOpacity: 1 });
+                return L.circleMarker(latlng, { radius: 6, fillColor: '#ffffff', color: dotColor, weight: 3, opacity: 1, fillOpacity: 1 });
             },
             onEachFeature: (feature, layer) => {
                 const name = feature.properties?.name?.trim();
@@ -1044,16 +1181,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         className: 'satellite-label'
                     });
 
-                    // Direct link to floor structure viewer
-                    layer.bindPopup(`
-                        <div style="font-family: 'Inter', sans-serif;">
-                            <strong>${name}</strong><br>
-                            <span style="font-size: 11px; color: #64748b;">Walkway Connected</span><br>
-                            <a href="building.html?name=${encodeURIComponent(name)}" style="display: inline-block; margin-top: 6px; color: #2563eb; font-weight: 700; font-size: 12px; text-decoration: none;">
-                                🏢 View Inside Floor Layout &rarr;
-                            </a>
-                        </div>
-                    `);
+                    const popupHtml = createBuildingInteractivePopup(name, rawCat);
+                    layer.bindPopup(popupHtml);
+
+                    layer.on('popupopen', (e) => {
+                        const popupEl = e.popup.getElement();
+                        const routeBtn = popupEl.querySelector('.btn-popup-route');
+                        if (routeBtn) {
+                            routeBtn.onclick = () => {
+                                map.closePopup();
+                                activeIndoorDestination = null;
+                                selectedWaypoints.destination = { id: name, name: name };
+                                const destText = destinationDisplay.querySelector('.waypoint-text');
+                                destText.textContent = `${icon} ${name}`;
+                                destText.classList.remove('placeholder');
+                                findRouteBtn.click();
+                            };
+                        }
+                    });
                 }
             }
         }).addTo(map);
@@ -1064,6 +1209,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(safetyTimer);
         hideLoader();
 
+        fetchIndoorRoomsDatabase();
+
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
@@ -1072,7 +1219,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Instant Local-First Loader
+    async function fetchIndoorRoomsDatabase() {
+        try {
+            const bRes = await fetch(`${API_URL}/api/admin/buildings-list`);
+            const bldgs = await bRes.json();
+            allIndoorRooms = [];
+
+            for (const bldg of bldgs) {
+                const fRes = await fetch(`${API_URL}/api/buildings/${encodeURIComponent(bldg)}/floors`);
+                const floors = await fRes.json();
+                floors.forEach(f => {
+                    (f.rooms || []).forEach(r => {
+                        allIndoorRooms.push({
+                            number: r.number,
+                            name: r.name,
+                            type: r.type,
+                            building: f.building_name,
+                            floor_number: f.floor_number
+                        });
+                    });
+                });
+            }
+        } catch (e) {
+            allIndoorRooms = [
+                { number: "CSA-4", name: "CSA 4 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
+                { number: "CSA-3", name: "CSA 3 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
+                { number: "CSA-2", name: "CSA 2 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
+                { number: "CSA-1", name: "CSA 1 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
+                { number: "BEE-LAB", name: "BEE LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
+                { number: "BE-LAB", name: "BE LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
+                { number: "MPMC-LAB", name: "MPMC LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
+                { number: "FC-2", name: "FC-2 Exam Cell", type: "Office", building: "CSA block", floor_number: 3 }
+            ];
+        }
+    }
+
     fetch('assets/data/giet_campus.geojson')
         .then(res => {
             if (!res.ok) throw new Error("Local bundle not available");
@@ -1081,23 +1262,21 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             processGeoJSONData(data);
             hideLoader();
-            // Background sync
             fetch(`${API_URL}/api/campus-data`, { signal: AbortSignal.timeout(5000) })
-                .catch(() => console.log("Backend offline; running on local campus data."));
+                .catch(() => console.log("Running on local dataset."));
         })
         .catch(err => {
-            console.warn("Falling back to API:", err);
             fetch(`${API_URL}/api/campus-data`)
                 .then(res => res.json())
                 .then(data => processGeoJSONData(data.geojson))
-                .catch(apiErr => {
-                    console.error("Critical: Unable to load campus data", apiErr);
+                .catch(apiErr => console.error("Error loading map data", apiErr))
+                .finally(() => {
                     clearTimeout(safetyTimer);
                     hideLoader();
                 });
         });
 
-    // ================= 17. ROUTE TRIGGER =================
+    // ================= 14. ROUTE TRIGGER =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -1149,18 +1328,12 @@ document.addEventListener('DOMContentLoaded', () => {
             renderRoutes(routes);
 
             if (window.innerWidth <= 640) {
-                applySheetSnap(0);
-                setTimeout(() => {
-                    const panel = document.querySelector('.panel-body');
-                    if (panel && turnStepsContainer) {
-                        panel.scrollTo({ top: turnStepsContainer.offsetTop - 20, behavior: 'smooth' });
-                    }
-                }, 280);
+                applySheetSnap(1);
             }
         });
     }
 
-    // ================= 18. GPS WATCH =================
+    // ================= 15. LIVE GPS WATCH & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
@@ -1199,7 +1372,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 19. WALK SIMULATION =================
     function generateUniformAnimationPoints(coords, meterSpacing = 1.0) {
         const points = [];
         if (!coords || coords.length < 2) return points;
@@ -1233,7 +1405,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 simulationInterval = null;
                 isTrackingOrSimulating = false;
                 simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate</span>`;
-                alert("You have arrived at your destination!");
+                
+                speakVoicePrompt("You have arrived at your destination!");
+                if (activeIndoorDestination) {
+                    showArrivalTransitionModal();
+                } else {
+                    alert("You have arrived at your destination!");
+                }
                 return;
             }
 
@@ -1303,6 +1481,9 @@ document.addEventListener('DOMContentLoaded', () => {
             breadcrumbPolyline = null;
             fullRouteCoords = [];
 
+            const arrivalModal = document.getElementById('arrival-popup-overlay');
+            if (arrivalModal) arrivalModal.remove();
+
             if (simulationInterval) {
                 clearInterval(simulationInterval);
                 simulationInterval = null;
@@ -1321,18 +1502,19 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedWaypoints.extraStops = [];
 
             selectedWaypoints.destination = null;
+            activeIndoorDestination = null;
+
             const destText = destinationDisplay.querySelector('.waypoint-text');
             destText.textContent = "Choose Destination";
             destText.classList.add('placeholder');
 
             turnHud.classList.add('hidden');
-            tourCardModal.classList.add('hidden');
             turnStepsContainer.classList.add('hidden');
             routeOutput.classList.add('hidden');
             routeOptionsContainer.classList.add('hidden');
             map.setView(GIET_CENTER, 18);
 
-            if (window.innerWidth <= 640) applySheetSnap(0);
+            if (window.innerWidth <= 640) applySheetSnap(1);
         });
     }
 
@@ -1343,17 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 20. SEARCH & INDOOR SHORTCUTS =================
-    // Specific classrooms routed to building entrance with direct indoor link
-    const INDOOR_ROOM_SHORTCUTS = [
-        { code: "csa-4", name: "CSA 4 (3rd Floor)", building: "CSA block", roomParam: "CSA-4" },
-        { code: "csa-3", name: "CSA 3 (3rd Floor)", building: "CSA block", roomParam: "CSA-3" },
-        { code: "bee lab", name: "BEE LAB (3rd Floor)", building: "CSA block", roomParam: "BEE-LAB" },
-        { code: "be lab", name: "BE LAB (3rd Floor)", building: "CSA block", roomParam: "BE-LAB" },
-        { code: "mpmc lab", name: "MPMC LAB (3rd Floor)", building: "CSA block", roomParam: "MPMC-LAB" },
-        { code: "fc-2", name: "FC-2 Exam Section", building: "CSA block", roomParam: "FC-2" }
-    ];
-
+    // ================= 16. LIVE SEARCH =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
@@ -1365,39 +1537,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Check classroom shortcuts
-            const matchedRooms = INDOOR_ROOM_SHORTCUTS.filter(r => r.code.includes(query) || r.name.toLowerCase().includes(query));
-            matchedRooms.forEach(rm => {
+            const matchedRooms = allIndoorRooms.filter(r => r.number.toLowerCase().includes(query) || r.name.toLowerCase().includes(query) || r.building.toLowerCase().includes(query));
+            matchedRooms.slice(0, 6).forEach(rm => {
                 const item = document.createElement('div');
                 item.className = 'search-item';
-                item.innerHTML = `<span style="font-size:18px;">🎓</span> <div><strong>${rm.name}</strong><br><small style="color:#64748b;">Inside ${rm.building}</small></div>`;
+                const isDuplicate = rm.name.trim().toLowerCase() === rm.number.trim().toLowerCase();
+                const displayTitle = isDuplicate ? rm.number : `${rm.number}: ${rm.name}`;
+
+                item.innerHTML = `
+                    <span style="font-size:18px;">🚪</span> 
+                    <div>
+                        <strong>${displayTitle}</strong><br>
+                        <small style="color:#64748b;">${rm.building} &bull; Floor ${rm.floor_number}</small>
+                    </div>
+                `;
 
                 item.addEventListener('click', (ev) => {
                     ev.preventDefault();
-                    ev.stopPropagation();
-                    buildingSearch.value = rm.name;
+                    buildingSearch.value = `${rm.number} (${rm.building})`;
                     searchResults.classList.add('hidden');
-
-                    selectedWaypoints.destination = { id: rm.building, name: rm.building };
-                    destinationDisplay.querySelector('.waypoint-text').textContent = `🏢 ${rm.building}`;
-                    destinationDisplay.querySelector('.waypoint-text').classList.remove('placeholder');
-
-                    findRouteBtn.click();
-
-                    turnHud.classList.remove('hidden');
-                    turnInstruction.innerHTML = `
-                        Destination: ${rm.name}<br>
-                        <a href="building.html?name=${encodeURIComponent(rm.building)}&room=${encodeURIComponent(rm.roomParam)}" style="color:#38bdf8; font-size:11px; text-decoration:underline;">
-                            Open 3rd Floor Blueprint &rarr;
-                        </a>
-                    `;
+                    handleSelectDestinationRoom(rm);
                 });
                 searchResults.appendChild(item);
             });
 
-            // Match outdoor campus landmarks
             const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
-            matchedPlaces.slice(0, 8).forEach(place => {
+            matchedPlaces.slice(0, 6).forEach(place => {
                 const icon = getPlaceIcon(place);
                 const item = document.createElement('div');
                 item.className = 'search-item';
@@ -1405,11 +1570,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 item.addEventListener('click', (ev) => {
                     ev.preventDefault();
-                    ev.stopPropagation();
-
                     buildingSearch.value = place;
                     searchResults.classList.add('hidden');
 
+                    activeIndoorDestination = null;
                     selectedWaypoints.destination = { id: place, name: place };
                     const destText = destinationDisplay.querySelector('.waypoint-text');
                     destText.textContent = `${icon} ${place}`;
@@ -1421,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (markerLayers[place]) markerLayers[place].openTooltip();
                     }
 
-                    if (window.innerWidth <= 640) applySheetSnap(0);
+                    if (window.innerWidth <= 640) applySheetSnap(1);
                 });
 
                 searchResults.appendChild(item);
@@ -1443,5 +1607,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResults.classList.add('hidden');
             }
         });
+    }
+
+    if (window.innerWidth <= 640) {
+        setTimeout(() => applySheetSnap(1), 350);
     }
 });

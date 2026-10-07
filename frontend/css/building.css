@@ -4,22 +4,115 @@
    Requires: common.css
    ========================================================================== */
 
+body.building-body {
+    background-color: var(--bg-page, #090d16);
+    color: var(--text-main, #f8fafc);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ================= 1. TOP HEADER & NAVBAR ================= */
+.app-header,
+.building-header {
+    height: 56px;
+    background: var(--bg-surface-glass, rgba(15, 23, 42, 0.95));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 1000;
+    flex-shrink: 0;
+}
+
+.brand-unit {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.brand-icon-box img {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.brand-title-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-title-main {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.brand-title-sub {
+    font-size: 9.5px;
+    color: #38bdf8;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-actions .cat-chip,
+.header-actions a.cat-chip {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.header-actions .cat-chip:hover,
+.header-actions a.cat-chip:hover {
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+/* ================= 2. PAGE STAGE & CONTROLS ================= */
 .layout-stage {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 14px 18px;
+    padding: 14px 16px;
     gap: 12px;
-    overflow-y: auto;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+    box-sizing: border-box;
 }
 
-/* Controls Header */
+/* Selector & Search Inputs */
 .selector-bar {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
     width: 100%;
 }
@@ -27,7 +120,7 @@
 .control-item {
     position: relative;
     flex: 1;
-    min-width: 240px;
+    min-width: 200px;
 }
 
 .control-item i {
@@ -35,58 +128,81 @@
     left: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 14px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 13px;
     pointer-events: none;
 }
 
-/* Floor Level Switcher */
+.control-item select,
+.control-item input {
+    width: 100%;
+    background: var(--bg-surface, #1e293b);
+    border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 12px 9px 34px;
+    border-radius: 10px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+
+.control-item select:focus,
+.control-item input:focus {
+    border-color: #38bdf8;
+}
+
+/* Floor Level Switcher Strip */
 .floor-switch-strip {
     display: flex;
     gap: 8px;
     overflow-x: auto;
-    padding-bottom: 2px;
+    padding: 2px 0 6px 0;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 .floor-switch-strip::-webkit-scrollbar { display: none; }
 
 .floor-pill-btn {
-    background: var(--bg-surface);
-    border: 1.5px solid var(--border-color);
-    color: var(--text-muted);
-    padding: 8px 16px;
-    border-radius: var(--radius-full);
-    font-size: 12.5px;
+    background: var(--bg-surface, #1e293b);
+    border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.12));
+    color: var(--text-muted, #94a3b8);
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
+    user-select: none;
+    flex-shrink: 0;
 }
 
 .floor-pill-btn:hover {
-    color: var(--primary-blue);
-    border-color: var(--accent-blue);
+    color: #ffffff;
+    border-color: #38bdf8;
 }
 
 .floor-pill-btn.active {
-    background: var(--primary-blue);
+    background: #2563eb;
     color: #ffffff;
-    border-color: var(--primary-blue);
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    border-color: #2563eb;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
 
-/* Blueprint Main Frame */
+/* ================= 3. BLUEPRINT CONTAINER & BOARD ================= */
 .blueprint-card-frame {
-    background: var(--bg-surface);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    background: var(--bg-surface, #0f172a);
+    border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    flex: 1;
-    min-height: 480px;
-    box-shadow: var(--shadow-card);
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .frame-top-meta {
@@ -100,15 +216,15 @@
 .floor-title-display {
     font-size: 14.5px;
     font-weight: 800;
-    color: var(--text-main);
+    color: #ffffff;
     letter-spacing: -0.01em;
 }
 
 .legend-group {
     display: flex;
     gap: 12px;
-    font-size: 11.5px;
-    color: var(--text-muted);
+    font-size: 11px;
+    color: #94a3b8;
     font-weight: 600;
     flex-wrap: wrap;
 }
@@ -124,39 +240,46 @@
     height: 8px;
     border-radius: 50%;
 }
-.dot-class { background: #10b981; }
-.dot-lab { background: #3b82f6; }
-.dot-office { background: #f59e0b; }
+.dot-class   { background: #10b981; }
+.dot-lab     { background: #3b82f6; }
+.dot-office  { background: #f59e0b; }
 .dot-utility { background: #8b5cf6; }
 
-/* The Actual Interactive Blueprint Canvas Box */
-.blueprint-canvas-scroll {
+/* The Viewport Container */
+.blueprint-canvas-scroll,
+.blueprint-viewport-wrap {
     position: relative;
     width: 100%;
-    flex: 1;
-    min-height: 400px;
-    background: var(--bg-page);
-    border-radius: var(--radius-md);
-    border: 1.5px dashed var(--border-card);
+    min-height: 490px;
+    background: #090d16;
+    border-radius: 12px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.12);
     overflow: auto;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 12px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
 }
 
-.blueprint-grid-board {
+/* Canvas Board (Standard size 900x480) */
+.blueprint-grid-board,
+.blueprint-canvas-board {
     position: relative;
     width: 900px;
     height: 480px;
-    background: var(--bg-surface);
-    border-radius: 10px;
-    border: 2px solid var(--border-card);
-    box-shadow: var(--shadow-sm);
+    background: #111827;
+    border-radius: 12px;
+    border: 2px solid #1f2937;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
+    user-select: none;
+    transform-origin: center center;
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
-/* Individual Room Elements Formatted via (x, y, w, h) */
+/* ================= 4. INDIVIDUAL ROOM BOXES ================= */
 .blueprint-room-box {
     position: absolute;
     border-radius: 8px;
@@ -169,83 +292,77 @@
     text-align: center;
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    border: 1.5px solid rgba(0, 0, 0, 0.15);
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
     user-select: none;
 }
 
 .blueprint-room-box:hover {
-    transform: scale(1.02);
+    transform: scale(1.025);
     z-index: 10;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
+/* Room Categorization Styling */
 .blueprint-room-box.classroom,
 .blueprint-room-box.class {
-    background: rgba(16, 185, 129, 0.14);
+    background: rgba(16, 185, 129, 0.18);
     border-color: #10b981;
-    color: #065f46;
+    color: #a7f3d0;
 }
 
 .blueprint-room-box.laboratory,
 .blueprint-room-box.lab {
-    background: rgba(37, 99, 235, 0.14);
+    background: rgba(59, 130, 246, 0.18);
     border-color: #3b82f6;
-    color: #1e40af;
+    color: #93c5fd;
 }
 
 .blueprint-room-box.office {
-    background: rgba(245, 158, 11, 0.14);
+    background: rgba(245, 158, 11, 0.18);
     border-color: #f59e0b;
-    color: #92400e;
+    color: #fde68a;
 }
 
 .blueprint-room-box.washroom,
 .blueprint-room-box.utility {
-    background: rgba(139, 92, 246, 0.14);
+    background: rgba(139, 92, 246, 0.18);
     border-color: #8b5cf6;
-    color: #5b21b6;
+    color: #ddd6fe;
 }
 
 .blueprint-room-box.auditorium {
-    background: rgba(239, 68, 68, 0.14);
+    background: rgba(239, 68, 68, 0.18);
     border-color: #ef4444;
-    color: #991b1b;
+    color: #fca5a5;
 }
 
-/* Walk Corridors, Stairs & Lifts */
 .blueprint-room-box.corridor {
-    background: rgba(148, 163, 184, 0.12);
-    border: 1.5px dashed #64748b;
-    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.1) !important;
+    border: 1.5px dashed #94a3b8 !important;
+    color: #cbd5e1 !important;
     z-index: 1;
 }
 
 .blueprint-room-box.stairs {
-    background: rgba(245, 158, 11, 0.2);
-    border: 1.5px solid #f59e0b;
-    color: #d97706;
+    background: rgba(245, 158, 11, 0.2) !important;
+    border: 2px solid #f59e0b !important;
+    color: #fde68a !important;
+    font-weight: 700;
 }
 
 .blueprint-room-box.lift {
-    background: rgba(234, 88, 12, 0.2);
-    border: 1.5px solid #ea580c;
-    color: #c2410c;
+    background: rgba(234, 88, 12, 0.2) !important;
+    border: 2px solid #ea580c !important;
+    color: #fed7aa !important;
+    font-weight: 700;
 }
 
-body.dark-mode .blueprint-room-box.classroom { color: #a7f3d0; }
-body.dark-mode .blueprint-room-box.laboratory { color: #93c5fd; }
-body.dark-mode .blueprint-room-box.office { color: #fde68a; }
-body.dark-mode .blueprint-room-box.washroom { color: #ddd6fe; }
-body.dark-mode .blueprint-room-box.auditorium { color: #fca5a5; }
-body.dark-mode .blueprint-room-box.stairs { color: #fde68a; }
-body.dark-mode .blueprint-room-box.lift   { color: #fed7aa; }
-body.dark-mode .blueprint-room-box.corridor { color: #cbd5e1; }
-
-/* Target Room Search Highlight Glow */
+/* Pulsing Active Room Box */
 .blueprint-room-box.active-pulse {
     border: 2.5px solid #10b981 !important;
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.6) !important;
+    box-shadow: 0 0 20px 4px rgba(16, 185, 129, 0.8) !important;
     animation: targetPulse 1.2s infinite alternate;
+    z-index: 25;
 }
 
 @keyframes targetPulse {
@@ -253,13 +370,14 @@ body.dark-mode .blueprint-room-box.corridor { color: #cbd5e1; }
     to { transform: scale(1.04); }
 }
 
-/* Room Information Inspector Card */
-.room-inspector-modal {
-    background: var(--bg-surface);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-lg);
+/* ================= 5. ROOM DETAIL / INSPECTOR CARD ================= */
+.room-inspector-modal,
+.room-detail-card {
+    background: #1e293b;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
     padding: 14px 18px;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -277,28 +395,31 @@ body.dark-mode .blueprint-room-box.corridor { color: #cbd5e1; }
     align-items: flex-start;
 }
 
-.room-type-pill {
+.room-type-pill,
+#room-type-tag {
     font-size: 10px;
     font-weight: 800;
-    color: var(--primary-blue);
+    color: #38bdf8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-.inspector-header h3 {
+.inspector-header h3,
+#room-title {
     font-size: 15px;
     font-weight: 800;
-    color: var(--text-main);
+    color: #ffffff;
     margin-top: 2px;
 }
 
-.btn-close-inspector {
-    background: var(--soft-blue-bg);
+.btn-close-inspector,
+#close-card-btn {
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    color: var(--text-muted);
+    color: #94a3b8;
     font-size: 13px;
     cursor: pointer;
     display: flex;
@@ -306,13 +427,66 @@ body.dark-mode .blueprint-room-box.corridor { color: #cbd5e1; }
     justify-content: center;
 }
 
-.inspector-body p {
-    font-size: 13px;
-    color: var(--text-muted);
-    line-height: 1.5;
+.btn-close-inspector:hover,
+#close-card-btn:hover {
+    color: #ffffff;
+    background: rgba(239, 68, 68, 0.3);
 }
 
-@media (max-width: 640px) {
-    .layout-stage { padding: 10px 12px; }
-    .blueprint-card-frame { padding: 12px; min-height: 420px; }
+.inspector-body p,
+#room-description {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ================= 6. MOBILE FIXES (<= 768px) ================= */
+@media (max-width: 768px) {
+    .app-header,
+    .building-header {
+        height: 52px;
+        padding: 0 12px;
+    }
+
+    .brand-title-sub {
+        display: none;
+    }
+
+    .layout-stage {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .control-item {
+        min-width: 100%; /* Stack dropdown and search cleanly */
+    }
+
+    .legend-group {
+        display: none; /* Hide legend on phones so canvas gets vertical space */
+    }
+
+    .blueprint-card-frame {
+        padding: 10px;
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    /* Wrap the scroll container with fixed viewport bounds */
+    .blueprint-canvas-scroll,
+    .blueprint-viewport-wrap {
+        width: 100%;
+        height: 55vh;
+        min-height: 320px;
+        padding: 0;
+        overflow: auto; /* Scroll horizontally if needed */
+        justify-content: flex-start; /* Prevent negative cutoffs */
+        align-items: flex-start;
+    }
+
+    .blueprint-grid-board,
+    .blueprint-canvas-board {
+        transform-origin: top left !important; /* Scale from top-left to avoid jumping up into header */
+        margin: 8px;
+    }
 }
