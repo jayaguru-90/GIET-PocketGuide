@@ -25,14 +25,13 @@
                 <img src="assets/images/LOGO.png" alt="GIET Logo" />
             </div>
             <div class="brand-title-wrap">
-                <span class="brand-title-main">GIET Guide</span>
+                <span class="brand-title-main">GIETU Map</span>
                 <span class="brand-title-sub"><span class="pulse-dot-sm"></span> Live GPS</span>
             </div>
         </a>
 
         <!-- SCROLLABLE UTILITIES & TOUR -->
         <div class="header-nav-group">
-            
             <div class="utility-chips-group">
                 <button type="button" class="util-chip" data-type="water" title="Drinking Water">🚰 Water</button>
                 <button type="button" class="util-chip" data-type="washroom" title="Restrooms">🚻 Restrooms</button>
@@ -41,7 +40,7 @@
             </div>
         </div>
 
-        <!-- QUICK PAGE ACTIONS (INCLUDES DIRECT ADMIN STUDIO LINK) -->
+        <!-- QUICK PAGE ACTIONS -->
         <div class="header-actions-group">
             <button type="button" id="theme-toggle-btn" class="btn-theme-circle" title="Toggle Theme" aria-label="Toggle Theme">
                 <i class="fa-solid fa-moon"></i>
@@ -71,29 +70,6 @@
         <button type="button" id="exit-hud-btn" class="btn-exit-hud" title="Close HUD" aria-label="Close HUD">✕</button>
     </div>
 
-    <!-- EXPANDED TOUR INFORMATION POPUP MODAL -->
-    <div id="tour-card-modal" class="tour-modal hidden">
-        <div class="tour-card-inner">
-            <div class="tour-header-meta">
-                <span class="tour-badge">🎓 OFFICIAL GIETU TOUR</span>
-                <span id="tour-stop-num" class="tour-counter">1/16</span>
-            </div>
-            <h3 id="tour-stop-title">Admin Block</h3>
-            <p id="tour-stop-desc">Main administrative headquarters housing the Vice Chancellor's office, Admissions, Academic Affairs, and Registrar offices.</p>
-            
-            <a id="tour-official-link" href="https://www.giet.edu" target="_blank" rel="noopener noreferrer" class="tour-web-link">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Visit Official GIETU Page
-            </a>
-
-            <div class="tour-actions">
-                <button type="button" id="tour-prev-btn" class="btn btn-secondary btn-touch">Back</button>
-                <button type="button" id="tour-speak-btn" class="btn btn-secondary btn-touch"><i class="fa-solid fa-volume-high"></i> Replay</button>
-                <button type="button" id="tour-next-btn" class="btn btn-primary btn-touch">Next <i class="fa-solid fa-arrow-right"></i></button>
-            </div>
-            <button type="button" id="close-tour-modal-btn" class="btn-close-tour" title="End Tour" aria-label="End Tour">✕</button>
-        </div>
-    </div>
-
     <!-- MAIN MAP CANVAS -->
     <div id="map"></div>
 
@@ -121,7 +97,7 @@
                 <div id="search-results" class="search-dropdown search-results-dropdown hidden"></div>
             </div>
 
-            <!-- Category Discovery Chips (Horizontal Scrollable) -->
+            <!-- Category Discovery Chips -->
             <div class="category-filters-container">
                 <div class="category-chips-scroll">
                     <button type="button" class="cat-chip active" data-cat="all">All</button>
@@ -155,6 +131,24 @@
             <button type="button" id="add-stop-btn" class="btn-link btn-add-stop">
                 <i class="fa-solid fa-plus-circle"></i> Add Next Stop
             </button>
+
+            <!-- ROUTE PRIORITY MODE SELECTOR -->
+            <div class="priority-selector-wrap" style="margin-top: 8px; margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+                    <i class="fa-solid fa-sliders"></i> Route Priority
+                </label>
+                <div style="display: flex; gap: 6px; background: rgba(15,23,42,0.6); padding: 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+                    <button type="button" class="btn-priority-pill active" data-priority="direct" style="flex: 1; padding: 6px 2px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: #2563eb; color: #fff;">
+                        ⚡ Direct
+                    </button>
+                    <button type="button" class="btn-priority-pill" data-priority="outdoor" style="flex: 1; padding: 6px 2px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94a3b8;">
+                        🌳 Walkway
+                    </button>
+                    <button type="button" class="btn-priority-pill" data-priority="covered" style="flex: 1; padding: 6px 2px; font-size: 11px; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: #94a3b8;">
+                        ☂️ Shaded
+                    </button>
+                </div>
+            </div>
 
             <!-- Primary Action Grid -->
             <div class="btn-grid action-buttons">

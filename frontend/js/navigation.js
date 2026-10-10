@@ -1,8 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ================= 0. ENVIRONMENT & BACKEND SETUP =================
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const API_URL = isLocal ? "http://127.0.0.1:8000" : "https://giet-campus-api.onrender.com";
 
-    // ================= 1. DOM REFERENCES & STATE =================
+    // University Geographic Boundary Envelope
+    const CAMPUS_BOUNDS = L.latLngBounds(
+        [19.0430, 83.8260], // Southwest boundary
+        [19.0545, 83.8395]  // Northeast boundary
+    );
+
+    const GIET_DEFAULT_CENTER = [19.0485, 83.8320];
+
+    // ================= 1. STATE VARIABLES & REFS =================
     const waypointsContainer = document.getElementById('waypoints-container');
     const startDisplay = document.getElementById('start-display');
     const destinationDisplay = document.getElementById('destination-display');
@@ -44,14 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const navPanel = document.getElementById('nav-panel');
     const togglePanelBtn = document.getElementById('toggle-panel-btn');
 
-    const GIET_CENTER = [19.0485, 83.8320];
+    const GIET_CENTER = GIET_DEFAULT_CENTER;
     const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
-
-    // Campus geographic fence
-    const CAMPUS_BOUNDS = L.latLngBounds(
-        [19.0430, 83.8260],
-        [19.0545, 83.8395]
-    );
 
     let campusGeoJSON = null;
     let buildings = {};
@@ -64,13 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Indoor Rooms Cache for search & pickers
     let allIndoorRooms = [];
 
+    // Route Priority Configuration
+    let currentRoutePriority = 'direct';
+    const PRIORITY_SETTINGS = {
+        direct: { corridorPenalty: 1.1, mainRoadBonus: 1.0 },
+        outdoor: { corridorPenalty: 4.5, mainRoadBonus: 0.8 },
+        covered: { corridorPenalty: 0.6, mainRoadBonus: 1.3 }
+    };
+
     let selectedWaypoints = {
         start: { id: "LIVE_LOCATION", name: "My Live Location (GPS)" },
         destination: null,
         extraStops: []
     };
     let activePickerTarget = null;
-    let activeIndoorDestination = null; // Stores { building, roomCode, floorNum, roomName }
+    let activeIndoorDestination = null;
 
     let fullRouteCoords = [];
     let remainingRoutePolyline = null;
@@ -96,7 +107,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeCategory = 'all';
     let isTrackingOrSimulating = false;
 
-    // ================= 2. THEME ENGINE =================
+    // Auto-Recalculation cooldown guard
+    let lastRerouteTime = 0;
+    const OFF_ROUTE_THRESHOLD_METERS = 28;
+
+    const TIER_1_LANDMARKS = [
+        'admin block', 'library', 'canteen', 'giet temple', 
+        'csa block', 'cse building', 'mechanical building', 'agriculture block'
+    ];
+
+    // ================= 2. THEME & PRIORITY PILLS =================
     function initTheme() {
         const savedTheme = localStorage.getItem('giet-theme') || 'light';
         applyTheme(savedTheme);
@@ -127,21 +147,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initTheme();
 
-    // ================= 3. VOICE GUIDANCE =================
+    const priorityPills = document.querySelectorAll('.btn-priority-pill');
+    priorityPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            priorityPills.forEach(p => {
+                p.classList.remove('active');
+                p.style.background = 'transparent';
+                p.style.color = '#94a3b8';
+            });
+            pill.classList.add('active');
+            pill.style.background = '#2563eb';
+            pill.style.color = '#ffffff';
+
+            currentRoutePriority = pill.getAttribute('data-priority');
+            if (campusGeoJSON) buildClientGraph(campusGeoJSON);
+            if (selectedWaypoints.destination) findRouteBtn.click();
+        });
+    });
+
+    // ================= 3. SYNCHRONIZED VOICE ENGINE (QUEUE FLUSH) =================
     let isVoiceEnabled = true;
     let spokenMilestones = new Set();
 
-    function speakVoicePrompt(text) {
+    function speakVoicePrompt(text, priority = false) {
         if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+        
+        // Immediately flush previous speech queue so audio remains locked with live progress
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.0;
-        utterance.pitch = 1.05;
+        utterance.rate = 1.08;
+        utterance.pitch = 1.0;
         utterance.lang = 'en-US';
 
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => v.lang.includes('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha')));
+        const preferredVoice = voices.find(v => 
+            v.lang.includes('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha'))
+        );
         if (preferredVoice) utterance.voice = preferredVoice;
 
         window.speechSynthesis.speak(utterance);
@@ -190,7 +232,48 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; Google Satellite &mdash; GIET University'
     }).addTo(map);
 
-    // ================= 5. PLACE ICONS & CATEGORIES =================
+    function isInsideCampus(lat, lng) {
+        return CAMPUS_BOUNDS.contains([lat, lng]);
+    }
+
+    function showGeofenceWarning() {
+        const existing = document.getElementById('geofence-warning-banner');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.id = 'geofence-warning-banner';
+        banner.className = 'campus-geofence-banner';
+        banner.innerHTML = `
+            <div class="geofence-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="geofence-content">
+                <div class="geofence-title">Outside Campus Grounds</div>
+                <div class="geofence-desc">
+                    Live GPS navigation functions inside GIET campus. Please pick a campus gate or building as your start point.
+                </div>
+                <button type="button" class="geofence-action-btn" id="btn-pick-campus-start">
+                    Select Starting Point &rarr;
+                </button>
+            </div>
+            <button type="button" class="geofence-close-btn" id="btn-close-geofence">✕</button>
+        `;
+
+        document.body.appendChild(banner);
+
+        banner.querySelector('#btn-pick-campus-start').addEventListener('click', () => {
+            banner.remove();
+            openLocationPicker('start', 'Choose Campus Starting Point');
+        });
+
+        banner.querySelector('#btn-close-geofence').addEventListener('click', () => {
+            banner.remove();
+        });
+
+        setTimeout(() => {
+            if (banner && banner.parentNode) banner.remove();
+        }, 8000);
+    }
+
+    // ================= 5. PLACE ICONS, CATEGORIES & LEVEL-OF-DETAIL FILTER =================
     function getPlaceIcon(name, rawCategory = '') {
         const n = (name || '').toLowerCase().trim();
         const c = (rawCategory || '').toLowerCase().trim();
@@ -198,6 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (n.includes('wc') || n.includes('washroom') || n.includes('restroom') || n.includes('toilet') || c.includes('washroom')) return '🚻';
         if (n.includes('dispensary') || n.includes('medical') || c.includes('medical')) return '🏥';
         if (n.includes('security') || n.includes('guard') || c.includes('security')) return '🛡️';
+        if (n.includes('water') || n.includes('cooler') || n.includes('purifier') || c.includes('water')) return '🚰';
         if (n.includes('temple')) return '🛕';
         if (n.includes('canteen')) return '🍱';
         if (n.includes('mess')) return '🍲';
@@ -207,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (n.includes('parking')) return '🅿️';
         if (n.includes('library')) return '📚';
         if (n.includes('auditorium')) return '🎭';
-        if (n.includes('cse') || n.includes('csa')) return '💻';
+        if (n.includes('cse') || n.includes('csa') || n.includes('ece')) return '💻';
         if (n.includes('bio tech')) return '🧪';
         if (n.includes('agriculture')) return '🌾';
         if (n.includes('mechanical')) return '⚙️';
@@ -216,31 +300,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getCategoryClassification(name, rawCategory = '') {
-        const n = name.toLowerCase();
-        const c = rawCategory.toLowerCase();
+        const n = (name || '').toLowerCase().trim();
+        const c = (rawCategory || '').toLowerCase().trim();
 
-        if (c.includes('academic') || n.includes('building') || n.includes('block') || n.includes('library') || n.includes('csa') || n.includes('bsh')) return 'academic';
-        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('mess')) return 'hostel';
-        if (c.includes('food') || n.includes('canteen') || n.includes('parlour')) return 'food';
-        if (c.includes('sports') || n.includes('pool') || n.includes('ground')) return 'sports';
-        if (c.includes('parking') || c.includes('gate') || n.includes('bus')) return 'parking';
+        if (
+            n.includes('water') || n.includes('cooler') || n.includes('purifier') || n.includes('aquaguard') ||
+            n.includes('wc') || n.includes('washroom') || n.includes('toilet') || n.includes('restroom') ||
+            n.includes('dispensary') || n.includes('first aid') ||
+            c.includes('utility') || c.includes('water') || c.includes('washroom') || c.includes('medical') || c.includes('security')
+        ) {
+            return 'utility';
+        }
+
+        if (c.includes('hostel') || c.includes('mess') || n.startsWith('nc-') || n.includes('hostel') || n.includes('mess')) {
+            return 'hostel';
+        }
+
+        if (c.includes('food') || n.includes('canteen') || n.includes('parlour') || n.includes('cafe')) {
+            return 'food';
+        }
+
+        if (c.includes('sports') || n.includes('pool') || n.includes('ground') || n.includes('stadium') || n.includes('court')) {
+            return 'sports';
+        }
+
+        if (c.includes('parking') || c.includes('gate') || n.includes('bus') || n.includes('parking')) {
+            return 'parking';
+        }
+
+        if (
+            c.includes('academic') || n.includes('building') || n.includes('block') || 
+            n.includes('library') || n.includes('csa') || n.includes('bsh') || n.includes('cse') || 
+            n.includes('ece') || n.includes('mechanical') || n.includes('agriculture') || n.includes('bio tech')
+        ) {
+            return 'academic';
+        }
+
         return 'academic';
     }
 
     function applyCategoryAndZoomFilter() {
         const currentZoom = map.getZoom();
-        const isZoomedOut = currentZoom < 18;
-        const majorLandmarks = ['admin block', 'library', 'canteen', 'giet temple', 'bus-stop', 'central mess', 'giet main ground'];
 
         Object.keys(markerLayers).forEach(name => {
             const layer = markerLayers[name];
             const meta = placeMetadata[name] || {};
             const itemCat = meta.category || 'academic';
+            const lowerName = name.toLowerCase();
 
             const categoryMatches = (activeCategory === 'all' || itemCat === activeCategory);
-            const zoomMatches = !isZoomedOut || majorLandmarks.some(landmark => name.toLowerCase().includes(landmark));
+            
+            let shouldShow = false;
+            if (categoryMatches) {
+                if (currentZoom >= 19.5) {
+                    shouldShow = true;
+                } else if (currentZoom >= 18.2) {
+                    shouldShow = !lowerName.includes('wc') && !lowerName.includes('washroom');
+                } else {
+                    shouldShow = TIER_1_LANDMARKS.some(landmark => lowerName.includes(landmark));
+                }
+            }
 
-            if (categoryMatches && zoomMatches) {
+            if (shouldShow) {
                 if (!map.hasLayer(layer)) map.addLayer(layer);
             } else {
                 if (map.hasLayer(layer)) map.removeLayer(layer);
@@ -269,14 +390,14 @@ document.addEventListener('DOMContentLoaded', () => {
         (campusGeoJSON.features || []).forEach(feat => {
             if (feat.geometry && feat.geometry.type === 'Point') {
                 const cat = (feat.properties.category || '').toLowerCase();
-                const name = feat.properties.name || '';
+                const name = (feat.properties.name || '').toLowerCase();
                 const [lng, lat] = feat.geometry.coordinates;
 
                 let matchType = null;
-                if (cat.includes('water') || name.toLowerCase().includes('water') || name.toLowerCase().includes('cooler')) matchType = 'water';
-                else if (cat.includes('washroom') || cat.includes('restroom') || name.toLowerCase().includes('washroom') || name.toLowerCase().includes('toilet') || name.toLowerCase().includes('wc')) matchType = 'washroom';
-                else if (cat.includes('medical') || name.toLowerCase().includes('first aid') || name.toLowerCase().includes('dispensary')) matchType = 'medical';
-                else if (cat.includes('security') || cat.includes('gate') || name.toLowerCase().includes('security')) matchType = 'security';
+                if (cat.includes('water') || name.includes('water') || name.includes('cooler') || name.includes('purifier')) matchType = 'water';
+                else if (cat.includes('washroom') || cat.includes('restroom') || name.includes('washroom') || name.includes('toilet') || name.includes('wc')) matchType = 'washroom';
+                else if (cat.includes('medical') || name.includes('first aid') || name.includes('dispensary')) matchType = 'medical';
+                else if (cat.includes('security') || cat.includes('gate') || name.includes('security')) matchType = 'security';
 
                 if (matchType && (filterType === 'all' || filterType === matchType)) {
                     const iconMap = { water: '🚰', washroom: '🚻', medical: '🏥', security: '🛡️' };
@@ -288,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     const m = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-                    m.bindPopup(`<strong>${name}</strong><br><small style="text-transform: capitalize;">${matchType}</small>`);
+                    m.bindPopup(`<strong>${feat.properties.name}</strong><br><small style="text-transform: capitalize;">${matchType}</small>`);
                     utilityMarkers.push(m);
                 }
             }
@@ -309,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 7. CLIENT DIJKSTRA ROUTING ENGINE =================
+    // ================= 7. PRECISION GRAPH BUILDER WITH PROJECTION =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -330,10 +451,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
+    // Projects point P perpendicularly onto segment AB to detect T-intersections
+    function projectPointOnSegment(p, a, b) {
+        const x = p[1], y = p[0];
+        const x1 = a[1], y1 = a[0];
+        const x2 = b[1], y2 = b[0];
+
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        if (dx === 0 && dy === 0) return a;
+
+        const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)));
+        return [y1 + t * dy, x1 + t * dx];
+    }
+
+    // 10-meter auto-connection to bridge walkway endpoints without crossing building interiors
+    const NODE_CONNECT_THRESHOLD_METERS = 10.0;
+
     function buildClientGraph(geojson) {
         clientGraph = {};
         clientNodes = [];
         const nodeSet = new Set();
+        const prioConfig = PRIORITY_SETTINGS[currentRoutePriority] || PRIORITY_SETTINGS.direct;
+        const allSegments = [];
 
         function regNode(k) {
             if (!nodeSet.has(k)) {
@@ -342,9 +482,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        function addEdge(uKey, vKey, uCoord, vCoord) {
+        function addEdge(uKey, vKey, uCoord, vCoord, multiplier = 1.0) {
             if (uKey === vKey) return;
-            const d = getDistance(uCoord[0], uCoord[1], vCoord[0], vCoord[1]);
+            const d = getDistance(uCoord[0], uCoord[1], vCoord[0], vCoord[1]) * multiplier;
             regNode(uKey);
             regNode(vKey);
             if (!clientGraph[uKey]) clientGraph[uKey] = [];
@@ -355,22 +495,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         (geojson.features || []).forEach(feat => {
             const geom = feat.geometry || {};
+            const props = feat.properties || {};
+            const name = (props.name || '').toLowerCase();
+            const highway = (props.highway || '').toLowerCase();
+
+            const isCorridor = props.indoor === true || 
+                               props.corridor === true || 
+                               highway === 'corridor' || 
+                               name.includes('corridor') || 
+                               name.includes('passage') || 
+                               name.includes('internal') || 
+                               name.includes('hallway');
+
+            let factor = 1.0;
+            if (isCorridor) factor *= prioConfig.corridorPenalty;
+            if (name.includes('main') || name.includes('road')) factor *= prioConfig.mainRoadBonus;
+            if (props.weight_factor) factor *= props.weight_factor;
+
             if (geom.type === 'LineString') {
                 const coords = geom.coordinates || [];
                 for (let i = 0; i < coords.length - 1; i++) {
                     const u = [coords[i][1], coords[i][0]];
                     const v = [coords[i + 1][1], coords[i + 1][0]];
-                    addEdge(toKey(u[0], u[1]), toKey(v[0], v[1]), u, v);
+                    addEdge(toKey(u[0], u[1]), toKey(v[0], v[1]), u, v, factor);
+                    allSegments.push({ u, v, factor });
                 }
             }
         });
 
+        // Auto-weld T-junctions: Connect walkway endpoints to intersecting segments within 12m
+        clientNodes.forEach(nodeKey => {
+            const p = parseKey(nodeKey);
+            allSegments.forEach(seg => {
+                const proj = projectPointOnSegment(p, seg.u, seg.v);
+                const distToProj = getDistance(p[0], p[1], proj[0], proj[1]);
+                if (distToProj > 0.3 && distToProj <= 12.0) {
+                    const projKey = toKey(proj[0], proj[1]);
+                    addEdge(nodeKey, projKey, p, proj, 1.0);
+                    addEdge(projKey, toKey(seg.u[0], seg.u[1]), proj, seg.u, seg.factor);
+                    addEdge(projKey, toKey(seg.v[0], seg.v[1]), proj, seg.v, seg.factor);
+                }
+            });
+        });
+
+        // Direct node-to-node proximity weld
         for (let i = 0; i < clientNodes.length; i++) {
             const p1 = parseKey(clientNodes[i]);
             for (let j = i + 1; j < clientNodes.length; j++) {
                 const p2 = parseKey(clientNodes[j]);
-                if (getDistance(p1[0], p1[1], p2[0], p2[1]) <= 12.0) {
-                    addEdge(clientNodes[i], clientNodes[j], p1, p2);
+                const dist = getDistance(p1[0], p1[1], p2[0], p2[1]);
+                if (dist <= NODE_CONNECT_THRESHOLD_METERS) {
+                    addEdge(clientNodes[i], clientNodes[j], p1, p2, 1.0);
                 }
             }
         }
@@ -424,12 +599,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
+    // ================= 8. MULTI-ROUTE ALTERNATIVE DISCOVERY =================
     function computeClientSideRoutes(coordsArray) {
         const routes = [];
         const penalized = {};
         const isMulti = coordsArray.length > 2;
 
-        for (let iter = 0; iter < 3; iter++) {
+        for (let iter = 0; iter < 6; iter++) {
             let fullCoords = [];
             let allNodePath = [];
             let failed = false;
@@ -468,29 +644,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 dist += getDistance(fullCoords[i][0], fullCoords[i][1], fullCoords[i + 1][0], fullCoords[i + 1][1]);
             }
 
-            const isDistinct = !routes.some(r => Math.abs(r.totalDistance - dist) < 10);
+            // Exclude duplicate paths (difference < 6m)
+            const isDistinct = !routes.some(r => Math.abs(r.totalDistance - dist) < 6);
             if (isDistinct) {
-                routes.push({ path: fullCoords, totalDistance: Math.round(dist) });
-                if (routes.length >= 3) break;
+                // Keep routes within a 55% threshold of the shortest path
+                if (routes.length === 0 || dist <= routes[0].totalDistance * 1.55) {
+                    routes.push({ path: fullCoords, totalDistance: Math.round(dist) });
+                }
+                if (routes.length >= 4) break;
             }
 
-            if (allNodePath.length > 3) {
-                for (let i = 1; i < allNodePath.length - 2; i++) {
-                    const k = `${allNodePath[i]}|${allNodePath[i + 1]}`;
-                    penalized[k] = (penalized[k] || 1.0) * 2.2;
+            // Bidirectionally penalize edges (1.45x) so Dijkstra branches to parallel walkways
+            if (allNodePath.length > 2) {
+                for (let i = 0; i < allNodePath.length - 1; i++) {
+                    const k1 = `${allNodePath[i]}|${allNodePath[i + 1]}`;
+                    const k2 = `${allNodePath[i + 1]}|${allNodePath[i]}`;
+                    penalized[k1] = (penalized[k1] || 1.0) * 1.45;
+                    penalized[k2] = (penalized[k2] || 1.0) * 1.45;
                 }
             }
         }
 
         routes.sort((a, b) => a.totalDistance - b.totalDistance);
         return routes.map((r, idx) => ({
-            name: isMulti ? (idx === 0 ? "Shortest Multi-Stop Route" : `Multi-Stop Route ${idx + 1}`) : (idx === 0 ? "Shortest Route (Via Walkway)" : `Alternative Route ${idx + 1}`),
+            name: isMulti 
+                ? (idx === 0 ? "Shortest Multi-Stop Route" : `Multi-Stop Option ${idx + 1}`) 
+                : (idx === 0 ? "Shortest Route (Via Walkway)" : `Alternative Route ${idx + 1}`),
             path: r.path,
             totalDistance: r.totalDistance
         }));
     }
 
-    // ================= 8. TURN-BY-TURN INSTRUCTIONS =================
+    // ================= 9. TURN-BY-TURN INSTRUCTIONS =================
     function generateTurnInstructions(coords) {
         if (!coords || coords.length < 2) return [];
         const instructions = [];
@@ -554,10 +739,211 @@ document.addEventListener('DOMContentLoaded', () => {
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 9. LIVE GPS & POLYLINE TRIMMING =================
+    // ================= 10. DUAL-ENTRANCE & STAIR GUIDANCE =================
+    function getBestEntranceForComplex(originCoord, targetBuildingName) {
+        const bName = (targetBuildingName || '').toLowerCase();
+        if (!bName.includes('csa') && !bName.includes('ece')) {
+            return buildings[targetBuildingName] || null;
+        }
+
+        const csaCoord = buildings["CSA block"] || buildings["CSA Block"] || [19.0489, 83.8321];
+        const eceCoord = buildings["ECE Block"] || [19.0494, 83.8329];
+
+        if (!originCoord) return csaCoord;
+
+        const distToCSA = getDistance(originCoord[0], originCoord[1], csaCoord[0], csaCoord[1]);
+        const distToECE = getDistance(originCoord[0], originCoord[1], eceCoord[0], eceCoord[1]);
+
+        return distToECE < distToCSA ? eceCoord : csaCoord;
+    }
+
+    function resolveVerticalTransitionText(dest, arrivalCoord = null) {
+        const floor = parseInt(dest.floorNum, 10);
+        const roomCode = (dest.roomCode || '').trim();
+        const bldgName = (dest.building || '').toLowerCase();
+
+        const isDualBlock = bldgName.includes('csa') || bldgName.includes('ece');
+
+        let enteredVia = "CSA Block entrance";
+        if (isDualBlock && arrivalCoord) {
+            const eceCoords = buildings["ECE Block"] || [19.0494, 83.8329];
+            const csaCoords = buildings["CSA block"] || buildings["CSA Block"] || [19.0489, 83.8321];
+
+            const distToECE = getDistance(arrivalCoord[0], arrivalCoord[1], eceCoords[0], eceCoords[1]);
+            const distToCSA = getDistance(arrivalCoord[0], arrivalCoord[1], csaCoords[0], csaCoords[1]);
+
+            enteredVia = distToECE < distToCSA ? "ECE Block entrance" : "CSA Block entrance";
+        }
+
+        const roomInfo = (allIndoorRooms || []).find(r => r.number.toLowerCase() === roomCode.toLowerCase());
+        let targetWing = "CSA wing";
+        if (roomInfo && roomInfo.plan) {
+            targetWing = roomInfo.plan.x > 450 ? "ECE wing" : "CSA wing";
+        } else {
+            targetWing = (roomCode.includes("ECE") || roomCode.includes("1") || roomCode.includes("2")) ? "ECE wing" : "CSA wing";
+        }
+
+        const ordinalFloor = floor === 1 ? "1st" : floor === 2 ? "2nd" : floor === 3 ? "3rd" : `${floor}th`;
+
+        if (floor === 0 || (floor === 1 && bldgName.includes("ground"))) {
+            return {
+                speech: `You arrived at ${enteredVia}. Both CSA and ECE entrances connect inside. Your room is on the Ground floor.`,
+                displaySub: `Arrived at <strong>${enteredVia}</strong>.<br>Both entrances connect inside on the <strong>Ground Floor</strong>.`,
+                actionHint: `Ground Floor Entry (${enteredVia})`
+            };
+        }
+
+        if (isDualBlock) {
+            let stairAdvice = "";
+            let speechAdvice = "";
+
+            if (enteredVia.includes("ECE")) {
+                if (targetWing === "ECE wing") {
+                    stairAdvice = `Take the <strong>ECE staircase directly</strong> up to <strong>Floor ${floor}</strong>.`;
+                    speechAdvice = `You arrived at ECE Block entrance. Take the ECE staircase up to ${ordinalFloor} floor.`;
+                } else {
+                    stairAdvice = `Take the <strong>ECE staircase</strong> up and cross over the 3rd floor corridor, or walk through the ground floor to the <strong>CSA staircase</strong>.`;
+                    speechAdvice = `You arrived at ECE Block entrance. Take the staircase and walk across to the CSA wing on ${ordinalFloor} floor.`;
+                }
+            } else {
+                if (targetWing === "CSA wing") {
+                    stairAdvice = `Take the <strong>CSA staircase directly</strong> up to <strong>Floor ${floor}</strong>.`;
+                    speechAdvice = `You arrived at CSA Block entrance. Take the CSA staircase up to ${ordinalFloor} floor.`;
+                } else {
+                    stairAdvice = `Take the <strong>CSA staircase</strong> up, or walk through the ground floor corridor to the <strong>ECE staircase</strong>.`;
+                    speechAdvice = `You arrived at CSA Block entrance. Take the staircase or move through to the ECE wing to reach ${ordinalFloor} floor.`;
+                }
+            }
+
+            return {
+                speech: speechAdvice,
+                displaySub: `Arrived via <strong>${enteredVia}</strong> (connected complex):<br>${stairAdvice}`,
+                actionHint: `Use ${enteredVia} Stairs`
+            };
+        }
+
+        let stairSide = "nearest staircase";
+        if (roomInfo && roomInfo.plan) {
+            stairSide = roomInfo.plan.x > 450 ? "Right-wing staircase" : "Left-wing staircase";
+        } else {
+            stairSide = roomCode.includes("1") || roomCode.includes("2") ? "Right-wing staircase" : "Left-wing staircase";
+        }
+
+        return {
+            speech: `You arrived at ${dest.building}. Take the ${stairSide} and move to the ${ordinalFloor} floor.`,
+            displaySub: `Take the <strong>${stairSide}</strong> and proceed to the <strong>${ordinalFloor} Floor</strong>.`,
+            actionHint: `Use ${stairSide}`
+        };
+    }
+
+    function showArrivalTransitionModal() {
+        if (!activeIndoorDestination) return;
+        if (document.getElementById('arrival-popup-overlay')) return;
+
+        const currentPos = currentUserLat && currentUserLng ? [currentUserLat, currentUserLng] : null;
+        const guidance = resolveVerticalTransitionText(activeIndoorDestination, currentPos);
+
+        const overlay = document.createElement('div');
+        overlay.id = 'arrival-popup-overlay';
+        overlay.className = 'arrival-popup-overlay';
+        overlay.innerHTML = `
+            <div class="arrival-popup-card">
+                <div class="arrival-icon-badge">
+                    <i class="fa-solid fa-stairs"></i>
+                </div>
+                <h3 style="font-size:18px; font-weight:800; margin:0;">You Have Arrived!</h3>
+                <div style="background:rgba(37,99,235,0.1); border:1.5px solid rgba(37,99,235,0.35); border-radius:10px; padding:10px 12px; margin:6px 0; text-align:left;">
+                    <p style="color:var(--text-main); font-size:13px; line-height:1.5; margin:0; font-weight:500;">
+                        ${guidance.displaySub}
+                    </p>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:6px; border-top:1px dashed rgba(255,255,255,0.15); padding-top:4px;">
+                        Target Room: <strong style="color:#0284c7;">${activeIndoorDestination.roomCode}</strong> (${activeIndoorDestination.building})
+                    </div>
+                </div>
+                <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
+                   class="btn-open-blueprint" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fa-solid fa-map"></i> View Floor ${activeIndoorDestination.floorNum} Layout &rarr;
+                </a>
+                <button type="button" id="close-arrival-btn" style="background:transparent; color:var(--text-muted); font-size:12px; cursor:pointer; border:none; padding:4px; margin-top:2px;">
+                    Stay on Outdoor Map
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#close-arrival-btn').addEventListener('click', () => {
+            overlay.remove();
+        });
+
+        speakVoicePrompt(guidance.speech, true);
+    }
+
+    function updateHudInstruction(remainingCoords, currentPos) {
+        if (!turnInstructions || turnInstructions.length === 0) return;
+
+        let nextTurn = null;
+        for (let i = 0; i < turnInstructions.length; i++) {
+            const step = turnInstructions[i];
+            const d = getDistance(currentPos[0], currentPos[1], step.coord[0], step.coord[1]);
+            if (d > 7) {
+                nextTurn = step;
+                nextTurn.liveDist = Math.round(d);
+                break;
+            }
+        }
+
+        if (nextTurn) {
+            turnHud.classList.remove('hidden');
+            turnIcon.textContent = nextTurn.icon;
+            turnInstruction.textContent = nextTurn.text;
+            turnDistance.textContent = `in ${nextTurn.liveDist} meters`;
+
+            const approachKey = `app_${nextTurn.id}`;
+            if (nextTurn.liveDist <= 18 && nextTurn.liveDist > 7 && !spokenMilestones.has(approachKey)) {
+                spokenMilestones.add(approachKey);
+                speakVoicePrompt(`In ${nextTurn.liveDist} meters, ${nextTurn.text}`);
+            }
+
+            const executeKey = `exe_${nextTurn.id}`;
+            if (nextTurn.liveDist <= 7 && !spokenMilestones.has(executeKey)) {
+                spokenMilestones.add(executeKey);
+                speakVoicePrompt(nextTurn.text);
+            }
+        } else {
+            turnHud.classList.remove('hidden');
+            turnIcon.textContent = "🏁";
+            
+            if (activeIndoorDestination) {
+                const guidance = resolveVerticalTransitionText(activeIndoorDestination, currentPos);
+                turnInstruction.innerHTML = `
+                    Arrived at ${activeIndoorDestination.building}!<br>
+                    <small style="color:#38bdf8; font-weight:700;">${guidance.actionHint}</small><br>
+                    <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
+                       style="display:inline-block; margin-top:5px; padding:4px 9px; background:#2563eb; color:#fff; border-radius:5px; font-weight:700; text-decoration:none; font-size:11px;">
+                       🏢 View Floor ${activeIndoorDestination.floorNum} Plan &rarr;
+                    </a>
+                `;
+                showArrivalTransitionModal();
+            } else {
+                turnInstruction.textContent = "Arrived at destination entrance";
+                if (!spokenMilestones.has("arrived")) {
+                    spokenMilestones.add("arrived");
+                    speakVoicePrompt("You have arrived at your destination doorway.");
+                }
+            }
+            turnDistance.textContent = "within entrance perimeter";
+        }
+    }
+
+    // ================= 11. LIVE GPS & AUTO-RECALCULATION =================
     function updateUserLiveLocation(lat, lng, accuracy = 5) {
         currentUserLat = lat;
         currentUserLng = lng;
+
+        if (!isInsideCampus(lat, lng)) {
+            console.warn("GPS outside GIET campus boundaries:", lat, lng);
+            return;
+        }
 
         if (recenterFabBtn) recenterFabBtn.classList.remove('hidden');
 
@@ -583,8 +969,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (recenterFabBtn) {
         recenterFabBtn.addEventListener('click', () => {
-            if (currentUserLat && currentUserLng) {
+            if (currentUserLat && currentUserLng && isInsideCampus(currentUserLat, currentUserLng)) {
                 map.flyTo([currentUserLat, currentUserLng], 19, { duration: 0.8 });
+            } else {
+                map.flyTo(GIET_CENTER, 18, { duration: 0.8 });
             }
         });
     }
@@ -601,7 +989,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (minD < 18) {
+        const now = Date.now();
+        if (minD > OFF_ROUTE_THRESHOLD_METERS && isTrackingOrSimulating && (now - lastRerouteTime > 7000)) {
+            lastRerouteTime = now;
+            speakVoicePrompt("You are off route. Recalculating path.");
+            
+            const targetBldg = activeIndoorDestination ? activeIndoorDestination.building : (selectedWaypoints.destination ? selectedWaypoints.destination.id : null);
+            const remainingDest = getBestEntranceForComplex(currentPos, targetBldg) || (selectedWaypoints.destination ? buildings[selectedWaypoints.destination.id] : null);
+
+            if (remainingDest) {
+                const rerouted = computeClientSideRoutes([currentPos, remainingDest]);
+                if (rerouted && rerouted.length > 0) {
+                    renderRoutes(rerouted);
+                    return;
+                }
+            }
+        }
+
+        if (minD <= OFF_ROUTE_THRESHOLD_METERS) {
             const remainingCoords = [currentPos, ...fullRouteCoords.slice(closestIdx + 1)];
             const walkedCoords = fullRouteCoords.slice(0, closestIdx + 1);
 
@@ -616,96 +1021,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showArrivalTransitionModal() {
-        if (!activeIndoorDestination) return;
-        if (document.getElementById('arrival-popup-overlay')) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = 'arrival-popup-overlay';
-        overlay.className = 'arrival-popup-overlay';
-        overlay.innerHTML = `
-            <div class="arrival-popup-card">
-                <div class="arrival-icon-badge">
-                    <i class="fa-solid fa-door-open"></i>
-                </div>
-                <h3 style="color:#ffffff; font-size:18px; font-weight:800; margin:0;">You Have Arrived!</h3>
-                <p style="color:#94a3b8; font-size:13px; line-height:1.5; margin:0;">
-                    Reached <strong>${activeIndoorDestination.building}</strong>.<br>
-                    Destination room: <strong style="color:#38bdf8;">${activeIndoorDestination.roomCode}</strong> (Floor ${activeIndoorDestination.floorNum}).
-                </p>
-                <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
-                   class="btn-open-blueprint">
-                    <i class="fa-solid fa-map"></i> View Floor ${activeIndoorDestination.floorNum} Layout &rarr;
-                </a>
-                <button type="button" id="close-arrival-btn" style="background:transparent; color:#64748b; font-size:12px; cursor:pointer; border:none; padding:4px;">
-                    Stay on Outdoor Map
-                </button>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-
-        overlay.querySelector('#close-arrival-btn').addEventListener('click', () => {
-            overlay.remove();
-        });
-    }
-
-    function updateHudInstruction(remainingCoords, currentPos) {
-        if (!turnInstructions || turnInstructions.length === 0) return;
-
-        let nextTurn = null;
-        for (let i = 0; i < turnInstructions.length; i++) {
-            const step = turnInstructions[i];
-            const d = getDistance(currentPos[0], currentPos[1], step.coord[0], step.coord[1]);
-            if (d > 6) {
-                nextTurn = step;
-                nextTurn.liveDist = Math.round(d);
-                break;
-            }
-        }
-
-        if (nextTurn) {
-            turnHud.classList.remove('hidden');
-            turnIcon.textContent = nextTurn.icon;
-            turnInstruction.textContent = nextTurn.text;
-            turnDistance.textContent = `in ${nextTurn.liveDist} meters`;
-
-            const approachKey = `approach_${nextTurn.id}`;
-            if (nextTurn.liveDist <= 25 && nextTurn.liveDist > 8 && !spokenMilestones.has(approachKey)) {
-                spokenMilestones.add(approachKey);
-                speakVoicePrompt(`In ${nextTurn.liveDist} meters, ${nextTurn.text}`);
-            }
-
-            const executeKey = `execute_${nextTurn.id}`;
-            if (nextTurn.liveDist <= 8 && !spokenMilestones.has(executeKey)) {
-                spokenMilestones.add(executeKey);
-                speakVoicePrompt(nextTurn.text);
-            }
-        } else {
-            turnHud.classList.remove('hidden');
-            turnIcon.textContent = "🏁";
-            
-            if (activeIndoorDestination) {
-                turnInstruction.innerHTML = `
-                    Arrived at ${activeIndoorDestination.building}!<br>
-                    <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
-                       style="display:inline-block; margin-top:4px; padding:3px 8px; background:#2563eb; color:#fff; border-radius:4px; font-weight:700; text-decoration:none; font-size:11px;">
-                       🏢 Open Room ${activeIndoorDestination.roomCode} Layout &rarr;
-                    </a>
-                `;
-                showArrivalTransitionModal();
-            } else {
-                turnInstruction.textContent = "Arrived at destination entrance";
-            }
-            turnDistance.textContent = "within 5 meters";
-
-            if (!spokenMilestones.has("arrived")) {
-                spokenMilestones.add("arrived");
-                speakVoicePrompt("You have arrived at your destination doorway.");
-            }
-        }
-    }
-
-    // ================= 10. ROUTE VISUALIZATION =================
+    // ================= 12. ROUTE VISUALIZATION =================
     function selectActiveRoute(index) {
         activeRouteIndex = index;
         const selectedRoute = calculatedRoutes[index];
@@ -721,9 +1037,9 @@ document.addEventListener('DOMContentLoaded', () => {
         calculatedRoutes.forEach((r, idx) => {
             if (idx !== index) {
                 const alt = L.polyline(r.path, {
-                    color: ROUTE_PALETTE[idx] || '#64748b',
+                    color: ROUTE_PALETTE[idx % ROUTE_PALETTE.length] || '#64748b',
                     weight: 5,
-                    opacity: 0.5,
+                    opacity: 0.55,
                     dashArray: '8, 8'
                 }).addTo(map);
                 alt.on('click', () => selectActiveRoute(idx));
@@ -732,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         remainingRoutePolyline = L.polyline(fullRouteCoords, {
-            color: ROUTE_PALETTE[index] || '#10b981',
+            color: ROUTE_PALETTE[index % ROUTE_PALETTE.length] || '#10b981',
             weight: 7,
             opacity: 1.0,
             lineCap: 'round',
@@ -755,10 +1071,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let indoorBanner = '';
             if (activeIndoorDestination) {
                 indoorBanner = `
-                    <div style="margin-bottom:10px; padding:10px; background:rgba(37,99,235,0.22); border:1.5px solid #2563eb; border-radius:10px;">
+                    <div style="margin-bottom:10px; padding:10px; background:rgba(37,99,235,0.15); border:1.5px solid #2563eb; border-radius:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; color:#93c5fd; font-weight:800;">Target Room: ${activeIndoorDestination.roomCode}</span>
-                            <span style="font-size:10px; background:#1e293b; padding:2px 6px; border-radius:4px; color:#cbd5e1;">Floor ${activeIndoorDestination.floorNum}</span>
+                            <span style="font-size:12px; color:#2563eb; font-weight:800;">Target Room: ${activeIndoorDestination.roomCode}</span>
+                            <span style="font-size:10px; background:var(--bg-page); padding:2px 6px; border-radius:4px; color:var(--text-muted);">Floor ${activeIndoorDestination.floorNum}</span>
                         </div>
                         <a href="building.html?name=${encodeURIComponent(activeIndoorDestination.building)}&floor=${activeIndoorDestination.floorNum}&room=${encodeURIComponent(activeIndoorDestination.roomCode)}" 
                            style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:8px; background:#2563eb; color:#ffffff; padding:7px 12px; border-radius:6px; font-size:12px; text-decoration:none; font-weight:700;">
@@ -771,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
             routeOutput.innerHTML = `
                 ${indoorBanner}
                 <div style="font-size: 13px;">
-                    <strong style="color: ${ROUTE_PALETTE[index] || '#10b981'}">${selectedRoute.name}</strong><br>
+                    <strong style="color: ${ROUTE_PALETTE[index % ROUTE_PALETTE.length] || '#10b981'}">${selectedRoute.name}</strong><br>
                     Distance: <strong>${selectedRoute.totalDistance} meters</strong> (~${estTime} mins walk)
                 </div>
             `;
@@ -797,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         routes.forEach((route, idx) => {
             const isShortest = idx === 0;
-            const routeColor = ROUTE_PALETTE[idx] || '#64748b';
+            const routeColor = ROUTE_PALETTE[idx % ROUTE_PALETTE.length] || '#64748b';
 
             const card = document.createElement('div');
             card.className = `route-card ${isShortest ? 'active' : ''}`;
@@ -819,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectActiveRoute(0);
     }
 
-    // ================= 11. IN-APP LOCATION PICKER (SCALABLE & GROUPED) =================
+    // ================= 13. IN-APP LOCATION PICKER =================
     let pickerCategoryFilter = 'all';
 
     function openLocationPicker(targetKey, titleText) {
@@ -851,6 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const categories = [
             { key: 'all', label: 'All Places' },
+            { key: 'buildings', label: '🏛️ Buildings' },
             { key: 'classroom', label: 'Classrooms' },
             { key: 'laboratory', label: 'Labs' },
             { key: 'office', label: 'Offices' },
@@ -877,11 +1194,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pickerItemsList.innerHTML = "";
         const term = filterTerm.toLowerCase().trim();
 
-        // 1. Live Location Option (Only for Starting point)
-        if (activePickerTarget === 'start' && pickerCategoryFilter === 'all') {
+        if (activePickerTarget === 'start' && (pickerCategoryFilter === 'all' || pickerCategoryFilter === 'buildings')) {
             const liveItem = document.createElement('div');
             liveItem.className = 'picker-item';
-            liveItem.innerHTML = `<span class="picker-item-icon">📍</span> <span>My Live Location (GPS)</span>`;
+            liveItem.innerHTML = `<span class="picker-item-icon">📍</span> <span><strong>My Live Location (GPS)</strong></span>`;
             liveItem.addEventListener('click', () => {
                 selectedWaypoints.start = { id: "LIVE_LOCATION", name: "My Live Location (GPS)" };
                 startDisplay.querySelector('.waypoint-text').textContent = "📍 My Live Location (GPS)";
@@ -890,77 +1206,22 @@ document.addEventListener('DOMContentLoaded', () => {
             pickerItemsList.appendChild(liveItem);
         }
 
-        // 2. Filter & Group Indoor Rooms
-        let filteredRooms = allIndoorRooms.filter(r => {
-            const matchesQuery = !term || 
-                r.number.toLowerCase().includes(term) || 
-                r.name.toLowerCase().includes(term) || 
-                r.building.toLowerCase().includes(term);
-            const matchesCat = pickerCategoryFilter === 'all' || (r.type || '').toLowerCase() === pickerCategoryFilter;
-            return matchesQuery && matchesCat;
-        });
-
-        // Group rooms by Building -> Floor
-        if (filteredRooms.length > 0) {
-            const grouped = {};
-            filteredRooms.forEach(rm => {
-                const groupKey = `${rm.building} — Floor ${rm.floor_number}`;
-                if (!grouped[groupKey]) grouped[groupKey] = [];
-                grouped[groupKey].push(rm);
-            });
-
-            Object.keys(grouped).forEach(groupTitle => {
-                const groupHeader = document.createElement('div');
-                groupHeader.className = 'picker-group-heading';
-                groupHeader.innerHTML = `
-                    <span>🏢 ${groupTitle}</span>
-                    <span style="font-size:10px; opacity:0.8;">${grouped[groupTitle].length} rooms</span>
-                `;
-                pickerItemsList.appendChild(groupHeader);
-
-                grouped[groupTitle].forEach(rm => {
-                    const item = document.createElement('div');
-                    item.className = 'picker-item-room';
-
-                    const isDuplicate = rm.name.trim().toLowerCase() === rm.number.trim().toLowerCase();
-                    const titleText = isDuplicate ? rm.number : `${rm.number}: ${rm.name}`;
-                    const category = (rm.type || 'classroom').toLowerCase();
-
-                    item.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size:16px;">🚪</span>
-                            <div>
-                                <div style="font-weight:700; color:#ffffff; font-size:13px;">${titleText}</div>
-                                <div style="font-size:11px; color:#94a3b8;">${rm.building} &bull; Level ${rm.floor_number}</div>
-                            </div>
-                        </div>
-                        <span class="room-item-badge ${category}">${rm.type || 'Room'}</span>
-                    `;
-
-                    item.addEventListener('click', () => {
-                        handleSelectDestinationRoom(rm);
-                        closeLocationPicker();
-                    });
-                    pickerItemsList.appendChild(item);
-                });
-            });
-        }
-
-        // 3. Outdoor Blocks & Sites
-        if (pickerCategoryFilter === 'all') {
+        if (pickerCategoryFilter === 'all' || pickerCategoryFilter === 'buildings') {
             const matchingPlaces = placeNamesSorted.filter(name => !term || name.toLowerCase().includes(term));
             if (matchingPlaces.length > 0) {
-                const catLabel2 = document.createElement('div');
-                catLabel2.className = 'picker-group-heading';
-                catLabel2.style.color = '#94a3b8';
-                catLabel2.innerHTML = `<span>🏛️ Campus Blocks & Landmarks</span>`;
-                pickerItemsList.appendChild(catLabel2);
+                const bldgGroupHeader = document.createElement('div');
+                bldgGroupHeader.className = 'picker-group-heading';
+                bldgGroupHeader.innerHTML = `
+                    <span>🏛️ Campus Blocks & Sites</span>
+                    <span style="font-size:10px; opacity:0.8;">${matchingPlaces.length} locations</span>
+                `;
+                pickerItemsList.appendChild(bldgGroupHeader);
 
                 matchingPlaces.forEach(name => {
                     const icon = getPlaceIcon(name);
                     const item = document.createElement('div');
                     item.className = 'picker-item';
-                    item.innerHTML = `<span class="picker-item-icon">${icon}</span> <span>${name}</span>`;
+                    item.innerHTML = `<span style="font-size:18px;">${icon}</span> <span>${name}</span>`;
 
                     item.addEventListener('click', () => {
                         if (activePickerTarget === 'start') {
@@ -988,6 +1249,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
+
+        if (pickerCategoryFilter !== 'buildings') {
+            let filteredRooms = allIndoorRooms.filter(r => {
+                const matchesQuery = !term || 
+                    r.number.toLowerCase().includes(term) || 
+                    r.name.toLowerCase().includes(term) || 
+                    r.building.toLowerCase().includes(term);
+                const matchesCat = pickerCategoryFilter === 'all' || (r.type || '').toLowerCase() === pickerCategoryFilter;
+                return matchesQuery && matchesCat;
+            });
+
+            if (filteredRooms.length > 0) {
+                const grouped = {};
+                filteredRooms.forEach(rm => {
+                    const groupKey = `${rm.building} — Floor ${rm.floor_number}`;
+                    if (!grouped[groupKey]) grouped[groupKey] = [];
+                    grouped[groupKey].push(rm);
+                });
+
+                Object.keys(grouped).forEach(groupTitle => {
+                    const groupHeader = document.createElement('div');
+                    groupHeader.className = 'picker-group-heading';
+                    groupHeader.innerHTML = `
+                        <span>🚪 ${groupTitle}</span>
+                        <span style="font-size:10px; opacity:0.8;">${grouped[groupTitle].length} rooms</span>
+                    `;
+                    pickerItemsList.appendChild(groupHeader);
+
+                    grouped[groupTitle].forEach(rm => {
+                        const item = document.createElement('div');
+                        item.className = 'picker-item-room';
+
+                        const isDuplicate = rm.name.trim().toLowerCase() === rm.number.trim().toLowerCase();
+                        const titleText = isDuplicate ? rm.number : `${rm.number}: ${rm.name}`;
+                        const category = (rm.type || 'classroom').toLowerCase();
+
+                        item.innerHTML = `
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:16px;">🏢</span>
+                                <div>
+                                    <div style="font-weight:700; font-size:13px;">${titleText}</div>
+                                    <div style="font-size:11px; color:var(--text-muted);">${rm.building} &bull; Level ${rm.floor_number}</div>
+                                </div>
+                            </div>
+                            <span class="room-item-badge ${category}">${rm.type || 'Room'}</span>
+                        `;
+
+                        item.addEventListener('click', () => {
+                            handleSelectDestinationRoom(rm);
+                            closeLocationPicker();
+                        });
+                        pickerItemsList.appendChild(item);
+                    });
+                });
+            }
+        }
     }
 
     function handleSelectDestinationRoom(rm) {
@@ -998,17 +1315,61 @@ document.addEventListener('DOMContentLoaded', () => {
             floorNum: rm.floor_number,
             roomName: rm.name 
         };
-        selectedWaypoints.destination = { id: hostBuilding, name: hostBuilding };
+        selectedWaypoints.destination = { id: hostBuilding, name: `${rm.number} (${hostBuilding})` };
 
         const destText = destinationDisplay.querySelector('.waypoint-text');
         destText.textContent = `🚪 ${rm.number} (${hostBuilding})`;
         destText.classList.remove('placeholder');
 
-        findRouteBtn.click();
+        const bldgCoords = buildings[hostBuilding] || buildings["CSA block"] || [19.0489, 83.8321];
+        if (bldgCoords) {
+            map.flyTo(bldgCoords, 19, { duration: 0.8 });
+            if (markerLayers[hostBuilding]) markerLayers[hostBuilding].openTooltip();
+        }
+
+        showRoomDiscoveryCard(rm, hostBuilding);
+    }
+
+    function showRoomDiscoveryCard(rm, hostBuilding) {
+        let card = document.getElementById('room-location-info-card');
+        if (!card) {
+            card = document.createElement('div');
+            card.id = 'room-location-info-card';
+            card.className = 'room-location-info-card';
+            waypointsContainer.parentNode.insertBefore(card, waypointsContainer);
+        }
+
+        const isDuplicate = rm.name.trim().toLowerCase() === rm.number.trim().toLowerCase();
+        const displayTitle = isDuplicate ? rm.number : `${rm.number} (${rm.name})`;
+
+        card.innerHTML = `
+            <div class="room-location-info-header">
+                <span class="room-location-info-title">📍 ${displayTitle}</span>
+                <span class="room-item-badge ${(rm.type || 'classroom').toLowerCase()}">${rm.type || 'Room'}</span>
+            </div>
+            <div class="room-location-info-sub">
+                Located in <strong>${hostBuilding}</strong> on <strong>Floor ${rm.floor_number}</strong>.
+            </div>
+            <div class="room-location-actions">
+                <button type="button" class="btn-room-info-action btn-route-to-room" id="btn-route-to-found-room">
+                    <i class="fa-solid fa-route"></i> Get Walking Route
+                </button>
+                <a href="building.html?name=${encodeURIComponent(hostBuilding)}&floor=${rm.floor_number}&room=${encodeURIComponent(rm.number)}" 
+                   class="btn-room-info-action btn-view-blueprint-inline">
+                    <i class="fa-solid fa-map"></i> View Floor Plan &rarr;
+                </a>
+            </div>
+        `;
+
+        card.querySelector('#btn-route-to-found-room').addEventListener('click', () => {
+            findRouteBtn.click();
+        });
+
+        speakVoicePrompt(`${rm.number} is located in ${hostBuilding}, Floor ${rm.floor_number}.`);
     }
 
     function resolveHostBuildingName(bldgRaw) {
-        const clean = bldgRaw.trim().toLowerCase();
+        const clean = (bldgRaw || '').trim().toLowerCase();
         const found = Object.keys(buildings).find(k => k.toLowerCase() === clean || clean.includes(k.toLowerCase()) || k.toLowerCase().includes(clean));
         return found || bldgRaw;
     }
@@ -1050,11 +1411,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 12. MOBILE BOTTOM DRAWER & PEEK ENGINE =================
+    // ================= 14. BOTTOM DRAWER =================
     let isDraggingHandle = false;
     let startTouchY = 0;
     let currentPanelState = 1;
-    const dragArea = document.getElementById('panel-handle-area') || togglePanelBtn;
+    const dragArea = document.getElementById('panel-handle-area');
 
     function applySheetSnap(stateIndex) {
         if (window.innerWidth > 640 || !navPanel) return;
@@ -1113,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 13. DATA INITIALIZER & INTERACTIVE POPUPS =================
+    // ================= 15. DATA INITIALIZER & INTERACTIVE POPUPS =================
     function createBuildingInteractivePopup(name, category) {
         const isNotBuilding = ["court", "ground", "parking", "bus-stop", "pool", "temple", "garden"].some(k => name.toLowerCase().includes(k));
         
@@ -1160,6 +1521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (icon === '🚻') dotColor = '#8b5cf6';
                 else if (icon === '🏥') dotColor = '#ef4444';
                 else if (icon === '🛡️') dotColor = '#f59e0b';
+                else if (icon === '🚰') dotColor = '#0284c7';
                 else if (icon === '🏊‍♂️' || icon === '⚽') dotColor = '#10b981';
 
                 return L.circleMarker(latlng, { radius: 6, fillColor: '#ffffff', color: dotColor, weight: 3, opacity: 1, fillOpacity: 1 });
@@ -1167,10 +1529,15 @@ document.addEventListener('DOMContentLoaded', () => {
             onEachFeature: (feature, layer) => {
                 const name = feature.properties?.name?.trim();
                 const rawCat = feature.properties?.category || '';
+                
                 if (feature.geometry.type === 'Point' && name) {
+                    const classifiedCategory = getCategoryClassification(name, rawCat);
+                    
+                    if (classifiedCategory === 'utility') return;
+
                     markerLayers[name] = layer;
                     buildings[name] = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
-                    placeMetadata[name] = { category: getCategoryClassification(name, rawCat) };
+                    placeMetadata[name] = { category: classifiedCategory };
                     placeNamesSorted.push(name);
 
                     const icon = getPlaceIcon(name, rawCat);
@@ -1202,6 +1569,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }).addTo(map);
+
+        if (!buildings["CSA block"] && !buildings["CSA Block"]) {
+            buildings["CSA block"] = [19.0489, 83.8321];
+        }
+        if (!buildings["ECE Block"]) {
+            buildings["ECE Block"] = [19.0494, 83.8329];
+        }
 
         placeNamesSorted.sort();
         buildClientGraph(data);
@@ -1235,21 +1609,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             name: r.name,
                             type: r.type,
                             building: f.building_name,
-                            floor_number: f.floor_number
+                            floor_number: f.floor_number,
+                            plan: r.plan || { x: 0, y: 0, w: 60, h: 60 }
                         });
                     });
                 });
             }
         } catch (e) {
             allIndoorRooms = [
-                { number: "CSA-4", name: "CSA 4 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
-                { number: "CSA-3", name: "CSA 3 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
-                { number: "CSA-2", name: "CSA 2 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
-                { number: "CSA-1", name: "CSA 1 Classroom", type: "Classroom", building: "CSA block", floor_number: 3 },
-                { number: "BEE-LAB", name: "BEE LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
-                { number: "BE-LAB", name: "BE LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
-                { number: "MPMC-LAB", name: "MPMC LAB", type: "Laboratory", building: "CSA block", floor_number: 3 },
-                { number: "FC-2", name: "FC-2 Exam Cell", type: "Office", building: "CSA block", floor_number: 3 }
+                { number: "EB-3", name: "CSA 3 / EB 3", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
+                { number: "EB-4", name: "CSA 4 / EB 4", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
+                { number: "CSA-4", name: "CSA 4 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
+                { number: "CSA-3", name: "CSA 3 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
+                { number: "CSA-2", name: "CSA 2 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 512, y: 40, w: 60, h: 125 } },
+                { number: "CSA-1", name: "CSA 1 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 578, y: 40, w: 60, h: 125 } },
+                { number: "BEE-LAB", name: "BEE LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 105, y: 285, w: 125, h: 125 } },
+                { number: "BE-LAB", name: "BE LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 242, y: 285, w: 125, h: 125 } },
+                { number: "MPMC-LAB", name: "MPMC LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 379, y: 285, w: 125, h: 125 } },
+                { number: "FC-2", name: "FC-2 Exam Cell", type: "Office", building: "CSA block", floor_number: 3, plan: { x: 250, y: 40, w: 120, h: 60 } }
             ];
         }
     }
@@ -1276,7 +1653,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
 
-    // ================= 14. ROUTE TRIGGER =================
+    // ================= 16. ROUTE TRIGGER =================
     if (findRouteBtn) {
         findRouteBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -1287,31 +1664,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const coordsArray = [];
+            let originCoord = null;
+
             if (selectedWaypoints.start.id === "LIVE_LOCATION") {
                 if (!currentUserLat || !currentUserLng) {
-                    alert("Acquiring GPS location... Please ensure location permissions are enabled.");
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
                             pos => {
                                 updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude);
                                 findRouteBtn.click();
                             },
-                            err => alert("Unable to get GPS location: " + err.message)
+                            err => showGeofenceWarning()
                         );
                     }
                     return;
                 }
-                coordsArray.push([currentUserLat, currentUserLng]);
+
+                if (!isInsideCampus(currentUserLat, currentUserLng)) {
+                    showGeofenceWarning();
+                    return;
+                }
+
+                originCoord = [currentUserLat, currentUserLng];
+                coordsArray.push(originCoord);
             } else if (buildings[selectedWaypoints.start.id]) {
-                coordsArray.push(buildings[selectedWaypoints.start.id]);
+                originCoord = buildings[selectedWaypoints.start.id];
+                coordsArray.push(originCoord);
             }
 
             selectedWaypoints.extraStops.forEach(st => {
                 if (st && buildings[st.id]) coordsArray.push(buildings[st.id]);
             });
 
-            if (buildings[selectedWaypoints.destination.id]) {
-                coordsArray.push(buildings[selectedWaypoints.destination.id]);
+            // Dynamically route to whichever complex entrance is closer from current position
+            const targetBldg = activeIndoorDestination ? activeIndoorDestination.building : selectedWaypoints.destination.id;
+            const destCoord = getBestEntranceForComplex(originCoord, targetBldg) || buildings[selectedWaypoints.destination.id];
+
+            if (destCoord) {
+                coordsArray.push(destCoord);
             }
 
             if (coordsArray.length < 2) {
@@ -1333,7 +1723,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 15. LIVE GPS WATCH & SIMULATION =================
+    // ================= 17. LIVE GPS WATCH & SIMULATION =================
     if (startNavBtn) {
         startNavBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
@@ -1352,22 +1742,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            isTrackingOrSimulating = true;
-            startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
-            startNavBtn.classList.add('btn-danger');
-
-            if (window.innerWidth <= 640) applySheetSnap(1);
-            speakVoicePrompt("Starting GPS live navigation.");
-
-            watchId = navigator.geolocation.watchPosition(
+            navigator.geolocation.getCurrentPosition(
                 (pos) => {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
-                    updateUserLiveLocation(lat, lng, pos.coords.accuracy);
-                    map.panTo([lat, lng], { animate: true, duration: 0.5 });
+
+                    if (!isInsideCampus(lat, lng)) {
+                        showGeofenceWarning();
+                        return;
+                    }
+
+                    isTrackingOrSimulating = true;
+                    startNavBtn.innerHTML = `<i class="fa-solid fa-stop"></i> <span>Stop GPS</span>`;
+                    startNavBtn.classList.add('btn-danger');
+
+                    if (window.innerWidth <= 640) applySheetSnap(1);
+                    speakVoicePrompt("Starting GPS live navigation.");
+
+                    watchId = navigator.geolocation.watchPosition(
+                        (watchPos) => {
+                            const wLat = watchPos.coords.latitude;
+                            const wLng = watchPos.coords.longitude;
+                            updateUserLiveLocation(wLat, wLng, watchPos.coords.accuracy);
+                            map.panTo([wLat, wLng], { animate: true, duration: 0.5 });
+                        },
+                        (err) => alert("GPS Error: " + err.message),
+                        { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+                    );
                 },
-                (err) => alert("GPS Error: " + err.message),
-                { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+                (err) => showGeofenceWarning(),
+                { enableHighAccuracy: true, timeout: 5000 }
             );
         });
     }
@@ -1406,10 +1810,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 isTrackingOrSimulating = false;
                 simulateBtn.innerHTML = `<i class="fa-solid fa-play"></i> <span>Simulate</span>`;
                 
-                speakVoicePrompt("You have arrived at your destination!");
+                const finalPoint = animationPoints[animationPoints.length - 1];
+                currentUserLat = finalPoint[0];
+                currentUserLng = finalPoint[1];
+
                 if (activeIndoorDestination) {
                     showArrivalTransitionModal();
                 } else {
+                    speakVoicePrompt("You have arrived at your destination!");
                     alert("You have arrived at your destination!");
                 }
                 return;
@@ -1484,6 +1892,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const arrivalModal = document.getElementById('arrival-popup-overlay');
             if (arrivalModal) arrivalModal.remove();
 
+            const infoCard = document.getElementById('room-location-info-card');
+            if (infoCard) infoCard.remove();
+
+            const geofenceBanner = document.getElementById('geofence-warning-banner');
+            if (geofenceBanner) geofenceBanner.remove();
+
             if (simulationInterval) {
                 clearInterval(simulationInterval);
                 simulationInterval = null;
@@ -1525,7 +1939,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 16. LIVE SEARCH =================
+    // ================= 18. LIVE SEARCH (ROOMS & PLACES) =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
@@ -1537,6 +1951,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // 1. Matched Indoor Rooms
             const matchedRooms = allIndoorRooms.filter(r => r.number.toLowerCase().includes(query) || r.name.toLowerCase().includes(query) || r.building.toLowerCase().includes(query));
             matchedRooms.slice(0, 6).forEach(rm => {
                 const item = document.createElement('div');
@@ -1548,7 +1963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span style="font-size:18px;">🚪</span> 
                     <div>
                         <strong>${displayTitle}</strong><br>
-                        <small style="color:#64748b;">${rm.building} &bull; Floor ${rm.floor_number}</small>
+                        <small style="color:var(--text-muted);">${rm.building} &bull; Floor ${rm.floor_number}</small>
                     </div>
                 `;
 
@@ -1561,6 +1976,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResults.appendChild(item);
             });
 
+            // 2. Matched Campus Blocks & Landmarks
             const matchedPlaces = placeNamesSorted.filter(p => p.toLowerCase().includes(query));
             matchedPlaces.slice(0, 6).forEach(place => {
                 const icon = getPlaceIcon(place);

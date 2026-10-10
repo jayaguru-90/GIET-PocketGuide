@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <!-- Stylesheet -->
     <link rel="stylesheet" href="css/style.css" />
@@ -44,20 +45,20 @@
             <!-- Navigation Links -->
             <nav class="navbar" id="navbar">
                 <a href="index.html" class="nav-link active">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <i class="fa-solid fa-house nav-icon"></i>
                     <span>Home</span>
                 </a>
                 <a href="navigation.html" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                    <i class="fa-solid fa-map-location-dot nav-icon"></i>
                     <span>Campus Map</span>
                 </a>
                 <a href="building.html" class="nav-link">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/></svg>
-                    <span>Building Directory</span>
+                    <i class="fa-solid fa-building nav-icon"></i>
+                    <span>Floor Blueprints</span>
                 </a>
                 <a href="admin.html" class="nav-link admin-btn">
-                    <svg class="nav-icon admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>Admin Portal</span>
+                    <i class="fa-solid fa-gear nav-icon admin-icon"></i>
+                    <span>Admin Studio</span>
                 </a>
             </nav>
         </div>
@@ -68,33 +69,34 @@
         <section class="hero">
             <div class="hero-container">
                 <div class="badge-wrapper">
-                    <span class="badge">📍 GIET Campus Navigation</span>
+                    <span class="badge">📍 GIET University Smart Navigation</span>
                 </div>
                 
-                <h1>Navigate GIET University <br><span class="gradient-text">Without Getting Lost</span></h1>
+                <h1>Navigate GIET Campus <br><span class="gradient-text">Without Getting Lost</span></h1>
                 
                 <p class="hero-subtitle">
-                    Find departments, lecture blocks, hostel messes, libraries, and connected walking paths across the entire campus in seconds.
+                    Locate academic blocks, indoor lecture halls, hostels, dining messes, and verified walkways in real-time.
                 </p>
 
                 <!-- Primary Action Buttons -->
                 <div class="hero-buttons">
                     <a href="navigation.html" class="btn btn-primary">
-                        <span>🗺️</span> Launch Interactive Map
+                        <i class="fa-solid fa-location-arrow"></i> Launch Live Map
                     </a>
                     <a href="building.html" class="btn btn-secondary">
-                        <span>📋</span> View Building Directory
+                        <i class="fa-solid fa-layer-group"></i> Explore Floor Plans
                     </a>
                 </div>
 
-                <!-- Instant Jump Chips -->
+                <!-- Instant Jump Chips with Valid Query Names -->
                 <div class="quick-chips-wrapper">
-                    <span class="chips-label">Popular Locations:</span>
+                    <span class="chips-label">Quick Jump:</span>
                     <div class="quick-chips">
-                        <a href="navigation.html?dest=CSE" class="chip">🏢 CSE Block</a>
-                        <a href="navigation.html?dest=Library" class="chip">📚 Central Library</a>
-                        <a href="navigation.html?dest=Mess" class="chip">🍛 Central Mess</a>
-                        <a href="navigation.html?dest=Admin" class="chip">🏛️ Administration</a>
+                        <a href="navigation.html?building=CSE%20Building" class="chip">💻 CSE Building</a>
+                        <a href="navigation.html?building=Library" class="chip">📚 Central Library</a>
+                        <a href="navigation.html?building=Central%20Mess" class="chip">🍱 Central Mess</a>
+                        <a href="navigation.html?building=Admin%20Block" class="chip">🏛️ Admin Block</a>
+                        <a href="navigation.html?building=CSA%20Block" class="chip">🏢 CSA Block</a>
                     </div>
                 </div>
 
@@ -106,17 +108,50 @@
                             <span class="dot dot-amber"></span>
                             <span class="dot dot-green"></span>
                         </div>
-                        <span class="preview-title">gietu-live-routing-engine v2.4</span>
+                        <span class="preview-title">gietu-spatial-dijkstra-engine v2.6</span>
                     </div>
                     <div class="preview-body">
                         <div class="preview-info">
                             <div class="status-indicator">
                                 <span class="status-pulse"></span>
-                                <strong>Connected Dijkstra Routing Grid</strong>
+                                <strong>Connected Campus Graph Network</strong>
                             </div>
-                            <p>Turn-by-turn routing across verified walkways with live simulation support.</p>
+                            <p>Sub-meter Dijkstra walkway pathfinding, geofence validation, and turn-by-turn guidance.</p>
                         </div>
-                        <a href="navigation.html" class="preview-link">Open Live Map &rarr;</a>
+                        <a href="navigation.html" class="preview-link">Open Outdoor Map &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CORE FEATURES SECTION -->
+        <section class="features">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="section-container">
+                <div class="section-heading">
+                    <span class="section-eyebrow">CAPABILITIES</span>
+                    <h2>Key Portal Features</h2>
+                    <p>Designed for students, faculty, and campus visitors</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-route"></i></div>
+                        <h3>Dijkstra Pathfinding</h3>
+                        <p>Calculates the shortest walkable route along paved campus pathways with step-by-step turn guidance and walk simulations.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                        <h3>Indoor Blueprints</h3>
+                        <p>Explore multi-floor layouts with touch pan, pinch-to-zoom, and room locator cards for labs, classrooms, and offices.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-filter"></i></div>
+                        <h3>Amenity Separation</h3>
+                        <p>Quickly locate water dispensers, restrooms, medical points, and security gates without cluttering academic landmark views.</p>
                     </div>
                 </div>
             </div>
@@ -129,12 +164,12 @@
                 <div class="section-heading">
                     <span class="section-eyebrow">THE TEAM</span>
                     <h2>Project Contributors</h2>
-                    <p>Designed and built for the GIET University community</p>
+                    <p>Department of Computer Science & Engineering, GIET University</p>
                 </div>
                 <div class="team-grid">
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/jaya%20photo.jpeg" alt="Jayaguru Sahu" loading="lazy" />
+                            <img src="assets/images/jaya%20photo.jpeg" alt="Jayaguru Sahu" loading="lazy" onerror="this.src='assets/images/LOGO.png'" />
                         </div>
                         <h4>Jayaguru Sahu</h4>
                         <span class="team-role">Developer</span>
@@ -142,7 +177,7 @@
 
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/bhavishya%20image%20.jpeg" alt="Pedina Bavishya" loading="lazy" />
+                            <img src="assets/images/bhavishya%20image%20.jpeg" alt="Pedina Bavishya" loading="lazy" onerror="this.src='assets/images/LOGO.png'" />
                         </div>
                         <h4>Pedina Bavishya</h4>
                         <span class="team-role">Developer</span>
@@ -150,7 +185,7 @@
 
                     <div class="team-card">
                         <div class="avatar-wrapper">
-                            <img src="assets/images/Ayush%20photo.jpeg" alt="Ayush Kumar Behera" loading="lazy" />
+                            <img src="assets/images/Ayush%20photo.jpeg" alt="Ayush Kumar Behera" loading="lazy" onerror="this.src='assets/images/LOGO.png'" />
                         </div>
                         <h4>Ayush Kumar Behera</h4>
                         <span class="team-role">Developer</span>
@@ -162,14 +197,12 @@
         
     <!-- FOOTER -->
     <footer class="footer">
-        <p>&copy; 2026 GIET Campus Guide. Built with precision for GIET University.</p>
+        <p>&copy; 2026 GIET Campus Guide. Built for GIET University.</p>
     </footer>
 
-    <!-- Dark Mode Button -->
+    <!-- Theme Toggle Floating Action -->
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
-        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
+        <i class="fa-solid fa-moon theme-icon" id="theme-icon"></i>
     </button>
 
     <script src="js/home.js"></script>

@@ -30,14 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let map = null;
     let tempPlacementMarker = null;
 
-    // Advanced Route Drawing, Vertex Editing & Midpoint Insertion
     let isDrawingRoute = false;
-    let drawnRoutePoints = [];        // [[lat, lng], [lat, lng], ...]
+    let drawnRoutePoints = [];
     let drawingPolyline = null;
-    let routeVertexMarkers = [];      // Main draggable vertex markers
-    let routeMidpointMarkers = [];    // Clickable mid-segment insertion handles
+    let routeVertexMarkers = [];
+    let routeMidpointMarkers = [];
 
-    // Magnetic Snapping Guides
     let snapGuideLayers = L.layerGroup();
     let snapIndicatorMarker = null;
     const SNAP_THRESHOLD_METERS = 8.0;
@@ -83,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const adminFloorSelect = document.getElementById("admin-floor-select");
     const btnAddFloor = document.getElementById("btn-add-floor");
     const btnDeleteFloor = document.getElementById("btn-delete-floor");
-    const saveRoomBtn = document.getElementById("save-room-btn");
+    const adminRoomForm = document.getElementById("admin-room-form");
     const adminRoomId = document.getElementById("admin-room-id");
     const roomNumVal = document.getElementById("room-num-val");
     const roomNameVal = document.getElementById("room-name-val");
@@ -95,10 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const roomHVal = document.getElementById("room-h-val");
     const btnCancelEditRoom = document.getElementById("btn-cancel-edit-room");
     const btnDeleteActiveRoom = document.getElementById("btn-delete-active-room");
+    const btnBatchSaveFloor = document.getElementById("btn-batch-save-floor");
+    const unsavedCountBadge = document.getElementById("unsaved-count");
     const adminFloorRoomsList = document.getElementById("admin-floor-rooms-list");
     const roomFormTitle = document.getElementById("room-form-title");
 
-    // Live Blueprint Preview & Sketch Upload Elements
+    // Live Blueprint Preview Elements
     const adminBlueprintViewport = document.getElementById("admin-blueprint-viewport");
     const adminBlueprintCanvas = document.getElementById("admin-blueprint-canvas");
     const previewFloorTitle = document.getElementById("preview-floor-title");
@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let isDrawMode = false;
     let underlayUrl = null;
     let isUnderlayVisible = true;
+    let pendingChangesCount = 0;
 
     const registryList = document.getElementById("registry-list");
     const searchFilter = document.getElementById("search-filter");
@@ -118,6 +119,78 @@ document.addEventListener("DOMContentLoaded", () => {
     const mapModeText = document.getElementById("map-mode-text");
 
     const GIET_CENTER = [19.0485, 83.8320];
+
+    function markPendingChanges() {
+        pendingChangesCount++;
+        if (unsavedCountBadge) unsavedCountBadge.textContent = pendingChangesCount;
+    }
+
+    function clearPendingChanges() {
+        pendingChangesCount = 0;
+        if (unsavedCountBadge) unsavedCountBadge.textContent = "0";
+    }
+
+    // Category Synchronizer: Robust matching for select option values
+    function setCategoryDropdownValue(selectEl, rawValue) {
+        if (!selectEl) return;
+        const target = String(rawValue || "").toLowerCase().trim();
+        let matchedIndex = 0;
+
+        for (let i = 0; i < selectEl.options.length; i++) {
+            const optVal = selectEl.options[i].value.toLowerCase().trim();
+            const optText = selectEl.options[i].textContent.toLowerCase().trim();
+
+            if (optVal === target || optText === target) {
+                matchedIndex = i;
+                break;
+            }
+            if ((target.includes("corridor") || target.includes("walk") || target.includes("hallway")) &&
+                (optVal.includes("corridor") || optText.includes("walk") || optText.includes("corridor"))) {
+                matchedIndex = i;
+                break;
+            }
+            if (target.includes("stair") && (optVal.includes("stair") || optText.includes("stair"))) {
+                matchedIndex = i;
+                break;
+            }
+            if ((target.includes("lift") || target.includes("elevator")) && (optVal.includes("lift") || optText.includes("lift"))) {
+                matchedIndex = i;
+                break;
+            }
+            if ((target.includes("office") || target.includes("cabin")) && (optVal.includes("office") || optText.includes("office"))) {
+                matchedIndex = i;
+                break;
+            }
+            if (target.includes("lab") && (optVal.includes("lab") || optText.includes("lab"))) {
+                matchedIndex = i;
+                break;
+            }
+            if ((target.includes("washroom") || target.includes("toilet") || target.includes("wc")) &&
+                (optVal.includes("washroom") || optText.includes("washroom"))) {
+                matchedIndex = i;
+                break;
+            }
+            if ((target.includes("water") || target.includes("utility")) &&
+                (optVal.includes("utility") || optText.includes("water") || optVal.includes("water"))) {
+                matchedIndex = i;
+                break;
+            }
+        }
+
+        selectEl.selectedIndex = matchedIndex;
+    }
+
+    function getNormalizedCategoryClass(rawType = "") {
+        const t = String(rawType).toLowerCase().trim();
+        if (t.includes("corridor") || t.includes("hallway") || t.includes("walkway") || t.includes("walk")) return "corridor";
+        if (t.includes("stair")) return "stairs";
+        if (t.includes("lift") || t.includes("elevator")) return "lift";
+        if (t.includes("lab")) return "laboratory";
+        if (t.includes("office") || t.includes("cabin") || t.includes("sec") || t.includes("hod")) return "office";
+        if (t.includes("washroom") || t.includes("toilet") || t.includes("wc") || t.includes("water")) return "utility";
+        if (t.includes("auditorium")) return "auditorium";
+        return "classroom";
+    }
 
     // ================= 1. AUTHENTICATION =================
     function checkAuth() {
@@ -282,7 +355,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Find closest segment index on a polyline to insert a point in the middle
     function findClosestSegmentIndex(clickLatLng, points) {
         if (points.length < 2) return -1;
         let bestIndex = -1;
@@ -292,7 +364,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const p1 = L.latLng(points[i][0], points[i][1]);
             const p2 = L.latLng(points[i + 1][0], points[i + 1][1]);
             
-            // Perpendicular point projection
             const dist = L.LineUtil.pointToSegmentDistance(
                 map.latLngToLayerPoint(clickLatLng),
                 map.latLngToLayerPoint(p1),
@@ -304,8 +375,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 bestIndex = i;
             }
         }
-
-        // Must be clicked within 15 pixels of the segment
         return minDistance < 15 ? bestIndex : -1;
     }
 
@@ -407,6 +476,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ================= 5. MAP CLICKS & DYNAMIC NODE INSERTION =================
     function handleMapClick(e) {
+        if (activeTab === "structure") return;
+
         let finalLat = e.latlng.lat;
         let finalLng = e.latlng.lng;
 
@@ -443,13 +514,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 finalLng = snap.lng;
             }
 
-            // Check if user clicked in the middle of an existing segment to split it
             const segIdx = findClosestSegmentIndex(e.latlng, drawnRoutePoints);
             if (segIdx !== -1) {
-                // Insert node between segIdx and segIdx + 1
                 drawnRoutePoints.splice(segIdx + 1, 0, [finalLat, finalLng]);
             } else {
-                // Append point to the end
                 drawnRoutePoints.push([finalLat, finalLng]);
             }
 
@@ -472,7 +540,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 dashArray: "4, 6"
             }).addTo(map);
 
-            // Allow clicking directly on the active path line to insert a middle node
             drawingPolyline.on("click", (e) => {
                 if (!isDrawingRoute) return;
                 L.DomEvent.stopPropagation(e);
@@ -486,7 +553,6 @@ document.addEventListener("DOMContentLoaded", () => {
             drawingPolyline.setLatLngs(drawnRoutePoints);
         }
 
-        // 1. Render primary draggable vertices
         drawnRoutePoints.forEach((pt, idx) => {
             const vMarker = L.marker(pt, {
                 draggable: true,
@@ -528,7 +594,6 @@ document.addEventListener("DOMContentLoaded", () => {
             routeVertexMarkers.push(vMarker);
         });
 
-        // 2. Render clickable midpoint handles between consecutive vertices
         for (let i = 0; i < drawnRoutePoints.length - 1; i++) {
             const midLat = (drawnRoutePoints[i][0] + drawnRoutePoints[i + 1][0]) / 2;
             const midLng = (drawnRoutePoints[i][1] + drawnRoutePoints[i + 1][1]) / 2;
@@ -545,7 +610,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             midMarker.bindTooltip(`+ Add Node Here`, { direction: "top", offset: [0, -5] });
 
-            // Clicking or dragging the midpoint handle adds the new node into the line
             midMarker.on("click", (ev) => {
                 L.DomEvent.stopPropagation(ev);
                 drawnRoutePoints.splice(i + 1, 0, [midLat, midLng]);
@@ -630,7 +694,8 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelEditBtn.addEventListener("click", resetLocationForm);
 
     // ================= 7. ROUTE DRAWING & EDITING =================
-    startDrawingBtn.addEventListener("click", () => {
+    startDrawingBtn.addEventListener("click", (e) => {
+        e.preventDefault();
         isDrawingRoute = !isDrawingRoute;
         if (isDrawingRoute) {
             startDrawingBtn.innerHTML = `<i class="fa-solid fa-pause"></i> <span>Pause Adding</span>`;
@@ -644,7 +709,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    clearDrawingBtn.addEventListener("click", () => {
+    clearDrawingBtn.addEventListener("click", (e) => {
+        e.preventDefault();
         drawnRoutePoints = [];
         routeVertexMarkers.forEach(m => map.removeLayer(m));
         routeVertexMarkers = [];
@@ -730,53 +796,51 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelRouteBtn.addEventListener("click", resetRouteForm);
     }
 
-    // ================= 8. TAB SWITCHING =================
-    tabLocationsBtn.addEventListener("click", () => {
-        activeTab = "locations";
-        tabLocationsBtn.classList.add("active");
-        tabRoutesBtn.classList.remove("active");
-        if (tabStructureBtn) tabStructureBtn.classList.remove("active");
+    // ================= 8. TAB SWITCHING (ISOLATED EXECUTION) =================
+    function activateTab(tabName) {
+        activeTab = tabName;
 
-        locationPanel.classList.remove("hidden");
-        routePanel.classList.add("hidden");
-        if (structurePanel) structurePanel.classList.add("hidden");
-        if (adminBlueprintViewport) adminBlueprintViewport.classList.add("hidden");
-        mapModeText.textContent = "Inspection Mode";
-        snapGuideLayers.clearLayers();
-        resetRouteForm();
-    });
+        tabLocationsBtn.classList.toggle("active", tabName === "locations");
+        tabRoutesBtn.classList.toggle("active", tabName === "routes");
+        if (tabStructureBtn) tabStructureBtn.classList.toggle("active", tabName === "structure");
 
-    tabRoutesBtn.addEventListener("click", () => {
-        activeTab = "routes";
-        tabRoutesBtn.classList.add("active");
-        tabLocationsBtn.classList.remove("active");
-        if (tabStructureBtn) tabStructureBtn.classList.remove("active");
+        locationPanel.classList.toggle("hidden", tabName !== "locations");
+        routePanel.classList.toggle("hidden", tabName !== "routes");
+        if (structurePanel) structurePanel.classList.toggle("hidden", tabName !== "structure");
 
-        routePanel.classList.remove("hidden");
-        locationPanel.classList.add("hidden");
-        if (structurePanel) structurePanel.classList.add("hidden");
-        if (adminBlueprintViewport) adminBlueprintViewport.classList.add("hidden");
-        mapModeText.textContent = "Corridor Mode";
-        renderSnapGuides();
-    });
+        if (adminBlueprintViewport) {
+            adminBlueprintViewport.classList.toggle("hidden", tabName !== "structure");
+        }
 
-    if (tabStructureBtn) {
-        tabStructureBtn.addEventListener("click", () => {
-            activeTab = "structure";
-            tabStructureBtn.classList.add("active");
-            tabLocationsBtn.classList.remove("active");
-            tabRoutesBtn.classList.remove("active");
-
-            structurePanel.classList.remove("hidden");
-            locationPanel.classList.add("hidden");
-            routePanel.classList.add("hidden");
-
-            if (adminBlueprintViewport) adminBlueprintViewport.classList.remove("hidden");
+        if (tabName === "locations") {
+            mapModeText.textContent = "Inspection Mode";
+            snapGuideLayers.clearLayers();
+            resetRouteForm();
+        } else if (tabName === "routes") {
+            mapModeText.textContent = "Corridor Mode";
+            renderSnapGuides();
+        } else if (tabName === "structure") {
             mapModeText.textContent = "Floor Plan Mode";
-
             snapGuideLayers.clearLayers();
             loadBuildingsIntoDropdown();
             resetRouteForm();
+        }
+    }
+
+    tabLocationsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        activateTab("locations");
+    });
+
+    tabRoutesBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        activateTab("routes");
+    });
+
+    if (tabStructureBtn) {
+        tabStructureBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            activateTab("structure");
         });
     }
 
@@ -789,11 +853,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
 
         if (previewFloorTitle && floorObj) {
-            previewFloorTitle.textContent = `${adminBldgSelect.value} - ${floorObj.name} (Live Preview)`;
+            previewFloorTitle.textContent = `${adminBldgSelect.value} - ${floorObj.name} (Live Canvas)`;
         }
 
         if (!floorObj || !floorObj.rooms || floorObj.rooms.length === 0) {
-            adminBlueprintCanvas.innerHTML = `<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px; pointer-events: none;">No rooms on this floor. Click "Draw Box" or upload a sketch.</div>`;
+            adminBlueprintCanvas.innerHTML = `<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px; pointer-events: none;">No rooms on this floor. Click "Draw Box" to start.</div>`;
             return;
         }
 
@@ -801,8 +865,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         floorObj.rooms.forEach(r => {
             const block = document.createElement("div");
-            const cat = (r.type || "classroom").toLowerCase();
-            block.className = `admin-preview-room ${cat}`;
+            const catClass = getNormalizedCategoryClass(r.type);
+
+            block.className = `admin-preview-room ${catClass}`;
             if (currentlyEditingId === r.id) block.classList.add("active-editing");
 
             block.style.left = `${r.plan.x}px`;
@@ -817,7 +882,7 @@ document.addEventListener("DOMContentLoaded", () => {
             block.innerHTML = `
                 <div style="font-size: 11px; font-weight: 800; pointer-events: none;">${r.number}</div>
                 <div style="font-size: 9.5px; opacity: 0.85; pointer-events: none;">${r.name}</div>
-                <button type="button" class="btn-canvas-del-room" title="Delete room" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; font-size: 9px; line-height: 1; border-radius: 50%; background: #ef4444; color: #fff; border: none; cursor: pointer; display: none; align-items: center; justify-content: center;">✕</button>
+                <button type="button" class="btn-canvas-del-room" title="Delete box" style="position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; font-size: 9px; line-height: 1; border-radius: 50%; background: #ef4444; color: #fff; border: none; cursor: pointer; display: none; align-items: center; justify-content: center;">✕</button>
                 <div class="room-resize-handle"></div>
             `;
 
@@ -827,19 +892,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (quickDelBtn) {
-                quickDelBtn.addEventListener("click", async (e) => {
+                quickDelBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    await deleteRoomById(r.id, `${r.number} (${r.name})`);
+                    deleteRoomFromMemory(r.id);
                 });
             }
 
             block.addEventListener("click", (e) => {
+                e.stopPropagation();
                 if (isDrawMode || e.target.classList.contains("room-resize-handle") || e.target.classList.contains("btn-canvas-del-room")) return;
+
                 adminRoomId.value = r.id;
                 roomNumVal.value = r.number;
                 roomNameVal.value = r.name;
-                roomTypeVal.value = r.type;
+                setCategoryDropdownValue(roomTypeVal, r.type);
                 roomDescVal.value = r.description || "";
                 roomXVal.value = r.plan.x;
                 roomYVal.value = r.plan.y;
@@ -853,6 +920,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             block.addEventListener("mousedown", (e) => {
                 if (isDrawMode || e.target.classList.contains("room-resize-handle") || e.target.classList.contains("btn-canvas-del-room")) return;
+                e.stopPropagation();
+
                 let startX = e.clientX;
                 let startY = e.clientY;
                 let origLeft = r.plan.x;
@@ -875,6 +944,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 function stopDrag() {
                     window.removeEventListener("mousemove", moveDrag);
                     window.removeEventListener("mouseup", stopDrag);
+                    markPendingChanges();
                 }
 
                 window.addEventListener("mousemove", moveDrag);
@@ -907,6 +977,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     function stopResize() {
                         window.removeEventListener("mousemove", doResize);
                         window.removeEventListener("mouseup", stopResize);
+                        markPendingChanges();
                     }
 
                     window.addEventListener("mousemove", doResize);
@@ -918,25 +989,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    async function deleteRoomById(roomId, label) {
-        if (!confirm(`Delete ${label || "this room"}?`)) return;
-
-        try {
-            const res = await fetch(`${API_URL}/api/admin/room/${roomId}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Server error deleting room");
-
-            const selectedFloorId = parseInt(adminFloorSelect.value);
-            const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
-            if (floorObj) {
-                floorObj.rooms = floorObj.rooms.filter(rm => rm.id !== roomId);
-            }
-
-            resetRoomEditor();
-            renderAdminRoomsList();
-        } catch (err) {
-            console.error("Error deleting room:", err);
-            alert("Could not delete room. Check if the backend is running.");
+    function deleteRoomFromMemory(roomId) {
+        const selectedFloorId = parseInt(adminFloorSelect.value);
+        const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
+        if (floorObj) {
+            floorObj.rooms = floorObj.rooms.filter(rm => rm.id !== roomId);
         }
+        markPendingChanges();
+        resetRoomEditor();
+        renderAdminRoomsList();
+        renderLiveBlueprintPreview();
     }
 
     if (btnDeleteActiveRoom) {
@@ -945,20 +1007,9 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             const currentId = adminRoomId.value ? parseInt(adminRoomId.value) : null;
             if (!currentId) return;
-            deleteRoomById(currentId, roomNumVal.value || "selected room");
+            deleteRoomFromMemory(currentId);
         });
     }
-
-    window.addEventListener("keydown", (e) => {
-        if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
-
-        if (e.key === "Delete" || e.key === "Backspace") {
-            const currentId = adminRoomId.value ? parseInt(adminRoomId.value) : null;
-            if (!currentId) return;
-            e.preventDefault();
-            deleteRoomById(currentId, roomNumVal.value || "selected room");
-        }
-    });
 
     [roomXVal, roomYVal, roomWVal, roomHVal].forEach(input => {
         if (!input) return;
@@ -976,12 +1027,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 room.plan.y = parseInt(roomYVal.value) || 0;
                 room.plan.w = parseInt(roomWVal.value) || 20;
                 room.plan.h = parseInt(roomHVal.value) || 20;
+                markPendingChanges();
                 renderLiveBlueprintPreview();
             }
         });
     });
 
-    // ================= 10. MANUAL BOX DRAWING =================
+    // ================= 10. MANUAL BOX DRAWING (ROBUST POINTER ENGINE) =================
     let drawStartX = 0, drawStartY = 0;
     let tempDrawBox = null;
 
@@ -1018,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        async function onMouseUp(ev) {
+        function onMouseUp(ev) {
             ev.preventDefault();
             ev.stopPropagation();
 
@@ -1040,71 +1092,51 @@ document.addEventListener("DOMContentLoaded", () => {
             if (w > 20 && h > 20) {
                 const selectedFloorId = parseInt(adminFloorSelect.value);
                 if (!selectedFloorId) {
-                    alert("Please select or add a floor first before drawing.");
+                    alert("Please select or add a floor first.");
                     return;
                 }
 
                 const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
                 const nextNum = (floorObj && floorObj.rooms ? floorObj.rooms.length + 1 : 1);
+                const newTempId = Date.now();
                 const defaultCode = `ROOM-${nextNum}`;
 
-                const payload = {
-                    floor_id: selectedFloorId,
-                    number: defaultCode,
-                    name: `Room ${nextNum}`,
-                    type: roomTypeVal.value || "Classroom",
-                    description: "",
-                    x: x,
-                    y: y,
-                    w: w,
-                    h: h
-                };
-
+                // Add to active floor in-memory
                 if (floorObj) {
                     if (!floorObj.rooms) floorObj.rooms = [];
                     floorObj.rooms.push({
-                        id: Date.now(),
+                        id: newTempId,
                         number: defaultCode,
                         name: `Room ${nextNum}`,
-                        type: payload.type,
+                        type: roomTypeVal.value || "Classroom",
                         description: "",
                         plan: { x, y, w, h }
                     });
                 }
 
+                markPendingChanges();
+
+                // Select the new room in sidebar form
+                adminRoomId.value = newTempId;
                 if (roomXVal) roomXVal.value = x;
                 if (roomYVal) roomYVal.value = y;
                 if (roomWVal) roomWVal.value = w;
                 if (roomHVal) roomHVal.value = h;
                 if (roomNumVal) roomNumVal.value = defaultCode;
                 if (roomNameVal) roomNameVal.value = `Room ${nextNum}`;
+                roomFormTitle.textContent = `New Box: ${defaultCode}`;
+                btnCancelEditRoom.classList.remove("hidden");
+                if (btnDeleteActiveRoom) btnDeleteActiveRoom.classList.remove("hidden");
 
-                activeTab = "structure";
-                tabStructureBtn.classList.add("active");
-                tabLocationsBtn.classList.remove("active");
-                tabRoutesBtn.classList.remove("active");
-                structurePanel.classList.remove("hidden");
-                locationPanel.classList.add("hidden");
-                routePanel.classList.add("hidden");
-                if (adminBlueprintViewport) adminBlueprintViewport.classList.remove("hidden");
+                // Exit drawing mode automatically so clicks work normally
+                isDrawMode = false;
+                btnDrawRoom.style.background = "";
+                btnDrawRoom.style.color = "";
+                btnDrawRoom.innerHTML = `<i class="fa-solid fa-vector-square"></i> Draw Box`;
+                adminBlueprintCanvas.style.cursor = "default";
 
                 renderAdminRoomsList();
                 renderLiveBlueprintPreview();
-
-                try {
-                    const res = await fetch(`${API_URL}/api/admin/save-room`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                    if (res.ok) {
-                        const savedData = await res.json();
-                        const target = floorObj.rooms.find(r => r.number === defaultCode);
-                        if (target && savedData.id) target.id = savedData.id;
-                    }
-                } catch (err) {
-                    console.warn("Backend offline or slow; preserved locally:", err);
-                }
             }
         }
 
@@ -1186,6 +1218,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 adminFloorSelect.appendChild(opt);
             });
 
+            clearPendingChanges();
             renderAdminRoomsList();
         } catch (e) {
             console.error("Failed to load floors for building", e);
@@ -1223,7 +1256,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 adminRoomId.value = r.id;
                 roomNumVal.value = r.number;
                 roomNameVal.value = r.name;
-                roomTypeVal.value = r.type;
+                setCategoryDropdownValue(roomTypeVal, r.type);
                 roomDescVal.value = r.description || "";
                 roomXVal.value = r.plan.x;
                 roomYVal.value = r.plan.y;
@@ -1235,8 +1268,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderLiveBlueprintPreview();
             });
 
-            item.querySelector(".btn-delete").addEventListener("click", async () => {
-                await deleteRoomById(r.id, `${r.number} (${r.name})`);
+            item.querySelector(".btn-delete").addEventListener("click", () => {
+                deleteRoomFromMemory(r.id);
             });
 
             adminFloorRoomsList.appendChild(item);
@@ -1283,17 +1316,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
             const floorName = floorObj ? floorObj.name : `Floor ID ${selectedFloorId}`;
 
-            const confirmation = confirm(`Are you sure you want to delete "${floorName}"?\n\nThis will permanently delete this floor and all rooms located on it.`);
-            if (!confirmation) return;
+            if (!confirm(`Are you sure you want to delete "${floorName}" and all its rooms?`)) return;
 
             try {
                 const res = await fetch(`${API_URL}/api/admin/floor/${selectedFloorId}`, {
                     method: "DELETE"
                 });
-
                 if (!res.ok) throw new Error("Failed to delete floor from DB");
-
-                alert(`Floor "${floorName}" deleted successfully.`);
                 resetRoomEditor();
                 loadFloorsForSelectedBuilding();
             } catch (err) {
@@ -1302,46 +1331,98 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (saveRoomBtn) {
-        saveRoomBtn.addEventListener("click", async (e) => {
+    // Apply Room Edit in-memory (No slow network turnaround)
+    if (adminRoomForm) {
+        adminRoomForm.addEventListener("submit", (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            const floorId = parseInt(adminFloorSelect.value);
-            if (!floorId) {
-                alert("Please select or add a floor first.");
-                return;
-            }
+            const selectedFloorId = parseInt(adminFloorSelect.value);
+            const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
+            if (!floorObj) return;
 
-            const payload = {
-                id: adminRoomId.value ? parseInt(adminRoomId.value) : null,
-                floor_id: floorId,
+            const currentId = adminRoomId.value ? parseInt(adminRoomId.value) : null;
+            const updatedRoomData = {
+                id: currentId || Date.now(),
                 number: roomNumVal.value.trim(),
                 name: roomNameVal.value.trim(),
                 type: roomTypeVal.value,
                 description: roomDescVal.value.trim(),
-                x: parseInt(roomXVal.value) || 40,
-                y: parseInt(roomYVal.value) || 40,
-                w: parseInt(roomWVal.value) || 60,
-                h: parseInt(roomHVal.value) || 60
+                plan: {
+                    x: parseInt(roomXVal.value) || 40,
+                    y: parseInt(roomYVal.value) || 40,
+                    w: parseInt(roomWVal.value) || 60,
+                    h: parseInt(roomHVal.value) || 60
+                }
             };
 
-            try {
-                const res = await fetch(`${API_URL}/api/admin/save-room`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+            if (!floorObj.rooms) floorObj.rooms = [];
 
-                if (res.ok) {
-                    alert(payload.id ? "Room updated in DB!" : "Room saved to DB!");
-                    resetRoomEditor();
-                    loadFloorsForSelectedBuilding();
+            if (currentId) {
+                const targetIdx = floorObj.rooms.findIndex(r => r.id === currentId);
+                if (targetIdx !== -1) {
+                    floorObj.rooms[targetIdx] = updatedRoomData;
                 } else {
-                    alert("Failed to save room.");
+                    floorObj.rooms.push(updatedRoomData);
                 }
+            } else {
+                floorObj.rooms.push(updatedRoomData);
+            }
+
+            markPendingChanges();
+            renderAdminRoomsList();
+            renderLiveBlueprintPreview();
+        });
+    }
+
+    // MASTER BATCH SAVE: Save all rooms in one request
+    if (btnBatchSaveFloor) {
+        btnBatchSaveFloor.addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const selectedFloorId = parseInt(adminFloorSelect.value);
+            if (!selectedFloorId) {
+                alert("Please select a floor first.");
+                return;
+            }
+
+            const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
+            if (!floorObj) return;
+
+            btnBatchSaveFloor.disabled = true;
+            btnBatchSaveFloor.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving All Rooms...`;
+
+            try {
+                // Save each room in the staged list to the database
+                for (const r of floorObj.rooms) {
+                    await fetch(`${API_URL}/api/admin/save-room`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            id: r.id && r.id < 1000000000000 ? r.id : null, // Fresh IDs from Date.now() will insert as new rows
+                            floor_id: selectedFloorId,
+                            number: r.number,
+                            name: r.name,
+                            type: r.type,
+                            description: r.description,
+                            x: r.plan.x,
+                            y: r.plan.y,
+                            w: r.plan.w,
+                            h: r.plan.h
+                        })
+                    });
+                }
+
+                alert("All floor changes saved to database successfully!");
+                clearPendingChanges();
+                await loadFloorsForSelectedBuilding();
             } catch (err) {
-                console.error("Save room failed:", err);
+                console.error("Batch save error:", err);
+                alert("Could not complete batch save. Verify backend connectivity.");
+            } finally {
+                btnBatchSaveFloor.disabled = false;
+                btnBatchSaveFloor.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Save All Floor Changes to DB (${pendingChangesCount})`;
             }
         });
     }
@@ -1354,6 +1435,7 @@ document.addEventListener("DOMContentLoaded", () => {
         roomFormTitle.textContent = "Floor & Room Studio";
         btnCancelEditRoom.classList.add("hidden");
         if (btnDeleteActiveRoom) btnDeleteActiveRoom.classList.add("hidden");
+        renderLiveBlueprintPreview();
     }
 
     btnCancelEditRoom.addEventListener("click", (e) => {
@@ -1404,7 +1486,7 @@ document.addEventListener("DOMContentLoaded", () => {
         editingFeatureIndex = index;
 
         if (feat.geometry.type === "Point") {
-            tabLocationsBtn.click();
+            activateTab("locations");
             locId.value = index;
             locName.value = feat.properties.name || "";
             locCategory.value = feat.properties.category || "Academic Building";
@@ -1426,7 +1508,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             map.flyTo([lat, lng], 20, { duration: 0.8 });
         } else if (feat.geometry.type === "LineString") {
-            tabRoutesBtn.click();
+            activateTab("routes");
             routeId.value = index;
             routeName.value = feat.properties.name || "Walkway Corridor";
             
@@ -1470,7 +1552,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ================= 13. SKETCH UPLOAD & AUTO-EXTRACTION =================
+    // ================= 13. SKETCH UPLOAD =================
     if (btnUploadSketch) {
         btnUploadSketch.addEventListener("click", (e) => {
             e.preventDefault();
@@ -1486,7 +1568,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const selectedFloorId = parseInt(adminFloorSelect.value);
             if (!selectedFloorId) {
-                alert("Please select or add a floor first before uploading.");
+                alert("Please select or add a floor first.");
                 return;
             }
 
@@ -1494,53 +1576,6 @@ document.addEventListener("DOMContentLoaded", () => {
             adminBlueprintCanvas.style.backgroundImage = `url('${underlayUrl}')`;
             btnToggleUnderlay.classList.remove("hidden");
             isUnderlayVisible = true;
-
-            const formData = new FormData();
-            formData.append("file", file);
-
-            btnUploadSketch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...`;
-            btnUploadSketch.disabled = true;
-
-            try {
-                const res = await fetch(`${API_URL}/api/admin/detect-sketch`, {
-                    method: "POST",
-                    body: formData
-                });
-                const data = await res.json();
-
-                if (data.status === "success" && data.rooms && data.rooms.length > 0) {
-                    const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
-                    if (floorObj) {
-                        for (const r of data.rooms) {
-                            await fetch(`${API_URL}/api/admin/save-room`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    floor_id: selectedFloorId,
-                                    number: r.number,
-                                    name: r.name,
-                                    type: r.type,
-                                    description: r.description,
-                                    x: r.x,
-                                    y: r.y,
-                                    w: r.w,
-                                    h: r.h
-                                })
-                            });
-                        }
-                        alert(`Detected & created ${data.rooms.length} room boundaries! You can now adjust them.`);
-                        loadFloorsForSelectedBuilding();
-                    }
-                } else {
-                    alert("No distinct closed rooms detected. You can trace rooms using 'Draw Box'.");
-                }
-            } catch (err) {
-                alert("Auto-detect endpoint offline. Image loaded as background underlay!");
-            } finally {
-                btnUploadSketch.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Upload Sketch / PNG`;
-                btnUploadSketch.disabled = false;
-                sketchFileInput.value = "";
-            }
         });
     }
 
@@ -1553,10 +1588,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Toggle Draw Mode (Deselects current room so pointer events focus on drawing)
     if (btnDrawRoom) {
         btnDrawRoom.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
+
             isDrawMode = !isDrawMode;
             btnDrawRoom.style.background = isDrawMode ? "#2563eb" : "";
             btnDrawRoom.style.color = isDrawMode ? "#fff" : "";
@@ -1565,7 +1602,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 : `<i class="fa-solid fa-vector-square"></i> Draw Box`;
             adminBlueprintCanvas.style.cursor = isDrawMode ? "crosshair" : "default";
 
-            renderLiveBlueprintPreview();
+            // Deselect any active room so its handles don't block canvas clicks
+            if (isDrawMode) {
+                resetRoomEditor();
+            } else {
+                renderLiveBlueprintPreview();
+            }
         });
     }
 

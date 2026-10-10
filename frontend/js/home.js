@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================= 1. INJECT SPOTLIGHT STYLES & REVEAL KEYFRAMES =================
     const styleSheet = document.createElement('style');
     styleSheet.textContent = `
-        /* Fluid Entrance Revealer */
         .reveal-item {
             opacity: 0;
             transform: translateY(20px);
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
             transform: translateY(0);
         }
 
-        /* Ambient Cursor Lighting on Cards */
         .card, .team-card, .hero-preview-card {
             position: relative;
             overflow: hidden;
@@ -192,20 +190,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: true });
     }
 
-    // ================= 6. SYNCHRONIZED DARK MODE TOGGLE =================
+    // ================= 6. THEME TOGGLE WITH ICON SWITCH =================
     const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+
+    function syncThemeIcon() {
+        const isDark = document.body.classList.contains('dark-mode');
+        if (themeIcon) {
+            themeIcon.className = isDark ? 'fa-solid fa-sun theme-icon' : 'fa-solid fa-moon theme-icon';
+        }
+    }
+    syncThemeIcon();
+
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             localStorage.setItem('giet-theme', isDark ? 'dark' : 'light');
+            syncThemeIcon();
         });
     }
 
-    // Listen for theme changes across open tabs/windows
     window.addEventListener('storage', (e) => {
         if (e.key === 'giet-theme') {
             document.body.classList.toggle('dark-mode', e.newValue === 'dark');
+            syncThemeIcon();
         }
     });
 });

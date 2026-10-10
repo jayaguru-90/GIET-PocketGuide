@@ -1,98 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Building Layout - GIET Campus Guide</title>
 
-    <link rel="icon" type="image/png" href="assets/images/LOGO.png" />
-    <link rel="shortcut icon" type="image/png" href="assets/images/LOGO.png" />
-    <link rel="apple-touch-icon" href="assets/images/LOGO.png" />
+    <link rel="icon" type="image/png" href="assets/images/LOGO.png">
+    <link rel="shortcut icon" type="image/png" href="assets/images/LOGO.png">
+    <link rel="apple-touch-icon" href="assets/images/LOGO.png">
 
-    <!-- Typography -->
+    <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Unified CSS Architecture -->
-    <link rel="stylesheet" href="css/common.css" />
-    <link rel="stylesheet" href="css/building.css" />
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/building.css">
 </head>
-<body>
+<body class="building-body">
 
-    <!-- TOP APPLICATION BAR -->
+    <!-- 1. TOP APPLICATION BAR -->
     <header class="app-header">
-        <a href="navigation.html" class="btn-nav-link">
-            <i class="fa-solid fa-arrow-left"></i> <span>Campus Map</span>
-        </a>
+        <div class="nav-col-left">
+            <a href="navigation.html" class="btn-nav-action" title="Back to Campus Map">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span class="nav-text-desktop">Campus Map</span>
+            </a>
+        </div>
         
-        <a href="index.html" class="brand-unit">
-            <div class="brand-icon-box">
-                <img src="assets/images/LOGO.png" alt="GIET Logo" />
+        <div class="nav-col-center">
+            <div class="brand-unit">
+                <div class="brand-icon-box">
+                    <img src="assets/images/LOGO.png" alt="GIET" onerror="this.style.display='none'">
+                </div>
+                <div class="brand-title-wrap">
+                    <span class="brand-title-main" id="building-header-name">CSA Block</span>
+                    <span class="brand-title-sub">FLOOR NAVIGATION</span>
+                </div>
             </div>
-            <div class="brand-title-wrap">
-                <span class="brand-title-main" id="building-header-name">Building Blueprint</span>
-                <span class="brand-title-sub">Floor Navigation</span>
-            </div>
-        </a>
+        </div>
 
-        <!-- DIRECT ADMIN & HOME BUTTONS -->
-        <div class="header-tools">
-            <button type="button" class="btn-theme-circle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <div class="nav-col-right">
+            <button type="button" class="btn-nav-action btn-icon-round" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
                 <i class="fa-solid fa-moon"></i>
             </button>
-            <a href="admin.html" class="btn-nav-link" title="Back to Admin Studio" style="background: rgba(37, 99, 235, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
-                <i class="fa-solid fa-gear"></i> Admin
+            <a href="admin.html" class="btn-nav-action nav-desktop-only" title="Admin Studio">
+                <i class="fa-solid fa-gear"></i>
+                <span>Admin</span>
             </a>
-            <a href="index.html" class="btn-nav-link"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="index.html" class="btn-nav-action nav-desktop-only" title="Home">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
         </div>
     </header>
 
     <main class="layout-stage">
-        <!-- CONTROLS ROW: BUILDING SELECTOR & SEARCH -->
+        <!-- 2. CONTROLS: CUSTOM BUILDING SELECTOR & SEARCH -->
         <section class="selector-bar">
-            <div class="control-item">
-                <i class="fa-solid fa-building"></i>
-                <select id="building-selector" class="common-select">
-                    <!-- Populated dynamically via Database -->
-                </select>
+            <div class="control-item building-select-container">
+                <button type="button" id="building-picker-trigger" class="custom-select-trigger" aria-label="Select Building">
+                    <i class="fa-solid fa-building select-icon"></i>
+                    <span id="selected-building-label">CSA Block</span>
+                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </button>
             </div>
 
-            <div class="control-item">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="room-search-input" class="common-search-input" placeholder="Search room, corridor, or lab (e.g. CSA-4, CORR-1, BEE LAB)..." autocomplete="off" />
+            <div class="control-item search-container">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="room-search-input" class="common-search-input" placeholder="Search room, corridor, or lab..." autocomplete="off">
             </div>
         </section>
 
-        <!-- FLOOR SELECTION TABS -->
+        <!-- 3. FLOOR TABS -->
         <section class="floor-switch-strip" id="floor-tabs-container">
             <!-- Dynamically populated from database floors -->
         </section>
 
-        <!-- BLUEPRINT FRAME -->
+        <!-- 4. ARCHITECTURAL BOARD CONTAINER -->
         <section class="blueprint-card-frame">
             <div class="frame-top-meta">
                 <span id="current-floor-label" class="floor-title-display">CSA Block - Third Floor</span>
-                <div class="legend-group">
-                    <span class="legend-badge"><span class="legend-dot dot-class"></span> Classroom</span>
-                    <span class="legend-badge"><span class="legend-dot dot-lab"></span> Laboratory</span>
-                    <span class="legend-badge"><span class="legend-dot dot-office"></span> Office</span>
-                    <span class="legend-badge"><span class="legend-dot" style="background: #f59e0b;"></span> Stairs/Lift</span>
-                    <span class="legend-badge"><span class="legend-dot" style="background: #94a3b8; border: 1px dashed #fff;"></span> Corridor</span>
-                    <span class="legend-badge"><span class="legend-dot dot-utility"></span> Washroom/Water</span>
+                
+                <!-- INTERACTIVE CATEGORY LEGEND BAR -->
+                <div class="legend-group" id="blueprint-legend-group">
+                    <button type="button" class="legend-badge active" data-category="all">All</button>
+                    <button type="button" class="legend-badge" data-category="classroom">
+                        <span class="legend-dot dot-class"></span> Class
+                    </button>
+                    <button type="button" class="legend-badge" data-category="laboratory">
+                        <span class="legend-dot dot-lab"></span> Lab
+                    </button>
+                    <button type="button" class="legend-badge" data-category="office">
+                        <span class="legend-dot dot-office"></span> Office
+                    </button>
+                    <button type="button" class="legend-badge" data-category="corridor">
+                        <span class="legend-dot dot-corridor"></span> Walkway
+                    </button>
+                    <button type="button" class="legend-badge" data-category="stairs">
+                        <span class="legend-dot dot-stairs"></span> Stairs/Lift
+                    </button>
+                    <button type="button" class="legend-badge" data-category="utility">
+                        <span class="legend-dot dot-utility"></span> Washroom/Water
+                    </button>
                 </div>
             </div>
 
-            <!-- SCROLLABLE ARCHITECTURAL BOARD -->
-            <div class="blueprint-canvas-scroll">
+            <!-- PINNED FLOATING ZOOM TOOLBAR (Direct child of card frame) -->
+            <div class="blueprint-zoom-toolbar">
+                <button type="button" id="btn-zoom-in" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" id="btn-zoom-reset" title="Fit to Screen"><i class="fa-solid fa-compress"></i></button>
+                <button type="button" id="btn-zoom-out" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+            </div>
+
+            <!-- TOUCH VIEWPORT CANVAS -->
+            <div class="blueprint-canvas-scroll" id="blueprint-viewport">
                 <div id="blueprint-board" class="blueprint-grid-board">
                     <!-- Rooms rendered from DB coordinates (x, y, w, h) -->
                 </div>
             </div>
         </section>
 
-        <!-- ROOM INFORMATION INSPECTOR CARD -->
+        <!-- 5. ROOM DETAIL BOTTOM INSPECTOR CARD -->
         <section id="room-detail-card" class="room-inspector-modal hidden">
             <div class="inspector-header">
                 <div>
@@ -104,8 +135,32 @@
             <div class="inspector-body">
                 <p id="room-description">Standard lecture hall facility equipped with digital teaching tools.</p>
             </div>
+            <a href="navigation.html" class="btn-return-map-route">
+                <i class="fa-solid fa-location-dot"></i> Back to Outdoor Navigation
+            </a>
         </section>
     </main>
+
+    <!-- 6. MODAL BOTTOM SHEET BUILDING PICKER -->
+    <div id="building-modal-sheet" class="building-sheet-modal hidden">
+        <div class="sheet-backdrop" id="sheet-backdrop"></div>
+        <div class="sheet-card">
+            <div class="sheet-header">
+                <div class="sheet-handle-bar"></div>
+                <div class="sheet-title-row">
+                    <h4>Select Campus Building</h4>
+                    <button type="button" id="btn-close-sheet" class="btn-sheet-close">✕</button>
+                </div>
+            </div>
+            <div class="sheet-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="sheet-building-search" placeholder="Filter buildings..." autocomplete="off">
+            </div>
+            <div class="sheet-list" id="building-options-list">
+                <!-- Options populated dynamically by building.js -->
+            </div>
+        </div>
+    </div>
 
     <script src="js/building.js"></script>
 </body>

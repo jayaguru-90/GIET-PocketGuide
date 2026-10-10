@@ -952,37 +952,26 @@
     },
     {
       "type": "Feature",
+      "properties": {
+        "name": "Line 44",
+        "highway": "footway"
+      },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
             83.8327627,
-            19.0490728,
-            0
-          ],
-          [
-            83.8327746,
-            19.049046,
-            0
+            19.0490728
           ],
           [
             83.8329367,
-            19.0487161,
-            0
+            19.0487161
           ],
           [
             83.8330831,
-            19.0484282,
-            0
+            19.0484282
           ]
         ]
-      },
-      "properties": {
-        "name": "Line 44",
-        "styleUrl": "#line-000000-1200-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 1.2
       }
     },
     {
@@ -1084,55 +1073,6 @@
     },
     {
       "type": "Feature",
-      "properties": {
-        "name": "Line 45",
-        "highway": "footway"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            83.832441,
-            19.0496439,
-            0
-          ],
-          [
-            83.8326304,
-            19.0493536
-          ],
-          [
-            83.8327267,
-            19.0491606
-          ],
-          [
-            83.832764,
-            19.049159
-          ],
-          [
-            83.8327972,
-            19.0491427
-          ],
-          [
-            83.8327972,
-            19.0491427
-          ],
-          [
-            83.833043,
-            19.0492724
-          ],
-          [
-            83.8333083,
-            19.0494166
-          ],
-          [
-            83.8334089,
-            19.0494724
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
       "geometry": {
         "type": "LineString",
         "coordinates": [
@@ -1169,70 +1109,6 @@
         "stroke-opacity": 1,
         "stroke": "#000000",
         "stroke-width": 1.2
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Line 46",
-        "highway": "footway"
-      },
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            83.8315314,
-            19.0484455
-          ],
-          [
-            83.8315621,
-            19.0484843
-          ],
-          [
-            83.8317237,
-            19.0485721
-          ],
-          [
-            83.8319661,
-            19.0486661
-          ],
-          [
-            83.8321309,
-            19.048746
-          ],
-          [
-            83.8321227,
-            19.0487854
-          ],
-          [
-            83.8321508,
-            19.0488133
-          ],
-          [
-            83.8322122,
-            19.048804
-          ],
-          [
-            83.8325388,
-            19.048987
-          ],
-          [
-            83.8326881,
-            19.0490695
-          ],
-          [
-            83.8327746,
-            19.049046
-          ],
-          [
-            83.8328058,
-            19.0490767
-          ],
-          [
-            83.8327972,
-            19.0491427
-          ]
-        ]
       }
     },
     {
@@ -1544,41 +1420,6 @@
       },
       "properties": {
         "name": "Line 54",
-        "styleUrl": "#line-000000-1200-nodesc",
-        "stroke-opacity": 1,
-        "stroke": "#000000",
-        "stroke-width": 1.2
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": {
-        "type": "LineString",
-        "coordinates": [
-          [
-            83.8326696,
-            19.0497856,
-            0
-          ],
-          [
-            83.8327062,
-            19.0497347,
-            0
-          ],
-          [
-            83.8328703,
-            19.0495229,
-            0
-          ],
-          [
-            83.833043,
-            19.0492724,
-            0
-          ]
-        ]
-      },
-      "properties": {
-        "name": "Line 55",
         "styleUrl": "#line-000000-1200-nodesc",
         "stroke-opacity": 1,
         "stroke": "#000000",
@@ -2535,6 +2376,304 @@
         "coordinates": [
           83.832016,
           19.049539
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "NC-13 Road",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8346696,
+            19.0474568
+          ],
+          [
+            83.8346289,
+            19.047421
+          ],
+          [
+            83.8346696,
+            19.0474568
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Hostel Garden",
+        "category": "Sports Ground"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.835115,
+          19.047851
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Central Mess 2",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.83496,
+          19.047828
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Faculty Quaters",
+        "category": "Hostel / Mess"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          83.835849,
+          19.048663
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ECE Route",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8324027,
+            19.0495653
+          ],
+          [
+            83.8323665,
+            19.0496023
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "walkway",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8326304,
+            19.0493536
+          ],
+          [
+            83.83288667025094,
+            19.049501635644358
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "ece-cp",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.832441,
+            19.0496439
+          ],
+          [
+            83.8326304,
+            19.0493536
+          ],
+          [
+            83.8327267,
+            19.0491606
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "mb-cp",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8333083,
+            19.0494166
+          ],
+          [
+            83.833043,
+            19.0492724
+          ],
+          [
+            83.8327972,
+            19.0491427
+          ],
+          [
+            83.8327267,
+            19.0491606
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "mb rd",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8333083,
+            19.0494166
+          ],
+          [
+            83.8334089,
+            19.0494724
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "rdb",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8326696,
+            19.0497856
+          ],
+          [
+            83.8327545,
+            19.0496662
+          ],
+          [
+            83.83288667025094,
+            19.049501635644358
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "rdb2",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.833043,
+            19.0492724
+          ],
+          [
+            83.83288667025094,
+            19.049501635644358
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "cp rd",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8327972,
+            19.0491427
+          ],
+          [
+            83.8327627,
+            19.0490728
+          ],
+          [
+            83.8326881,
+            19.0490695
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "cse rd",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8315314,
+            19.0484455
+          ],
+          [
+            83.8315621,
+            19.0484843
+          ],
+          [
+            83.8317237,
+            19.0485721
+          ],
+          [
+            83.8319661,
+            19.0486661
+          ],
+          [
+            83.8321508,
+            19.0488133
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "lib rd",
+        "highway": "footway"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            83.8325388,
+            19.048987
+          ],
+          [
+            83.8322122,
+            19.048804
+          ]
         ]
       }
     }
