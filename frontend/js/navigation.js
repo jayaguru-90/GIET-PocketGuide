@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // University Geographic Boundary Envelope
     const CAMPUS_BOUNDS = L.latLngBounds(
-        [19.0430, 83.8260], // Southwest boundary
-        [19.0545, 83.8395]  // Northeast boundary
+        [19.0430, 83.8260],
+        [19.0545, 83.8395]
     );
 
     const GIET_DEFAULT_CENTER = [19.0485, 83.8320];
@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ROUTE_PALETTE = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
     let campusGeoJSON = null;
+    let isDataLoaded = false;
     let buildings = {};
     let markerLayers = {};
     let placeMetadata = {};
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeCategory = 'all';
     let isTrackingOrSimulating = false;
 
-    // Auto-Recalculation cooldown guard
+    // Recalculation Cooldown Guard
     let lastRerouteTime = 0;
     const OFF_ROUTE_THRESHOLD_METERS = 28;
 
@@ -115,6 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
         'admin block', 'library', 'canteen', 'giet temple', 
         'csa block', 'cse building', 'mechanical building', 'agriculture block'
     ];
+
+    // Case-Insensitive Building Coordinate Lookup
+    function findBuildingCoords(name) {
+        if (!name) return null;
+        if (buildings[name]) return buildings[name];
+        const lower = name.toLowerCase().trim();
+        const matchedKey = Object.keys(buildings).find(k => k.toLowerCase().trim() === lower);
+        return matchedKey ? buildings[matchedKey] : null;
+    }
 
     // ================= 2. THEME & PRIORITY PILLS =================
     function initTheme() {
@@ -165,18 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 3. SYNCHRONIZED VOICE ENGINE (QUEUE FLUSH) =================
+    // ================= 3. SYNCHRONIZED VOICE ENGINE =================
     let isVoiceEnabled = true;
     let spokenMilestones = new Set();
 
-    function speakVoicePrompt(text, priority = false) {
+    function speakVoicePrompt(text) {
         if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
-        
-        // Immediately flush previous speech queue so audio remains locked with live progress
         window.speechSynthesis.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.08;
+        utterance.rate = 1.05;
         utterance.pitch = 1.0;
         utterance.lang = 'en-US';
 
@@ -211,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingScreen.style.display = 'none';
         setTimeout(() => { if (map) map.invalidateSize(); }, 200);
     }
-    const safetyTimer = setTimeout(hideLoader, 2000);
+    const safetyTimer = setTimeout(hideLoader, 2500);
 
     // ================= 4. MAP INITIALIZATION WITH BOUNDS =================
     const map = L.map('map', {
@@ -328,14 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'parking';
         }
 
-        if (
-            c.includes('academic') || n.includes('building') || n.includes('block') || 
-            n.includes('library') || n.includes('csa') || n.includes('bsh') || n.includes('cse') || 
-            n.includes('ece') || n.includes('mechanical') || n.includes('agriculture') || n.includes('bio tech')
-        ) {
-            return 'academic';
-        }
-
         return 'academic';
     }
 
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ================= 7. PRECISION GRAPH BUILDER WITH PROJECTION =================
+    // ================= 7. PRECISION GRAPH BUILDER =================
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371000;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -451,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
-    // Projects point P perpendicularly onto segment AB to detect T-intersections
     function projectPointOnSegment(p, a, b) {
         const x = p[1], y = p[0];
         const x1 = a[1], y1 = a[0];
@@ -465,7 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return [y1 + t * dy, x1 + t * dx];
     }
 
-    // 10-meter auto-connection to bridge walkway endpoints without crossing building interiors
     const NODE_CONNECT_THRESHOLD_METERS = 10.0;
 
     function buildClientGraph(geojson) {
@@ -504,7 +502,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                highway === 'corridor' || 
                                name.includes('corridor') || 
                                name.includes('passage') || 
-                               name.includes('internal') || 
                                name.includes('hallway');
 
             let factor = 1.0;
@@ -523,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Auto-weld T-junctions: Connect walkway endpoints to intersecting segments within 12m
+        // Auto-weld T-junctions
         clientNodes.forEach(nodeKey => {
             const p = parseKey(nodeKey);
             allSegments.forEach(seg => {
@@ -538,13 +535,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Direct node-to-node proximity weld
         for (let i = 0; i < clientNodes.length; i++) {
             const p1 = parseKey(clientNodes[i]);
             for (let j = i + 1; j < clientNodes.length; j++) {
                 const p2 = parseKey(clientNodes[j]);
-                const dist = getDistance(p1[0], p1[1], p2[0], p2[1]);
-                if (dist <= NODE_CONNECT_THRESHOLD_METERS) {
+                if (getDistance(p1[0], p1[1], p2[0], p2[1]) <= NODE_CONNECT_THRESHOLD_METERS) {
                     addEdge(clientNodes[i], clientNodes[j], p1, p2, 1.0);
                 }
             }
@@ -644,17 +639,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 dist += getDistance(fullCoords[i][0], fullCoords[i][1], fullCoords[i + 1][0], fullCoords[i + 1][1]);
             }
 
-            // Exclude duplicate paths (difference < 6m)
             const isDistinct = !routes.some(r => Math.abs(r.totalDistance - dist) < 6);
             if (isDistinct) {
-                // Keep routes within a 55% threshold of the shortest path
                 if (routes.length === 0 || dist <= routes[0].totalDistance * 1.55) {
                     routes.push({ path: fullCoords, totalDistance: Math.round(dist) });
                 }
                 if (routes.length >= 4) break;
             }
 
-            // Bidirectionally penalize edges (1.45x) so Dijkstra branches to parallel walkways
             if (allNodePath.length > 2) {
                 for (let i = 0; i < allNodePath.length - 1; i++) {
                     const k1 = `${allNodePath[i]}|${allNodePath[i + 1]}`;
@@ -739,15 +731,15 @@ document.addEventListener('DOMContentLoaded', () => {
         turnStepsContainer.classList.remove('hidden');
     }
 
-    // ================= 10. DUAL-ENTRANCE & STAIR GUIDANCE =================
+    // ================= 10. DUAL-ENTRANCE & TRANSITION GUIDANCE =================
     function getBestEntranceForComplex(originCoord, targetBuildingName) {
         const bName = (targetBuildingName || '').toLowerCase();
         if (!bName.includes('csa') && !bName.includes('ece')) {
-            return buildings[targetBuildingName] || null;
+            return findBuildingCoords(targetBuildingName);
         }
 
-        const csaCoord = buildings["CSA block"] || buildings["CSA Block"] || [19.0489, 83.8321];
-        const eceCoord = buildings["ECE Block"] || [19.0494, 83.8329];
+        const csaCoord = findBuildingCoords("CSA Block") || [19.0489, 83.8321];
+        const eceCoord = findBuildingCoords("ECE Block") || [19.0494, 83.8329];
 
         if (!originCoord) return csaCoord;
 
@@ -766,8 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let enteredVia = "CSA Block entrance";
         if (isDualBlock && arrivalCoord) {
-            const eceCoords = buildings["ECE Block"] || [19.0494, 83.8329];
-            const csaCoords = buildings["CSA block"] || buildings["CSA Block"] || [19.0489, 83.8321];
+            const eceCoords = findBuildingCoords("ECE Block") || [19.0494, 83.8329];
+            const csaCoords = findBuildingCoords("CSA Block") || [19.0489, 83.8321];
 
             const distToECE = getDistance(arrivalCoord[0], arrivalCoord[1], eceCoords[0], eceCoords[1]);
             const distToCSA = getDistance(arrivalCoord[0], arrivalCoord[1], csaCoords[0], csaCoords[1]);
@@ -787,8 +779,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (floor === 0 || (floor === 1 && bldgName.includes("ground"))) {
             return {
-                speech: `You arrived at ${enteredVia}. Both CSA and ECE entrances connect inside. Your room is on the Ground floor.`,
-                displaySub: `Arrived at <strong>${enteredVia}</strong>.<br>Both entrances connect inside on the <strong>Ground Floor</strong>.`,
+                speech: `You arrived at ${enteredVia}. Your room is on the Ground floor.`,
+                displaySub: `Arrived at <strong>${enteredVia}</strong>.<br>Target room is on the <strong>Ground Floor</strong>.`,
                 actionHint: `Ground Floor Entry (${enteredVia})`
             };
         }
@@ -802,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     stairAdvice = `Take the <strong>ECE staircase directly</strong> up to <strong>Floor ${floor}</strong>.`;
                     speechAdvice = `You arrived at ECE Block entrance. Take the ECE staircase up to ${ordinalFloor} floor.`;
                 } else {
-                    stairAdvice = `Take the <strong>ECE staircase</strong> up and cross over the 3rd floor corridor, or walk through the ground floor to the <strong>CSA staircase</strong>.`;
+                    stairAdvice = `Take the <strong>ECE staircase</strong> up and cross over the corridor, or walk through the ground floor to the <strong>CSA staircase</strong>.`;
                     speechAdvice = `You arrived at ECE Block entrance. Take the staircase and walk across to the CSA wing on ${ordinalFloor} floor.`;
                 }
             } else {
@@ -810,29 +802,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     stairAdvice = `Take the <strong>CSA staircase directly</strong> up to <strong>Floor ${floor}</strong>.`;
                     speechAdvice = `You arrived at CSA Block entrance. Take the CSA staircase up to ${ordinalFloor} floor.`;
                 } else {
-                    stairAdvice = `Take the <strong>CSA staircase</strong> up, or walk through the ground floor corridor to the <strong>ECE staircase</strong>.`;
-                    speechAdvice = `You arrived at CSA Block entrance. Take the staircase or move through to the ECE wing to reach ${ordinalFloor} floor.`;
+                    stairAdvice = `Take the <strong>CSA staircase</strong> up, or walk through the ground floor to the <strong>ECE staircase</strong>.`;
+                    speechAdvice = `You arrived at CSA Block entrance. Take the staircase and proceed to the ${ordinalFloor} floor.`;
                 }
             }
 
             return {
                 speech: speechAdvice,
-                displaySub: `Arrived via <strong>${enteredVia}</strong> (connected complex):<br>${stairAdvice}`,
+                displaySub: `Arrived via <strong>${enteredVia}</strong>:<br>${stairAdvice}`,
                 actionHint: `Use ${enteredVia} Stairs`
             };
         }
 
-        let stairSide = "nearest staircase";
-        if (roomInfo && roomInfo.plan) {
-            stairSide = roomInfo.plan.x > 450 ? "Right-wing staircase" : "Left-wing staircase";
-        } else {
-            stairSide = roomCode.includes("1") || roomCode.includes("2") ? "Right-wing staircase" : "Left-wing staircase";
-        }
-
         return {
-            speech: `You arrived at ${dest.building}. Take the ${stairSide} and move to the ${ordinalFloor} floor.`,
-            displaySub: `Take the <strong>${stairSide}</strong> and proceed to the <strong>${ordinalFloor} Floor</strong>.`,
-            actionHint: `Use ${stairSide}`
+            speech: `You arrived at ${dest.building}. Proceed to the ${ordinalFloor} floor.`,
+            displaySub: `Proceed up the staircase to the <strong>${ordinalFloor} Floor</strong>.`,
+            actionHint: `Use Stairs`
         };
     }
 
@@ -875,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
             overlay.remove();
         });
 
-        speakVoicePrompt(guidance.speech, true);
+        speakVoicePrompt(guidance.speech);
     }
 
     function updateHudInstruction(remainingCoords, currentPos) {
@@ -941,7 +926,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserLng = lng;
 
         if (!isInsideCampus(lat, lng)) {
-            console.warn("GPS outside GIET campus boundaries:", lat, lng);
+            console.warn("GPS outside campus boundaries:", lat, lng);
             return;
         }
 
@@ -995,7 +980,7 @@ document.addEventListener('DOMContentLoaded', () => {
             speakVoicePrompt("You are off route. Recalculating path.");
             
             const targetBldg = activeIndoorDestination ? activeIndoorDestination.building : (selectedWaypoints.destination ? selectedWaypoints.destination.id : null);
-            const remainingDest = getBestEntranceForComplex(currentPos, targetBldg) || (selectedWaypoints.destination ? buildings[selectedWaypoints.destination.id] : null);
+            const remainingDest = getBestEntranceForComplex(currentPos, targetBldg) || (selectedWaypoints.destination ? findBuildingCoords(selectedWaypoints.destination.id) : null);
 
             if (remainingDest) {
                 const rerouted = computeClientSideRoutes([currentPos, remainingDest]);
@@ -1321,7 +1306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         destText.textContent = `🚪 ${rm.number} (${hostBuilding})`;
         destText.classList.remove('placeholder');
 
-        const bldgCoords = buildings[hostBuilding] || buildings["CSA block"] || [19.0489, 83.8321];
+        const bldgCoords = findBuildingCoords(hostBuilding) || findBuildingCoords("CSA Block") || [19.0489, 83.8321];
         if (bldgCoords) {
             map.flyTo(bldgCoords, 19, { duration: 0.8 });
             if (markerLayers[hostBuilding]) markerLayers[hostBuilding].openTooltip();
@@ -1474,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 15. DATA INITIALIZER & INTERACTIVE POPUPS =================
+    // ================= 15. DATA INITIALIZER =================
     function createBuildingInteractivePopup(name, category) {
         const isNotBuilding = ["court", "ground", "parking", "bus-stop", "pool", "temple", "garden"].some(k => name.toLowerCase().includes(k));
         
@@ -1499,6 +1484,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function processGeoJSONData(data) {
+        if (isDataLoaded) return;
+        isDataLoaded = true;
+
         campusGeoJSON = data;
         buildings = {};
         markerLayers = {};
@@ -1551,9 +1539,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const popupHtml = createBuildingInteractivePopup(name, rawCat);
                     layer.bindPopup(popupHtml);
 
-                    layer.on('popupopen', (e) => {
-                        const popupEl = e.popup.getElement();
-                        const routeBtn = popupEl.querySelector('.btn-popup-route');
+                    layer.on('popupopen', () => {
+                        const popupEl = layer.getPopup().getElement();
+                        const routeBtn = popupEl ? popupEl.querySelector('.btn-popup-route') : null;
                         if (routeBtn) {
                             routeBtn.onclick = () => {
                                 map.closePopup();
@@ -1570,10 +1558,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }).addTo(map);
 
-        if (!buildings["CSA block"] && !buildings["CSA Block"]) {
-            buildings["CSA block"] = [19.0489, 83.8321];
+        if (!findBuildingCoords("CSA Block")) {
+            buildings["CSA Block"] = [19.0489, 83.8321];
         }
-        if (!buildings["ECE Block"]) {
+        if (!findBuildingCoords("ECE Block")) {
             buildings["ECE Block"] = [19.0494, 83.8329];
         }
 
@@ -1584,6 +1572,21 @@ document.addEventListener('DOMContentLoaded', () => {
         hideLoader();
 
         fetchIndoorRoomsDatabase();
+
+        // Check URL parameters for direct jumps
+        const params = new URLSearchParams(window.location.search);
+        const directBldg = params.get('building') || params.get('name');
+        if (directBldg) {
+            const resolved = resolveHostBuildingName(directBldg);
+            selectedWaypoints.destination = { id: resolved, name: resolved };
+            const destText = destinationDisplay.querySelector('.waypoint-text');
+            destText.textContent = `🏛️ ${resolved}`;
+            destText.classList.remove('placeholder');
+            const targetCoords = findBuildingCoords(resolved);
+            if (targetCoords) {
+                map.flyTo(targetCoords, 19, { duration: 1.0 });
+            }
+        }
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -1615,38 +1618,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
             }
-        } catch (e) {
+        } catch {
             allIndoorRooms = [
-                { number: "EB-3", name: "CSA 3 / EB 3", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
-                { number: "EB-4", name: "CSA 4 / EB 4", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
-                { number: "CSA-4", name: "CSA 4 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
-                { number: "CSA-3", name: "CSA 3 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
-                { number: "CSA-2", name: "CSA 2 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 512, y: 40, w: 60, h: 125 } },
-                { number: "CSA-1", name: "CSA 1 Classroom", type: "Classroom", building: "CSA block", floor_number: 3, plan: { x: 578, y: 40, w: 60, h: 125 } },
-                { number: "BEE-LAB", name: "BEE LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 105, y: 285, w: 125, h: 125 } },
-                { number: "BE-LAB", name: "BE LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 242, y: 285, w: 125, h: 125 } },
-                { number: "MPMC-LAB", name: "MPMC LAB", type: "Laboratory", building: "CSA block", floor_number: 3, plan: { x: 379, y: 285, w: 125, h: 125 } },
-                { number: "FC-2", name: "FC-2 Exam Cell", type: "Office", building: "CSA block", floor_number: 3, plan: { x: 250, y: 40, w: 120, h: 60 } }
+                { number: "EB-3", name: "CSA 3 / EB 3", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
+                { number: "EB-4", name: "CSA 4 / EB 4", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
+                { number: "CSA-4", name: "CSA 4 Classroom", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 105, y: 40, w: 65, h: 125 } },
+                { number: "CSA-3", name: "CSA 3 Classroom", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 178, y: 40, w: 65, h: 125 } },
+                { number: "CSA-2", name: "CSA 2 Classroom", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 512, y: 40, w: 60, h: 125 } },
+                { number: "CSA-1", name: "CSA 1 Classroom", type: "Classroom", building: "CSA Block", floor_number: 3, plan: { x: 578, y: 40, w: 60, h: 125 } },
+                { number: "BEE-LAB", name: "BEE LAB", type: "Laboratory", building: "CSA Block", floor_number: 3, plan: { x: 105, y: 285, w: 125, h: 125 } },
+                { number: "BE-LAB", name: "BE LAB", type: "Laboratory", building: "CSA Block", floor_number: 3, plan: { x: 242, y: 285, w: 125, h: 125 } },
+                { number: "MPMC-LAB", name: "MPMC LAB", type: "Laboratory", building: "CSA Block", floor_number: 3, plan: { x: 379, y: 285, w: 125, h: 125 } },
+                { number: "FC-2", name: "FC-2 Exam Cell", type: "Office", building: "CSA Block", floor_number: 3, plan: { x: 250, y: 40, w: 120, h: 60 } }
             ];
         }
     }
 
+    // Load data with single-execution guard
     fetch('assets/data/giet_campus.geojson')
         .then(res => {
-            if (!res.ok) throw new Error("Local bundle not available");
+            if (!res.ok) throw new Error("Local dataset missing");
             return res.json();
         })
         .then(data => {
             processGeoJSONData(data);
-            hideLoader();
-            fetch(`${API_URL}/api/campus-data`, { signal: AbortSignal.timeout(5000) })
-                .catch(() => console.log("Running on local dataset."));
         })
-        .catch(err => {
+        .catch(() => {
             fetch(`${API_URL}/api/campus-data`)
                 .then(res => res.json())
                 .then(data => processGeoJSONData(data.geojson))
-                .catch(apiErr => console.error("Error loading map data", apiErr))
+                .catch(apiErr => console.error("Error loading map data:", apiErr))
                 .finally(() => {
                     clearTimeout(safetyTimer);
                     hideLoader();
@@ -1674,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 updateUserLiveLocation(pos.coords.latitude, pos.coords.longitude);
                                 findRouteBtn.click();
                             },
-                            err => showGeofenceWarning()
+                            () => showGeofenceWarning()
                         );
                     }
                     return;
@@ -1687,18 +1688,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 originCoord = [currentUserLat, currentUserLng];
                 coordsArray.push(originCoord);
-            } else if (buildings[selectedWaypoints.start.id]) {
-                originCoord = buildings[selectedWaypoints.start.id];
-                coordsArray.push(originCoord);
+            } else {
+                originCoord = findBuildingCoords(selectedWaypoints.start.id);
+                if (originCoord) coordsArray.push(originCoord);
             }
 
             selectedWaypoints.extraStops.forEach(st => {
-                if (st && buildings[st.id]) coordsArray.push(buildings[st.id]);
+                if (st) {
+                    const c = findBuildingCoords(st.id);
+                    if (c) coordsArray.push(c);
+                }
             });
 
-            // Dynamically route to whichever complex entrance is closer from current position
             const targetBldg = activeIndoorDestination ? activeIndoorDestination.building : selectedWaypoints.destination.id;
-            const destCoord = getBestEntranceForComplex(originCoord, targetBldg) || buildings[selectedWaypoints.destination.id];
+            const destCoord = getBestEntranceForComplex(originCoord, targetBldg) || findBuildingCoords(selectedWaypoints.destination.id);
 
             if (destCoord) {
                 coordsArray.push(destCoord);
@@ -1770,7 +1773,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
                     );
                 },
-                (err) => showGeofenceWarning(),
+                () => showGeofenceWarning(),
                 { enableHighAccuracy: true, timeout: 5000 }
             );
         });
@@ -1939,7 +1942,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= 18. LIVE SEARCH (ROOMS & PLACES) =================
+    // ================= 18. LIVE SEARCH =================
     if (buildingSearch && searchResults) {
         buildingSearch.addEventListener('input', () => {
             const query = buildingSearch.value.trim().toLowerCase();
@@ -1995,7 +1998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     destText.textContent = `${icon} ${place}`;
                     destText.classList.remove('placeholder');
 
-                    const coords = buildings[place];
+                    const coords = findBuildingCoords(place);
                     if (coords) {
                         map.flyTo(coords, 19, { duration: 1.0 });
                         if (markerLayers[place]) markerLayers[place].openTooltip();

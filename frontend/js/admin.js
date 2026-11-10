@@ -130,7 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (unsavedCountBadge) unsavedCountBadge.textContent = "0";
     }
 
-    // Category Synchronizer: Robust matching for select option values
     function setCategoryDropdownValue(selectEl, rawValue) {
         if (!selectEl) return;
         const target = String(rawValue || "").toLowerCase().trim();
@@ -796,7 +795,7 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelRouteBtn.addEventListener("click", resetRouteForm);
     }
 
-    // ================= 8. TAB SWITCHING (ISOLATED EXECUTION) =================
+    // ================= 8. TAB SWITCHING =================
     function activateTab(tabName) {
         activeTab = tabName;
 
@@ -857,7 +856,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (!floorObj || !floorObj.rooms || floorObj.rooms.length === 0) {
-            adminBlueprintCanvas.innerHTML = `<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px; pointer-events: none;">No rooms on this floor. Click "Draw Box" to start.</div>`;
+            adminBlueprintCanvas.innerHTML = `<div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 13px; pointer-events: none;">No rooms on this floor. Upload a sketch or click "Draw Box" to start.</div>`;
             return;
         }
 
@@ -1033,7 +1032,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ================= 10. MANUAL BOX DRAWING (ROBUST POINTER ENGINE) =================
+    // ================= 10. MANUAL BOX DRAWING =================
     let drawStartX = 0, drawStartY = 0;
     let tempDrawBox = null;
 
@@ -1101,7 +1100,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const newTempId = Date.now();
                 const defaultCode = `ROOM-${nextNum}`;
 
-                // Add to active floor in-memory
                 if (floorObj) {
                     if (!floorObj.rooms) floorObj.rooms = [];
                     floorObj.rooms.push({
@@ -1116,7 +1114,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 markPendingChanges();
 
-                // Select the new room in sidebar form
                 adminRoomId.value = newTempId;
                 if (roomXVal) roomXVal.value = x;
                 if (roomYVal) roomYVal.value = y;
@@ -1128,7 +1125,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 btnCancelEditRoom.classList.remove("hidden");
                 if (btnDeleteActiveRoom) btnDeleteActiveRoom.classList.remove("hidden");
 
-                // Exit drawing mode automatically so clicks work normally
                 isDrawMode = false;
                 btnDrawRoom.style.background = "";
                 btnDrawRoom.style.color = "";
@@ -1152,7 +1148,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (res.ok) {
                 buildingsList = await res.json();
             }
-        } catch (e) {
+        } catch {
             console.warn("Backend API offline, reading from map data...");
         }
 
@@ -1331,7 +1327,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Apply Room Edit in-memory (No slow network turnaround)
     if (adminRoomForm) {
         adminRoomForm.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -1394,13 +1389,12 @@ document.addEventListener("DOMContentLoaded", () => {
             btnBatchSaveFloor.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving All Rooms...`;
 
             try {
-                // Save each room in the staged list to the database
                 for (const r of floorObj.rooms) {
                     await fetch(`${API_URL}/api/admin/save-room`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            id: r.id && r.id < 1000000000000 ? r.id : null, // Fresh IDs from Date.now() will insert as new rows
+                            id: r.id && r.id < 1000000000 ? r.id : null,
                             floor_id: selectedFloorId,
                             number: r.number,
                             name: r.name,
@@ -1552,7 +1546,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // ================= 13. SKETCH UPLOAD =================
+    // ================= 13. SKETCH UPLOAD & AUTO-DETECTION =================
     if (btnUploadSketch) {
         btnUploadSketch.addEventListener("click", (e) => {
             e.preventDefault();
@@ -1572,10 +1566,59 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            // 1. Show image as underlay without cropping (handled by background-size: contain)
             underlayUrl = URL.createObjectURL(file);
             adminBlueprintCanvas.style.backgroundImage = `url('${underlayUrl}')`;
             btnToggleUnderlay.classList.remove("hidden");
             isUnderlayVisible = true;
+
+            // 2. Transmit image to OpenCV backend endpoint
+            const formData = new FormData();
+            formData.append("file", file);
+
+            btnUploadSketch.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Detecting...`;
+            btnUploadSketch.disabled = true;
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/detect-sketch`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!res.ok) throw new Error("Auto-detection request failed");
+                const data = await res.json();
+
+                if (data.rooms && data.rooms.length > 0) {
+                    const floorObj = currentFloorsCache.find(f => f.id === selectedFloorId);
+                    if (floorObj) {
+                        if (!floorObj.rooms) floorObj.rooms = [];
+                        
+                        data.rooms.forEach((r, idx) => {
+                            floorObj.rooms.push({
+                                id: Date.now() + idx,
+                                number: r.number,
+                                name: r.name,
+                                type: r.type || "Classroom",
+                                description: r.description || "Auto-detected boundary",
+                                plan: { x: r.x, y: r.y, w: r.w, h: r.h }
+                            });
+                        });
+                        
+                        markPendingChanges();
+                        renderAdminRoomsList();
+                        renderLiveBlueprintPreview();
+                        alert(`Successfully detected and placed ${data.rooms.length} room boxes on the canvas.`);
+                    }
+                } else {
+                    alert("No distinct closed rooms detected automatically. You can trace rooms directly using 'Draw Box' over the underlay.");
+                }
+            } catch (err) {
+                console.error("Sketch detection error:", err);
+                alert("Detection endpoint error. You can continue tracing rooms manually using 'Draw Box' over your loaded image.");
+            } finally {
+                btnUploadSketch.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> Upload Sketch / PNG`;
+                btnUploadSketch.disabled = false;
+            }
         });
     }
 
@@ -1588,7 +1631,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Toggle Draw Mode (Deselects current room so pointer events focus on drawing)
     if (btnDrawRoom) {
         btnDrawRoom.addEventListener("click", (e) => {
             e.preventDefault();
@@ -1602,7 +1644,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 : `<i class="fa-solid fa-vector-square"></i> Draw Box`;
             adminBlueprintCanvas.style.cursor = isDrawMode ? "crosshair" : "default";
 
-            // Deselect any active room so its handles don't block canvas clicks
             if (isDrawMode) {
                 resetRoomEditor();
             } else {

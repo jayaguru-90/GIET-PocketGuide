@@ -35,13 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeFloorIndex = 0;
     let activeCategoryFilter = 'all';
 
-    // Read URL query parameters (?name=... or ?building=..., and ?room=...)
+    // Parse URL query parameters
     const urlParams = new URLSearchParams(window.location.search);
     let activeBuilding = (urlParams.get('building') || urlParams.get('name') || "CSA Block").trim();
     const targetFloorParam = urlParams.get('floor');
     const targetRoomCode = urlParams.get('room') ? urlParams.get('room').trim().toLowerCase() : null;
 
-    // Gestures and Matrix Pan/Zoom State
+    // Viewport Matrix State
     let scale = 1.0;
     let panX = 0;
     let panY = 0;
@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();
 
     // ================= 2. CATEGORY CLASSIFICATION NORMALIZER =================
-    // Normalizes admin dropdown labels (including emojis/spaces) to CSS classes
     function normalizeCategory(rawType = '') {
         const t = String(rawType).toLowerCase().trim();
 
@@ -111,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`${API_URL}/api/admin/buildings-list`, { signal: AbortSignal.timeout(3000) });
             buildingsList = await res.json();
-        } catch (e) {
+        } catch {
             buildingsList = ["CSA Block", "CSE Building", "Admin Block", "Library", "Mechanical building", "Bio tech Building", "Agriculture Block", "BSH Building"];
         }
 
@@ -258,7 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewW = blueprintViewport.clientWidth;
         const viewH = blueprintViewport.clientHeight;
 
-        // Keep at least part of the canvas visible
         const marginX = Math.min(viewW * 0.4, 120);
         const marginY = Math.min(viewH * 0.4, 100);
 
@@ -309,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewW = blueprintViewport.clientWidth || 360;
         const viewH = blueprintViewport.clientHeight || 450;
 
-        // Calculate actual bounding box occupied by rooms
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         if (rooms.length > 0) {
             rooms.forEach(r => {
@@ -336,19 +333,17 @@ document.addEventListener('DOMContentLoaded', () => {
         scale = Math.min(scaleX, scaleY, 1.25);
         if (scale < 0.35) scale = 0.35;
 
-        // Center room cluster inside the viewport
         panX = (viewW / 2) - (contentCenterX * scale);
         panY = (viewH / 2) - (contentCenterY * scale);
 
         updateTransform();
     }
 
-    function getDistance(t1, t2) {
+    function getTouchDistance(t1, t2) {
         return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
 
     if (blueprintViewport) {
-        // --- Touch Gestures ---
         blueprintViewport.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
@@ -357,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (e.touches.length === 2) {
                 isDragging = false;
                 isPinching = true;
-                initialPinchDist = getDistance(e.touches[0], e.touches[1]);
+                initialPinchDist = getTouchDistance(e.touches[0], e.touches[1]);
                 initialPinchScale = scale;
                 pinchMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 pinchMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -368,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             if (isPinching && e.touches.length === 2) {
-                const dist = getDistance(e.touches[0], e.touches[1]);
+                const dist = getTouchDistance(e.touches[0], e.touches[1]);
                 const newScale = initialPinchScale * (dist / initialPinchDist);
                 setScaleAtPoint(newScale, pinchMidX, pinchMidY);
             } else if (isDragging && e.touches.length === 1) {
@@ -390,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // --- Mouse Gestures ---
         blueprintViewport.addEventListener('mousedown', (e) => {
             isDragging = true;
             dragStartX = e.clientX - panX;
@@ -415,7 +409,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { passive: false });
     }
 
-    // Zoom Toolbar Controls
     if (btnZoomIn) {
         btnZoomIn.addEventListener('click', () => {
             const rect = blueprintViewport.getBoundingClientRect();
@@ -456,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Category Filter Buttons Handler
     if (legendGroup) {
         legendGroup.querySelectorAll('.legend-badge').forEach(badge => {
             badge.addEventListener('click', () => {
@@ -541,11 +533,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         applyCategoryFilterToBoxes();
 
-        // Trigger viewport centering
         setTimeout(() => {
             autoFitCanvasToScreen();
 
-            // Center targeted room if requested in query parameters
             if (highlightedElement && highlightedRoomData) {
                 const p = highlightedRoomData.plan || { x: 0, y: 0, w: 60, h: 60 };
                 const viewW = blueprintViewport.clientWidth;

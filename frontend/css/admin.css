@@ -262,7 +262,8 @@ body.admin-body {
 }
 
 /* Action Buttons */
-.btn-action-primary {
+.btn-action-primary,
+.btn-solid-primary {
     background: #2563eb;
     color: #ffffff;
     padding: 10px 14px;
@@ -279,10 +280,13 @@ body.admin-body {
     transition: background 0.15s ease;
 }
 
-.btn-action-primary:hover { background: #1d4ed8; }
-.btn-action-primary:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+.btn-action-primary:hover,
+.btn-solid-primary:hover { background: #1d4ed8; }
+.btn-action-primary:disabled,
+.btn-solid-primary:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
 
-.btn-action-secondary {
+.btn-action-secondary,
+.btn-solid-secondary {
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: #cbd5e1;
@@ -298,7 +302,8 @@ body.admin-body {
     gap: 6px;
 }
 
-.btn-action-secondary:hover { background: #334155; color: #fff; }
+.btn-action-secondary:hover,
+.btn-solid-secondary:hover { background: #334155; color: #fff; }
 
 /* Registry Items */
 .registry-item {
@@ -396,6 +401,21 @@ body.admin-body {
     gap: 12px;
 }
 
+.blueprint-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.blueprint-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .blueprint-preview-board-wrap {
     flex: 1;
     overflow: auto;
@@ -408,18 +428,23 @@ body.admin-body {
     padding: 24px;
 }
 
+/* 
+   FIX FOR CLIPPING: 
+   Set background-size: contain !important; and center placement 
+   so uploaded sketches are never cropped regardless of aspect ratio.
+*/
 .admin-blueprint-canvas {
     position: relative;
     width: 900px;
     height: 480px;
-    background: #111827;
+    background-color: #111827;
     border: 2px solid #1f2937;
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     flex-shrink: 0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-size: contain !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
     user-select: none;
 }
 
@@ -476,29 +501,29 @@ body.admin-body {
 }
 
 /* Room Categorization Outlines */
-.admin-preview-room.classroom   { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #a7f3d0; }
-.admin-preview-room.laboratory  { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #93c5fd; }
-.admin-preview-room.office      { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; color: #fde68a; }
-.admin-preview-room.washroom    { background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #ddd6fe; }
-.admin-preview-room.auditorium  { background: rgba(239, 68, 68, 0.15);  border-color: #ef4444; color: #fca5a5; }
-.admin-preview-room.utility     { background: rgba(139, 92, 246, 0.15); border-color: #8b5cf6; color: #ddd6fe; }
+.admin-preview-room.classroom   { background: rgba(16, 185, 129, 0.22); border-color: #10b981; color: #a7f3d0; }
+.admin-preview-room.laboratory  { background: rgba(59, 130, 246, 0.22); border-color: #3b82f6; color: #93c5fd; }
+.admin-preview-room.office      { background: rgba(245, 158, 11, 0.22); border-color: #f59e0b; color: #fde68a; }
+.admin-preview-room.washroom    { background: rgba(139, 92, 246, 0.22); border-color: #8b5cf6; color: #ddd6fe; }
+.admin-preview-room.auditorium  { background: rgba(239, 68, 68, 0.22);  border-color: #ef4444; color: #fca5a5; }
+.admin-preview-room.utility     { background: rgba(139, 92, 246, 0.22); border-color: #8b5cf6; color: #ddd6fe; }
 
 .admin-preview-room.corridor {
-    background: rgba(148, 163, 184, 0.1) !important;
+    background: rgba(148, 163, 184, 0.15) !important;
     border: 1.5px dashed #94a3b8 !important;
     color: #cbd5e1 !important;
     z-index: 1;
 }
 
 .admin-preview-room.stairs {
-    background: rgba(245, 158, 11, 0.2) !important;
+    background: rgba(245, 158, 11, 0.25) !important;
     border: 2px solid #f59e0b !important;
     color: #fde68a !important;
     font-weight: 700;
 }
 
 .admin-preview-room.lift {
-    background: rgba(234, 88, 12, 0.2) !important;
+    background: rgba(234, 88, 12, 0.25) !important;
     border: 2px solid #ea580c !important;
     color: #fed7aa !important;
     font-weight: 700;
@@ -534,7 +559,7 @@ body.admin-body {
     to { opacity: 1; }
 }
 
-.auth-modal-card {
+.auth-card {
     background: #1e293b;
     border: 1.5px solid rgba(255, 255, 255, 0.12);
     border-radius: 18px;
@@ -544,35 +569,14 @@ body.admin-body {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
+    text-align: center;
     box-sizing: border-box;
 }
 
-.auth-icon-badge {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: rgba(37, 99, 235, 0.2);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: #38bdf8;
-    font-size: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 10px auto;
-}
-
-.auth-modal-card .input-field input {
+.auth-card .input-field input {
     background: #0f172a !important;
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-.auth-modal-card .input-field input:-webkit-autofill,
-.auth-modal-card .input-field input:-webkit-autofill:hover, 
-.auth-modal-card .input-field input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #f8fafc !important;
-    -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
-    transition: background-color 5000s ease-in-out 0s;
 }
 
 /* ================= 6. DESKTOP ONLY GUARD (< 992px) ================= */
@@ -601,19 +605,58 @@ body.admin-body {
     gap: 12px;
 }
 
+.mobile-icon-box {
+    font-size: 2.2rem;
+    color: #38bdf8;
+}
+
+.mobile-tip-pill {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-return-mobile {
+    margin-top: 10px;
+    background: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 @media (max-width: 992px) {
     .mobile-blocker-screen {
         display: flex !important;
     }
 }
 
-/* ================= 7. MAGNETIC SNAP PULSE ================= */
-@keyframes snapPulse {
-    0% { transform: scale(0.85); opacity: 0.6; }
-    100% { transform: scale(1.35); opacity: 1; }
+.map-status-pill {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.magnetic-snap-pulse {
-    pointer-events: none;
-    z-index: 1000;
+.hidden {
+    display: none !important;
 }
